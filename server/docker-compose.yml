@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  database:
+    image: mongo:7.0-noble
+    container_name: electrokart-db
+    ports:
+      - "27017:27017"
+    volumes:
+      - electrokart-db-data:/data/db
+    restart: always
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: electrokart-api
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    environment:
+      - MONGODB_URI=mongodb://database:27017/electrokart
+    depends_on:
+      - database
+    restart: always
+
+volumes:
+  electrokart-db-data:

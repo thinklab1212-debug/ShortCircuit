@@ -1,0 +1,6 @@
+export { default as ProductGallery } from './ProductGallery'
+export { default as ProductInfo } from './ProductInfo'
+export { default as AddToCart } from './AddToCart'
+export { default as Specifications } from './Specifications'
+export { default as ReviewsSection } from './ReviewsSection'
+export { RelatedProducts, RecentlyViewedProducts } from './RelatedProducts'

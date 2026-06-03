@@ -1,0 +1,44 @@
+// ============================================================================
+// ElectroKart — Central Route Aggregator
+// ============================================================================
+// Mounts all modular route segments under standard namespace identifiers.
+// Aggregated router is mounted under /api/v1 inside app.ts.
+// ============================================================================
+
+import { Router } from 'express';
+import authRoutes from './auth.routes.js';
+import userRoutes from './user.routes.js';
+import addressRoutes from './address.routes.js';
+import productRoutes from './product.routes.js';
+import categoryRoutes from './category.routes.js';
+import brandRoutes from './brand.routes.js';
+import cartRoutes from './cart.routes.js';
+import wishlistRoutes from './wishlist.routes.js';
+import orderRoutes from './order.routes.js';
+import couponRoutes from './coupon.routes.js';
+import paymentRoutes from './payment.routes.js';
+import bannerRoutes from './banner.routes.js';
+import analyticsRoutes from './analytics.routes.js';
+import uploadRoutes from './upload.routes.js';
+import searchRoutes from './search.routes.js';
+
+const router = Router();
+
+// Route mappings
+router.use('/auth', authRoutes);
+router.use('/users', userRoutes);
+router.use('/addresses', addressRoutes);
+router.use('/products', productRoutes);
+router.use('/categories', categoryRoutes);
+router.use('/brands', brandRoutes);
+router.use('/cart', cartRoutes);
+router.use('/wishlist', wishlistRoutes);
+router.use('/orders', orderRoutes);
+router.use('/coupons', couponRoutes);
+router.use('/payments', paymentRoutes);
+router.use('/banners', bannerRoutes);
+router.use('/analytics', analyticsRoutes);
+router.use('/upload', uploadRoutes);
+router.use('/search', searchRoutes);
+
+export default router;
