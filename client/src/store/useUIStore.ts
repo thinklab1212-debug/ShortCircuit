@@ -4,6 +4,8 @@ import type { Theme } from '@/types'
 
 // ─── UI Store ───────────────────────────────────────────────────────────────────
 
+type AuthModalView = 'login' | 'register'
+
 interface UIState {
   theme: Theme
   isSidebarOpen: boolean
@@ -11,6 +13,8 @@ interface UIState {
   isSearchOpen: boolean
   isCartDrawerOpen: boolean
   globalLoading: boolean
+  isAuthModalOpen: boolean
+  authModalView: AuthModalView
 
   // Actions
   setTheme: (theme: Theme) => void
@@ -23,6 +27,9 @@ interface UIState {
   toggleCartDrawer: () => void
   setCartDrawerOpen: (open: boolean) => void
   setGlobalLoading: (loading: boolean) => void
+  openAuthModal: (view?: AuthModalView) => void
+  closeAuthModal: () => void
+  setAuthModalView: (view: AuthModalView) => void
 }
 
 const useUIStore = create<UIState>()(
@@ -34,6 +41,8 @@ const useUIStore = create<UIState>()(
       isSearchOpen: false,
       isCartDrawerOpen: false,
       globalLoading: false,
+      isAuthModalOpen: false,
+      authModalView: 'login' as AuthModalView,
 
       setTheme: (theme) => {
         // Apply theme to document
@@ -78,6 +87,15 @@ const useUIStore = create<UIState>()(
 
       setGlobalLoading: (globalLoading) =>
         set({ globalLoading }),
+
+      openAuthModal: (view = 'login') =>
+        set({ isAuthModalOpen: true, authModalView: view }),
+
+      closeAuthModal: () =>
+        set({ isAuthModalOpen: false, authModalView: 'login' }),
+
+      setAuthModalView: (authModalView) =>
+        set({ authModalView }),
     }),
     {
       name: 'electrokart-ui',

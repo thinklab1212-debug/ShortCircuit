@@ -1,5 +1,6 @@
 import { Outlet } from 'react-router'
 import { Link } from 'react-router'
+import { X } from 'lucide-react'
 import { APP } from '@/constants'
 import { BrandLogo } from '@/components/layout/BrandLogo'
 import { ScrollToTop } from '@/components/layout/ScrollToTop'
@@ -48,6 +49,13 @@ export function AuthLayout() {
           <Link to="/" className="flex items-center gap-2 lg:hidden">
             <BrandLogo size="sm" />
             <span className="text-lg font-bold font-heading">{APP.NAME}</span>
+          </Link>
+          <Link
+            to="/"
+            className="flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors ml-auto"
+            aria-label="Back to store"
+          >
+            <X className="h-5 w-5" />
           </Link>
         </div>
         <div className="flex flex-1 items-center justify-center p-6">

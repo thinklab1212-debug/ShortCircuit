@@ -2,6 +2,7 @@ import { Outlet } from 'react-router'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { ScrollToTop } from '@/components/layout/ScrollToTop'
+import { AuthModal } from '@/components/auth'
 import { useCart } from '@/hooks/useCart'
 import { useWishlist } from '@/hooks/useWishlist'
 
@@ -21,6 +22,7 @@ export function DefaultLayout() {
         <Outlet />
       </main>
       <Footer />
+      <AuthModal />
     </div>
   )
 }

@@ -60,7 +60,7 @@ export function useInitAuth() {
 
 // ─── Login Mutation ─────────────────────────────────────────────────────────────
 
-export function useLogin() {
+export function useLogin(options?: { onSuccess?: () => void }) {
   const navigate = useNavigate()
   const location = useLocation()
   const login = useAuthStore((s) => s.login)
@@ -72,11 +72,17 @@ export function useLogin() {
       login(user, accessToken)
       toast.success(`Welcome back, ${user.firstName}!`)
 
-      const params = new URLSearchParams(location.search)
-      const redirect = params.get('redirect')
-      const fromState = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname
-      const destination = redirect || fromState || (user.role === 'admin' ? '/admin' : '/')
-      navigate(destination, { replace: true })
+      if (options?.onSuccess) {
+        // Modal context: call the callback, skip navigation
+        options.onSuccess()
+      } else {
+        // Page context: existing redirect logic (unchanged)
+        const params = new URLSearchParams(location.search)
+        const redirect = params.get('redirect')
+        const fromState = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname
+        const destination = redirect || fromState || (user.role === 'admin' ? '/admin' : '/')
+        navigate(destination, { replace: true })
+      }
     },
     onError: (error: AxiosError<ApiResponse>) => {
       toast.error(getErrorMessage(error))
@@ -87,14 +93,21 @@ export function useLogin() {
 // ─── Register Mutation ──────────────────────────────────────────────────────────
 // Registration does NOT issue a session; the user must sign in afterwards.
 
-export function useRegister() {
+export function useRegister(options?: { onSuccess?: () => void }) {
   const navigate = useNavigate()
 
   return useMutation({
     mutationFn: authApi.register,
     onSuccess: () => {
       toast.success('Account created! Please sign in to continue.')
-      navigate('/login', { replace: true })
+
+      if (options?.onSuccess) {
+        // Modal context: call the callback (switch to login view)
+        options.onSuccess()
+      } else {
+        // Page context: existing navigate to /login (unchanged)
+        navigate('/login', { replace: true })
+      }
     },
     onError: (error: AxiosError<ApiResponse>) => {
       toast.error(getErrorMessage(error))

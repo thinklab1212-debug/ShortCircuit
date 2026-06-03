@@ -31,7 +31,7 @@ export function Navbar() {
   const navigate = useNavigate()
   const { isAuthenticated, user, logout } = useAuthStore()
   const { totalItems } = useCartStore()
-  const { isMobileMenuOpen, setMobileMenuOpen } = useUIStore()
+  const { isMobileMenuOpen, setMobileMenuOpen, openAuthModal } = useUIStore()
   const { theme, setTheme } = useTheme()
   const isMobile = useIsMobile()
   const [isProfileOpen, setIsProfileOpen] = useState(false)
@@ -201,12 +201,12 @@ export function Navbar() {
                 </AnimatePresence>
               </div>
             ) : (
-              <Link
-                to="/login"
+              <button
+                onClick={() => openAuthModal('login')}
                 className="hidden sm:inline-flex items-center gap-2 rounded-full bg-foreground px-5 py-2 text-sm font-medium text-background transition-all hover:bg-foreground/90 active:scale-[0.98]"
               >
                 Sign In
-              </Link>
+              </button>
             )}
 
             {/* Mobile Menu Toggle */}
@@ -280,13 +280,15 @@ export function Navbar() {
                 {!isAuthenticated && (
                   <>
                     <div className="my-3 border-t border-border" />
-                    <Link
-                      to="/login"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground"
+                    <button
+                      onClick={() => {
+                        setMobileMenuOpen(false)
+                        openAuthModal('login')
+                      }}
+                      className="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground w-full"
                     >
                       Sign In
-                    </Link>
+                    </button>
                   </>
                 )}
               </div>
