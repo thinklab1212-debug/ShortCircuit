@@ -75,8 +75,10 @@ export interface BuiltFilters {
 export function buildProductFilters(query: ProductQueryParams): BuiltFilters {
   const filter: Record<string, any> = {};
 
-  // Always filter for active products (public endpoints)
+  // Always filter for active, approved products (public endpoints)
+  // SAFETY: Both conditions are required to prevent vendor product leaks
   filter.isActive = true;
+  filter.approvalStatus = 'approved';
 
   // -------------------------------------------------------------------------
   // Text search
@@ -199,8 +201,9 @@ export function buildProductFilters(query: ProductQueryParams): BuiltFilters {
 export function buildAdminProductFilters(query: ProductQueryParams): BuiltFilters {
   const { filter, sort } = buildProductFilters(query);
 
-  // Remove the default isActive filter for admin
+  // Remove the public safety filters for admin
   delete filter.isActive;
+  delete filter.approvalStatus;
 
   // Allow filtering by active/inactive status
   if (query.isActive !== undefined) {

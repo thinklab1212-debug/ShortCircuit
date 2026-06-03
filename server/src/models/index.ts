@@ -17,3 +17,4 @@ export { default as Address, type IAddress } from './Address.model.js';
 export { default as Order, type IOrder, type IOrderModel } from './Order.model.js';
 export { default as Coupon, type ICoupon } from './Coupon.model.js';
 export { default as Banner, type IBanner } from './Banner.model.js';
+export { default as VendorProfile, type IVendorProfile } from './VendorProfile.model.js';

@@ -41,7 +41,9 @@ export interface ValidationErrorDetail {
 
 // ─── Enums (string unions matching backend) ─────────────────────────────────────
 
-export type UserRole = 'customer' | 'admin'
+export type UserRole = 'customer' | 'vendor' | 'admin'
+
+export type ApprovalStatus = 'draft' | 'pending_review' | 'approved' | 'rejected'
 
 export type OrderStatus =
   | 'placed'
@@ -248,6 +250,15 @@ export interface Product {
   effectivePrice?: number
   createdAt: string
   updatedAt?: string
+  // Vendor fields (present on vendor-scoped queries)
+  vendor?: string | User
+  vendorPrice?: number
+  approvalStatus?: ApprovalStatus
+  rejectionReason?: string
+  vendorNote?: string
+  submittedAt?: string
+  reviewedAt?: string
+  reviewedBy?: string
 }
 
 export interface ProductFilters {
@@ -690,3 +701,70 @@ export interface BreadcrumbItem {
 }
 
 export type Theme = 'light' | 'dark' | 'system'
+
+// ─── Vendor ─────────────────────────────────────────────────────────────────────
+
+export interface VendorProfile {
+  _id: string
+  user: string | User
+  businessName: string
+  contactPerson: string
+  phone: string
+  gstin?: string
+  createdAt: string
+  updatedAt?: string
+}
+
+export interface VendorDashboardStats {
+  total: number
+  draft: number
+  pendingReview: number
+  approved: number
+  rejected: number
+}
+
+export interface CreateVendorData {
+  firstName: string
+  lastName: string
+  email: string
+  password: string
+  businessName: string
+  contactPerson: string
+  phone: string
+  gstin?: string
+}
+
+export interface ReviewProductData {
+  action: 'approve' | 'reject'
+  price?: number
+  salePrice?: number
+  reason?: string
+}
+
+export interface VendorProductFormData {
+  name: string
+  description: string
+  shortDescription?: string
+  sku: string
+  vendorPrice: number
+  category: string
+  brand: string
+  tags?: string[]
+  images?: ProductImage[]
+  stock: number
+  lowStockThreshold?: number
+  specifications?: ProductSpecification[]
+  manufacturer?: string
+  warranty?: string
+  datasheetUrl?: string
+  packageContents?: string[]
+  applicationAreas?: string[]
+  voltageRating?: string
+  currentRating?: string
+  weight?: number
+  dimensions?: ProductDimensions
+  compatibility?: string[]
+  certifications?: string[]
+  vendorNote?: string
+  variants?: ProductVariant[]
+}

@@ -4,19 +4,10 @@ import { motion } from 'framer-motion'
 import {
   LayoutDashboard,
   Package,
-  Tags,
-  Building2,
-  ShoppingBag,
-  Users,
-  Ticket,
-  Image,
-  BarChart3,
-  Settings,
+  User,
   ChevronLeft,
   ChevronRight,
   Menu,
-  Store,
-  ClipboardCheck,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { APP } from '@/constants'
@@ -24,37 +15,28 @@ import { BrandLogo } from '@/components/layout/BrandLogo'
 import { useIsMobile } from '@/hooks'
 import { ScrollToTop } from '@/components/layout/ScrollToTop'
 
-// ─── Admin Layout ───────────────────────────────────────────────────────────────
+// ─── Vendor Layout ──────────────────────────────────────────────────────────────
 
 const sidebarLinks = [
-  { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
-  { label: 'Products', href: '/admin/products', icon: Package },
-  { label: 'Categories', href: '/admin/categories', icon: Tags },
-  { label: 'Brands', href: '/admin/brands', icon: Building2 },
-  { label: 'Orders', href: '/admin/orders', icon: ShoppingBag },
-  { label: 'Users', href: '/admin/users', icon: Users },
-  { label: 'Vendors', href: '/admin/vendors', icon: Store },
-  { label: 'Review Queue', href: '/admin/review-queue', icon: ClipboardCheck },
-  { label: 'Coupons', href: '/admin/coupons', icon: Ticket },
-  { label: 'Banners', href: '/admin/banners', icon: Image },
-  { label: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
-  { label: 'Settings', href: '/admin/settings', icon: Settings },
+  { label: 'Dashboard', href: '/vendor', icon: LayoutDashboard },
+  { label: 'Products', href: '/vendor/products', icon: Package },
+  { label: 'Profile', href: '/vendor/profile', icon: User },
 ]
 
-export function AdminLayout() {
+export function VendorLayout() {
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const location = useLocation()
   const isMobile = useIsMobile()
 
   const isActive = (href: string) => {
-    if (href === '/admin') return location.pathname === '/admin'
+    if (href === '/vendor') return location.pathname === '/vendor'
     return location.pathname.startsWith(href)
   }
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      <ScrollToTop selector="#admin-main" />
+      <ScrollToTop selector="#vendor-main" />
       {/* Mobile Sidebar Overlay */}
       {mobileOpen && (
         <div
@@ -74,7 +56,7 @@ export function AdminLayout() {
         {/* Sidebar Header */}
         <div className="flex h-16 items-center justify-between border-b border-border px-4">
           {!collapsed && (
-            <Link to="/admin" className="flex items-center gap-2">
+            <Link to="/vendor" className="flex items-center gap-2">
               <BrandLogo size="sm" />
               <span className="text-sm font-bold font-heading">{APP.NAME}</span>
             </Link>
@@ -126,7 +108,7 @@ export function AdminLayout() {
 
       {/* Main Content */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Admin Top Bar */}
+        {/* Vendor Top Bar */}
         <header className="flex h-16 items-center gap-4 border-b border-border bg-background px-6">
           <button
             onClick={() => setMobileOpen(true)}
@@ -136,16 +118,16 @@ export function AdminLayout() {
           </button>
           <div className="flex-1" />
           <span className="text-xs font-medium text-muted-foreground border border-border bg-muted/40 px-2.5 py-1 rounded-full">
-            Admin Panel
+            Vendor Panel
           </span>
         </header>
 
         {/* Page Content */}
-        <main id="admin-main" className="flex-1 overflow-y-auto p-6">
+        <main id="vendor-main" className="flex-1 overflow-y-auto p-6">
           <motion.div
             key={location.pathname}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, y: 8 } as const}
+            animate={{ opacity: 1, y: 0 } as const}
             transition={{ duration: 0.2 }}
           >
             <Outlet />

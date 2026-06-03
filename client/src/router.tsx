@@ -1,6 +1,6 @@
 import { createBrowserRouter } from 'react-router'
-import { DefaultLayout, AuthLayout, AdminLayout } from '@/layouts'
-import { ProtectedRoute, AdminRoute, GuestRoute } from '@/components/guards'
+import { DefaultLayout, AuthLayout, AdminLayout, VendorLayout } from '@/layouts'
+import { ProtectedRoute, AdminRoute, GuestRoute, VendorRoute } from '@/components/guards'
 import { NotFound } from '@/components/ui/error'
 
 // Auth
@@ -39,6 +39,13 @@ import AdminCouponsPage from '@/pages/admin/CouponsAdminPage'
 import AdminBannersPage from '@/pages/admin/BannersAdminPage'
 import AdminAnalyticsPage from '@/pages/admin/AnalyticsPage'
 import AdminSettingsPage from '@/pages/admin/SettingsPage'
+import AdminVendorsPage from '@/pages/admin/VendorsAdminPage'
+import AdminReviewQueuePage from '@/pages/admin/ReviewQueuePage'
+// Vendor
+import VendorDashboardPage from '@/pages/vendor/DashboardPage'
+import VendorProductsPage from '@/pages/vendor/ProductsPage'
+import VendorProductFormPage from '@/pages/vendor/ProductFormPage'
+import VendorProfilePage from '@/pages/vendor/ProfilePage'
 
 // ─── Router Configuration ───────────────────────────────────────────────────────
 
@@ -103,6 +110,21 @@ export const router = createBrowserRouter([
       { path: 'banners', element: <AdminBannersPage /> },
       { path: 'analytics', element: <AdminAnalyticsPage /> },
       { path: 'settings', element: <AdminSettingsPage /> },
+      { path: 'vendors', element: <AdminVendorsPage /> },
+      { path: 'review-queue', element: <AdminReviewQueuePage /> },
+    ],
+  },
+
+  // ── Vendor Routes (Vendor Layout) ──
+  {
+    element: <VendorRoute><VendorLayout /></VendorRoute>,
+    path: 'vendor',
+    children: [
+      { index: true, element: <VendorDashboardPage /> },
+      { path: 'products', element: <VendorProductsPage /> },
+      { path: 'products/new', element: <VendorProductFormPage /> },
+      { path: 'products/:id/edit', element: <VendorProductFormPage /> },
+      { path: 'profile', element: <VendorProfilePage /> },
     ],
   },
 

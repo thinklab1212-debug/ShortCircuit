@@ -134,6 +134,16 @@ export interface IProduct extends Document {
   // --- Timestamps ---
   createdAt: Date;
   updatedAt: Date;
+
+  // --- Vendor Fields ---
+  vendor?: mongoose.Types.ObjectId;        // null = platform-owned (admin-created)
+  vendorPrice?: number;                    // Vendor's supply price (hidden from public)
+  approvalStatus: 'draft' | 'pending_review' | 'approved' | 'rejected';
+  rejectionReason?: string;
+  vendorNote?: string;                     // Vendor's note to admin on submission
+  submittedAt?: Date;
+  reviewedAt?: Date;
+  reviewedBy?: mongoose.Types.ObjectId;    // Admin who reviewed
 }
 
 // ---------------------------------------------------------------------------
@@ -429,6 +439,48 @@ const productSchema = new Schema<IProduct, IProductModel>(
         message: '{VALUE} is not a recognized certification',
       },
     },
+
+    // --- VENDOR FIELDS ---
+
+    vendor: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+      index: true,
+    },
+    vendorPrice: {
+      type: Number,
+      min: [0, 'Vendor price cannot be negative'],
+      select: false,            // Hidden from public API (same as costPrice)
+    },
+    approvalStatus: {
+      type: String,
+      enum: {
+        values: ['draft', 'pending_review', 'approved', 'rejected'],
+        message: 'Approval status must be draft, pending_review, approved, or rejected',
+      },
+      default: 'draft',         // Safe default — must be explicitly approved
+    },
+    rejectionReason: {
+      type: String,
+      maxlength: [1000, 'Rejection reason cannot exceed 1000 characters'],
+      trim: true,
+    },
+    vendorNote: {
+      type: String,
+      maxlength: [500, 'Vendor note cannot exceed 500 characters'],
+      trim: true,
+    },
+    submittedAt: {
+      type: Date,
+    },
+    reviewedAt: {
+      type: Date,
+    },
+    reviewedBy: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+    },
   },
   {
     timestamps: true,
@@ -472,6 +524,10 @@ productSchema.index({ isActive: 1, soldCount: -1 });                // Best sell
 productSchema.index({ isActive: 1, ratingsAverage: -1 });           // Top rated
 productSchema.index({ isActive: 1, salePrice: 1, price: 1 });      // Price sort
 productSchema.index({ isActive: 1, createdAt: -1 });                // Newest
+
+// Vendor-specific indexes
+productSchema.index({ vendor: 1, approvalStatus: 1, createdAt: -1 });
+productSchema.index({ approvalStatus: 1, submittedAt: -1 });
 
 // ---------------------------------------------------------------------------
 // Virtuals

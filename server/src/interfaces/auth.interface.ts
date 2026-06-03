@@ -15,12 +15,12 @@ import type { Request } from 'express';
  * All supported user roles in the system.
  * Used by the RBAC middleware to authorize route access.
  */
-export type UserRole = 'customer' | 'admin';
+export type UserRole = 'customer' | 'vendor' | 'admin';
 
 /**
  * Array of all valid roles — used in middleware for validation.
  */
-export const USER_ROLES: readonly UserRole[] = ['customer', 'admin'] as const;
+export const USER_ROLES: readonly UserRole[] = ['customer', 'vendor', 'admin'] as const;
 
 // ---------------------------------------------------------------------------
 // JWT Token Payloads

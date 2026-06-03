@@ -131,6 +131,23 @@ const API_ROUTES = {
     BASE: '/search',
     SUGGESTIONS: '/search/suggestions',
   },
+
+  // Vendor Self-Service
+  VENDOR: {
+    PROFILE: '/vendor/profile',
+    PRODUCTS: '/vendor/products',
+    PRODUCT_BY_ID: (id: string) => `/vendor/products/${id}`,
+    SUBMIT: (id: string) => `/vendor/products/${id}/submit`,
+    DASHBOARD: '/vendor/dashboard',
+  },
+
+  // Admin Vendor Management
+  ADMIN_VENDORS: {
+    BASE: '/admin/vendors',
+    BY_ID: (id: string) => `/admin/vendors/${id}`,
+    REVIEW_QUEUE: '/admin/vendors/products/review-queue',
+    REVIEW: (id: string) => `/admin/vendors/products/${id}/review`,
+  },
 } as const
 
 export default API_ROUTES

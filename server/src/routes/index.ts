@@ -21,6 +21,8 @@ import bannerRoutes from './banner.routes.js';
 import analyticsRoutes from './analytics.routes.js';
 import uploadRoutes from './upload.routes.js';
 import searchRoutes from './search.routes.js';
+import vendorRoutes from './vendor.routes.js';
+import adminVendorRoutes from './adminVendor.routes.js';
 
 const router = Router();
 
@@ -40,5 +42,7 @@ router.use('/banners', bannerRoutes);
 router.use('/analytics', analyticsRoutes);
 router.use('/upload', uploadRoutes);
 router.use('/search', searchRoutes);
+router.use('/vendor', vendorRoutes);
+router.use('/admin/vendors', adminVendorRoutes);
 
 export default router;

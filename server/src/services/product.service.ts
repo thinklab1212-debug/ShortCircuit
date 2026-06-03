@@ -97,7 +97,11 @@ export class ProductService {
     if (!categoryExists) throw ApiError.badRequest('Invalid or inactive category ID.');
     if (!brandExists) throw ApiError.badRequest('Invalid or inactive brand ID.');
 
-    const product = await Product.create(dto);
+    // Admin-created products are immediately approved and visible
+    const product = await Product.create({
+      ...dto,
+      approvalStatus: 'approved',  // Admin products skip review
+    });
 
     // Trigger denormalized counts (async, non-blocking)
     Category.updateProductCount(dto.category);
@@ -166,7 +170,8 @@ export class ProductService {
    * Retrieves a product by its unique URL slug.
    */
   public static async getProductBySlug(slug: string): Promise<InstanceType<typeof Product>> {
-    const product = await Product.findOne({ slug, isActive: true })
+    // SAFETY: Both isActive AND approvalStatus are required for public access
+    const product = await Product.findOne({ slug, isActive: true, approvalStatus: 'approved' })
       .populate({ path: 'category', select: 'name slug icon' })
       .populate({ path: 'brand', select: 'name slug logo' });
 
@@ -205,6 +210,7 @@ export class ProductService {
       category: product.category,
       _id: { $ne: productId },
       isActive: true,
+      approvalStatus: 'approved',    // SAFETY: only show approved products
     })
       .limit(limit)
       .populate('category', 'name slug')
@@ -215,7 +221,7 @@ export class ProductService {
    * Retrieves list of featured products.
    */
   public static async getFeaturedProducts(limit: number = 8): Promise<InstanceType<typeof Product>[]> {
-    return Product.find({ isFeatured: true, isActive: true })
+    return Product.find({ isFeatured: true, isActive: true, approvalStatus: 'approved' })
       .limit(limit)
       .populate('category', 'name slug')
       .populate('brand', 'name slug');
@@ -228,7 +234,7 @@ export class ProductService {
     if (!query || !query.trim()) return [];
 
     const products = await Product.find(
-      { $text: { $search: query }, isActive: true },
+      { $text: { $search: query }, isActive: true, approvalStatus: 'approved' },
       { score: { $meta: 'textScore' } }
     )
       .sort({ score: { $meta: 'textScore' } })

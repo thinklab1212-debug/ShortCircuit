@@ -26,7 +26,7 @@ declare namespace Express {
     /** User's email address */
     email: string;
     /** User's role for RBAC checks */
-    role: 'customer' | 'admin';
+    role: 'customer' | 'vendor' | 'admin';
     /** User's first name */
     firstName: string;
     /** User's last name */

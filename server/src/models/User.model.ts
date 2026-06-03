@@ -24,7 +24,7 @@ export interface IUser extends Document {
     url: string;
     publicId: string;
   };
-  role: 'customer' | 'admin';
+  role: 'customer' | 'vendor' | 'admin';
   isBlocked: boolean;
   isEmailVerified: boolean;
   passwordResetToken?: string;
@@ -97,8 +97,8 @@ const userSchema = new Schema<IUser, IUserModel>(
     role: {
       type: String,
       enum: {
-        values: ['customer', 'admin'],
-        message: 'Role must be either customer or admin',
+        values: ['customer', 'vendor', 'admin'],
+        message: 'Role must be customer, vendor, or admin',
       },
       default: 'customer',
     },
