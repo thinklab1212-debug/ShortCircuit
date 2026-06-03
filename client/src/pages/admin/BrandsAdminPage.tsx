@@ -114,10 +114,18 @@ export default function BrandsAdminPage() {
       toast.error('Name is required')
       return
     }
+
+    const payload = {
+      ...form,
+      website: form.website?.trim() || undefined,
+      description: form.description?.trim() || undefined,
+      countryOfOrigin: form.countryOfOrigin?.trim() || undefined,
+    }
+
     if (editing) {
-      updateMutation.mutate({ id: editing._id, payload: form })
+      updateMutation.mutate({ id: editing._id, payload })
     } else {
-      createMutation.mutate(form)
+      createMutation.mutate(payload)
     }
   }
 

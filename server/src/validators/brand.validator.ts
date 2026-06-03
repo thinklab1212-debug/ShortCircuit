@@ -30,7 +30,8 @@ export const createBrandSchema = z.object({
     .string()
     .trim()
     .url('Website must be a valid URL')
-    .optional(),
+    .optional()
+    .or(z.literal('')),
     
   countryOfOrigin: z
     .string()
