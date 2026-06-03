@@ -1,9 +1,9 @@
 // ─── Application Constants ──────────────────────────────────────────────────────
 
 export const APP = {
-  NAME: 'ElectroKart',
-  TAGLINE: 'Premium Electronics Marketplace',
-  DESCRIPTION: 'Discover the latest in electronics with unbeatable prices and premium quality.',
+  NAME: 'Short Circuit',
+  TAGLINE: 'Electronics for Makers & Engineers',
+  DESCRIPTION: 'Shop boards, sensors, robotics kits, drone components and engineering tools at student-friendly prices.',
   VERSION: '1.0.0',
 } as const
 

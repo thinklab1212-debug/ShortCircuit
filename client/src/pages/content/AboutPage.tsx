@@ -63,7 +63,7 @@ export default function AboutPage() {
               The electronics marketplace built for engineering students
             </h1>
             <p className="mx-auto mt-5 max-w-2xl text-body-lg leading-relaxed text-muted-foreground">
-              ElectroKart brings together the components, boards and tools you need for
+              Short Circuit brings together the components, boards and tools you need for
               coursework, capstone projects and side builds — all in one place, at student-friendly prices.
             </p>
           </motion.div>
@@ -130,7 +130,7 @@ export default function AboutPage() {
 
         {/* Why choose us */}
         <section className="py-8">
-          <h2 className="text-center text-display-xs font-heading text-foreground">Why choose ElectroKart</h2>
+          <h2 className="text-center text-display-xs font-heading text-foreground">Why choose Short Circuit</h2>
           <motion.div
             variants={staggerContainer}
             initial="initial"

@@ -1,7 +1,7 @@
 import { Outlet } from 'react-router'
 import { Link } from 'react-router'
-import { Zap } from 'lucide-react'
 import { APP } from '@/constants'
+import { BrandLogo } from '@/components/layout/BrandLogo'
 import { ScrollToTop } from '@/components/layout/ScrollToTop'
 
 // ─── Auth Layout (Login, Register, Forgot Password) ────────────────────────────
@@ -20,9 +20,7 @@ export function AuthLayout() {
         </div>
 
         <div className="relative z-10 flex flex-col items-center justify-center w-full p-12 text-primary-foreground">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm mb-8">
-            <Zap className="h-8 w-8" />
-          </div>
+          <BrandLogo size="lg" className="mb-8" />
           <h1 className="text-4xl font-bold font-heading mb-4 text-center">{APP.NAME}</h1>
           <p className="text-lg text-primary-foreground/80 text-center max-w-md">
             {APP.DESCRIPTION}
@@ -48,9 +46,7 @@ export function AuthLayout() {
       <div className="flex w-full lg:w-1/2 flex-col">
         <div className="flex items-center justify-between p-6">
           <Link to="/" className="flex items-center gap-2 lg:hidden">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground">
-              <Zap className="h-4 w-4 text-primary-foreground" />
-            </div>
+            <BrandLogo size="sm" />
             <span className="text-lg font-bold font-heading">{APP.NAME}</span>
           </Link>
         </div>

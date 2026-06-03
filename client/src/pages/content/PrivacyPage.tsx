@@ -5,7 +5,7 @@ export default function PrivacyPage() {
     <LegalLayout
       title="Privacy Policy"
       updated="30 May 2026"
-      intro="This Privacy Policy explains how ElectroKart collects, uses and protects your personal information when you use our website and services."
+      intro="This Privacy Policy explains how Short Circuit collects, uses and protects your personal information when you use our website and services."
     >
       <LegalSection heading="Information we collect">
         <p>

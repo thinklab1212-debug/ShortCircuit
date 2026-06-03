@@ -48,7 +48,7 @@ export default function LoginPage() {
           Welcome back
         </h1>
         <p className="text-body-md text-muted-foreground">
-          Sign in to your ElectroKart account
+          Sign in to your Short Circuit account
         </p>
       </motion.div>
 

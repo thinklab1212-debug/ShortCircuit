@@ -1,5 +1,5 @@
 // ============================================================================
-// ElectroKart — Frontend Domain Types
+// Short Circuit — Frontend Domain Types
 // ============================================================================
 // These mirror the backend Mongoose models and ApiResponse envelope exactly.
 // Source of truth: server/src/models/*, shared/types, shared/constants.

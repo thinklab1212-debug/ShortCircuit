@@ -23,6 +23,7 @@ import { useIsMobile } from '@/hooks'
 import { cn } from '@/lib/utils'
 import { getUserName } from '@/utils'
 import { APP } from '@/constants'
+import { BrandLogo } from '@/components/layout/BrandLogo'
 
 // ─── Navbar ─────────────────────────────────────────────────────────────────────
 
@@ -70,9 +71,7 @@ export function Navbar() {
         <div className="container flex h-16 items-center justify-between gap-4">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 shrink-0">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-foreground">
-              <Zap className="h-5 w-5 text-primary-foreground" />
-            </div>
+            <BrandLogo size="md" />
             <span className="text-xl font-bold font-heading text-foreground hidden sm:inline">
               {APP.NAME}
             </span>

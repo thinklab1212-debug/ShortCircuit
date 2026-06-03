@@ -30,7 +30,7 @@ const FAQS: Faq[] = [
   {
     question: 'Do products come with a warranty?',
     answer:
-      'Yes. All branded products carry the standard manufacturer warranty. Warranty terms and duration are listed on each product page, and you can use your ElectroKart invoice as proof of purchase for claims.',
+      'Yes. All branded products carry the standard manufacturer warranty. Warranty terms and duration are listed on each product page, and you can use your Short Circuit invoice as proof of purchase for claims.',
   },
   {
     question: 'Is Cash on Delivery (COD) available?',

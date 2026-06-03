@@ -5,7 +5,7 @@ export default function ReturnsPage() {
     <LegalLayout
       title="Returns & Refunds"
       updated="30 May 2026"
-      intro="We want you to be fully satisfied with your purchase. If something isn't right, here's how returns and refunds work at ElectroKart."
+      intro="We want you to be fully satisfied with your purchase. If something isn't right, here's how returns and refunds work at Short Circuit."
     >
       <LegalSection heading="Return window">
         <p>

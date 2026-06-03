@@ -1,6 +1,6 @@
 import type { Variants, Transition } from 'framer-motion'
 
-// ─── ElectroKart Animation Standards ────────────────────────────────────────────
+// ─── Short Circuit Animation Standards ──────────────────────────────────────────
 
 // ─── Timing Constants ───────────────────────────────────────────────────────────
 

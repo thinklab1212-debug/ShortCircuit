@@ -122,7 +122,7 @@ export default function HeroBanner() {
                         transition={{ delay: 0.1, duration: 0.5 }}
                         className="inline-flex items-center rounded-full bg-white/8 px-4 py-1.5 text-sm font-medium text-white/85 backdrop-blur-sm border border-white/20"
                       >
-                        ⚡ ElectroKart Exclusive
+                        ⚡ Short Circuit Exclusive
                       </motion.div>
                       <motion.h2
                         initial={{ y: 30, opacity: 0 }}

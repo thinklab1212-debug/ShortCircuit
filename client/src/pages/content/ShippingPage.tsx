@@ -5,7 +5,7 @@ export default function ShippingPage() {
     <LegalLayout
       title="Shipping Policy"
       updated="30 May 2026"
-      intro="Here's everything you need to know about how and when your ElectroKart order reaches you."
+      intro="Here's everything you need to know about how and when your Short Circuit order reaches you."
     >
       <LegalSection heading="Order processing">
         <p>

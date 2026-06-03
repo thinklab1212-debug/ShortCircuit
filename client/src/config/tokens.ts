@@ -1,4 +1,4 @@
-// ─── ElectroKart Design Tokens ──────────────────────────────────────────────────
+// ─── Short Circuit Design Tokens ────────────────────────────────────────────────
 // Single source of truth for all visual design values
 
 export const tokens = {

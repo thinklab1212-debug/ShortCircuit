@@ -26,7 +26,7 @@ export default function FooterCTA() {
           </motion.h2>
 
           <motion.p variants={fadeInUp} className="text-body-lg text-muted-foreground mb-8 max-w-lg mx-auto">
-            Join thousands of happy customers who trust ElectroKart for their electronics needs.
+            Join thousands of happy customers who trust Short Circuit for their electronics needs.
           </motion.p>
 
           <motion.div variants={fadeInUp} className="flex flex-wrap justify-center gap-4">

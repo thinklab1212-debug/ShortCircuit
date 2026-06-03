@@ -1,6 +1,5 @@
 import { Link } from 'react-router'
 import {
-  Zap,
   Mail,
   Phone,
   MapPin,
@@ -10,6 +9,7 @@ import {
   Play,
 } from 'lucide-react'
 import { APP } from '@/constants'
+import { BrandLogo } from '@/components/layout/BrandLogo'
 
 // ─── Footer ────────────────────────────────────────────────────────────────────
 
@@ -24,9 +24,7 @@ export function Footer() {
           {/* Brand Column */}
           <div className="space-y-4">
             <Link to="/" className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-foreground">
-                <Zap className="h-5 w-5 text-primary-foreground" />
-              </div>
+              <BrandLogo size="md" />
               <span className="text-xl font-bold font-heading">{APP.NAME}</span>
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">

@@ -49,7 +49,7 @@ export default function WhyChooseUs() {
       <div className="container">
         <div className="text-center mb-12">
           <h2 className="text-display-xs sm:text-display-sm font-heading text-foreground">
-            Why Choose ElectroKart?
+            Why Choose Short Circuit?
           </h2>
           <p className="mt-2 text-body-md text-muted-foreground max-w-2xl mx-auto">
             We're committed to providing the best electronics shopping experience in India.

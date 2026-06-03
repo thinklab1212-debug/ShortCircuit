@@ -310,7 +310,7 @@ export default function CheckoutPage() {
         order_id: rz.razorpayOrderId,
         amount: rz.amount,
         currency: rz.currency,
-        name: 'ElectroKart',
+        name: 'Short Circuit',
         handler: async (resp: {
           razorpay_payment_id: string
           razorpay_signature: string

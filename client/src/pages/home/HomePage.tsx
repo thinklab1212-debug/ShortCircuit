@@ -64,7 +64,7 @@ export default function HomePage() {
         isError={newArrivals.isError}
       />
 
-      {/* 8. Why Choose ElectroKart */}
+      {/* 8. Why Choose Short Circuit */}
       <WhyChooseUs />
 
       {/* 9. Newsletter */}

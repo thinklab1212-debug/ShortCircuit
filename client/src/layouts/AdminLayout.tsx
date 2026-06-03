@@ -14,11 +14,11 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
-  Zap,
   Menu,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { APP } from '@/constants'
+import { BrandLogo } from '@/components/layout/BrandLogo'
 import { useIsMobile } from '@/hooks'
 import { ScrollToTop } from '@/components/layout/ScrollToTop'
 
@@ -71,9 +71,7 @@ export function AdminLayout() {
         <div className="flex h-16 items-center justify-between border-b border-border px-4">
           {!collapsed && (
             <Link to="/admin" className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground">
-                <Zap className="h-4 w-4 text-primary-foreground" />
-              </div>
+              <BrandLogo size="sm" />
               <span className="text-sm font-bold font-heading">{APP.NAME}</span>
             </Link>
           )}

@@ -107,7 +107,7 @@ export default function RegisterPage() {
           Create account
         </h1>
         <p className="text-body-md text-muted-foreground">
-          Join ElectroKart for the best electronics deals
+          Join Short Circuit for the best electronics deals
         </p>
       </motion.div>
 
