@@ -259,6 +259,7 @@ export interface Product {
   submittedAt?: string
   reviewedAt?: string
   reviewedBy?: string
+  imageUploadSource?: 'vendor' | 'admin'
 }
 
 export interface ProductFilters {
@@ -739,6 +740,8 @@ export interface ReviewProductData {
   price?: number
   salePrice?: number
   reason?: string
+  images?: string[]
+  imageMergeMode?: 'append' | 'replace'
 }
 
 export interface VendorProductFormData {

@@ -199,6 +199,8 @@ export const reviewProductSchema = z.discriminatedUnion('action', [
     action: z.literal('approve'),
     price: z.number({ required_error: 'Price is required to approve' }).positive('Price must be positive'),
     salePrice: z.number().positive().optional(),
+    images: z.array(z.string().url('Product image must be a valid URL')).max(15).optional(),
+    imageMergeMode: z.enum(['append', 'replace']).optional().default('append'),
   }),
   z.object({
     action: z.literal('reject'),

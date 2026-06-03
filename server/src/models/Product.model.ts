@@ -83,7 +83,7 @@ export interface IProduct extends Document {
   tags: string[];
 
   // --- Media ---
-  images: IProductImage[];             // Max 8 images
+  images: IProductImage[];             // Max 15 images
 
   // --- Inventory ---
   stock: number;
@@ -144,6 +144,7 @@ export interface IProduct extends Document {
   submittedAt?: Date;
   reviewedAt?: Date;
   reviewedBy?: mongoose.Types.ObjectId;    // Admin who reviewed
+  imageUploadSource?: 'vendor' | 'admin';
 }
 
 // ---------------------------------------------------------------------------
@@ -307,8 +308,8 @@ const productSchema = new Schema<IProduct, IProductModel>(
     images: {
       type: [productImageSchema],
       validate: {
-        validator: (images: IProductImage[]) => images.length <= 8,
-        message: 'A product can have at most 8 images',
+        validator: (images: IProductImage[]) => images.length <= 15,
+        message: 'A product can have at most 15 images',
       },
       default: [],
     },
@@ -480,6 +481,14 @@ const productSchema = new Schema<IProduct, IProductModel>(
     reviewedBy: {
       type: Schema.Types.ObjectId,
       ref: 'User',
+    },
+    imageUploadSource: {
+      type: String,
+      enum: {
+        values: ['vendor', 'admin'],
+        message: 'imageUploadSource must be vendor or admin',
+      },
+      default: 'vendor',
     },
   },
   {

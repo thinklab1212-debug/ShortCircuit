@@ -15,6 +15,22 @@ import Brand from '../models/Brand.model.js';
 import { ApiError } from '../utils/index.js';
 import { executePaginatedQuery } from '../utils/pagination.js';
 
+function getPublicIdFromUrl(url: string): string {
+  try {
+    const regex = /\/image\/upload\/(?:v\d+\/)?(electrokart\/[^\/]+\/[^\/\.]+)/i;
+    const match = url.match(regex);
+    if (match && match[1]) return match[1];
+
+    const fallbackRegex = /\/image\/upload\/(?:v\d+\/)?([^\/\.]+)/i;
+    const fallbackMatch = url.match(fallbackRegex);
+    if (fallbackMatch && fallbackMatch[1]) return fallbackMatch[1];
+  } catch {}
+  const parts = url.split('/');
+  const filename = parts[parts.length - 1] || 'image';
+  const dotIndex = filename.lastIndexOf('.');
+  return dotIndex > -1 ? filename.substring(0, dotIndex) : filename;
+}
+
 export class VendorService {
   // =========================================================================
   // Admin: Create Vendor Account
@@ -165,6 +181,33 @@ export class VendorService {
       product.rejectionReason = undefined;
       product.reviewedAt = new Date();
       product.reviewedBy = adminUserId as any;
+
+      // Process admin image upload
+      if (dto.images && dto.images.length > 0) {
+        const adminImages = dto.images.map((url: string) => ({
+          url,
+          publicId: getPublicIdFromUrl(url),
+          isPrimary: false,
+        }));
+
+        const mergeMode = dto.imageMergeMode || 'append';
+        if (mergeMode === 'replace') {
+          product.images = adminImages as any;
+        } else {
+          product.images = [...product.images, ...adminImages] as any;
+        }
+        product.imageUploadSource = 'admin';
+
+        // Ensure at least one primary image is set
+        const hasPrimary = product.images.some((img: any) => img.isPrimary);
+        if (!hasPrimary && product.images.length > 0) {
+          (product.images[0] as any).isPrimary = true;
+        }
+
+        if (product.images.length > 15) {
+          throw new ApiError(400, 'A product can have at most 15 images.');
+        }
+      }
     } else if (dto.action === 'reject') {
       // ATOMIC: All rejection fields set together
       product.approvalStatus = 'rejected';

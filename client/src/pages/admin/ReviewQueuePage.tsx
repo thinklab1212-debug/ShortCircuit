@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ClipboardCheck, Check, X } from 'lucide-react'
+import { ClipboardCheck, Check, X, Upload, Loader2 } from 'lucide-react'
 import { adminVendorApi } from '@/services/vendorApi'
+import { uploadApi } from '@/services'
 import { AdminPageHeader } from '@/components/admin'
 import { ErrorFallback } from '@/components/ui/error'
 import { Skeleton } from '@/components/ui/loader'
 import { formatPrice, formatDate, getUserName } from '@/utils'
 import { toast } from 'sonner'
-import type { Product, User, ReviewProductData } from '@/types'
+import type { Product, User, ReviewProductData, ProductImage } from '@/types'
 
 // ─── Admin Review Queue Page ────────────────────────────────────────────────────
 
@@ -22,6 +23,9 @@ export default function ReviewQueuePage() {
   const [approvePrice, setApprovePrice] = useState('')
   const [approveSalePrice, setApproveSalePrice] = useState('')
   const [rejectReason, setRejectReason] = useState('')
+  const [adminImages, setAdminImages] = useState<ProductImage[]>([])
+  const [uploading, setUploading] = useState(false)
+  const [imageMergeMode, setImageMergeMode] = useState<'append' | 'replace'>('append')
   const queryClient = useQueryClient()
 
   const { data, isLoading, isError, error, refetch } = useQuery({
@@ -43,9 +47,36 @@ export default function ReviewQueuePage() {
     },
   })
 
+  const handleUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return
+    setUploading(true)
+    try {
+      for (const file of Array.from(files)) {
+        const res = await uploadApi.image(file)
+        const { url, publicId } = res.data.data
+        setAdminImages((prev) => [
+          ...prev,
+          { url, publicId, isPrimary: false },
+        ])
+      }
+    } catch {
+      toast.error('Image upload failed')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const removeAdminImage = (publicId: string) => {
+    setAdminImages((prev) => prev.filter((img) => img.publicId !== publicId))
+  }
+
   const handleApprove = (e: React.FormEvent) => {
     e.preventDefault()
     if (!modal || modal.type !== 'approve') return
+    if (uploading) {
+      toast.error('Please wait for image uploads to complete')
+      return
+    }
     const price = parseFloat(approvePrice)
     if (!price || price <= 0) {
       toast.error('Please enter a valid selling price')
@@ -55,6 +86,8 @@ export default function ReviewQueuePage() {
       action: 'approve',
       price,
       ...(approveSalePrice ? { salePrice: parseFloat(approveSalePrice) } : {}),
+      images: adminImages.map((img) => img.url),
+      imageMergeMode,
     }
     reviewMutation.mutate({ id: modal.product._id, data })
   }
@@ -75,6 +108,9 @@ export default function ReviewQueuePage() {
   const openApproveModal = (product: Product) => {
     setApprovePrice(product.vendorPrice ? String(Math.ceil(product.vendorPrice * 1.3)) : '')
     setApproveSalePrice('')
+    setAdminImages([])
+    setUploading(false)
+    setImageMergeMode('append')
     setModal({ type: 'approve', product })
   }
 
@@ -101,7 +137,7 @@ export default function ReviewQueuePage() {
       {modal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setModal(null)} />
-          <div className="relative z-10 w-full max-w-md mx-4 rounded-2xl border border-border bg-card shadow-2xl">
+          <div className="relative z-10 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto rounded-2xl border border-border bg-card shadow-2xl">
             {modal.type === 'approve' ? (
               <>
                 <div className="flex items-center justify-between border-b border-border px-6 py-4">
@@ -146,6 +182,105 @@ export default function ReviewQueuePage() {
                       placeholder="Optional discounted price"
                     />
                   </div>
+
+                  {/* Vendor Images (Read-only) */}
+                  <div>
+                    <label className="text-sm font-medium text-foreground block mb-2">Vendor Images</label>
+                    {modal.product.images && modal.product.images.length > 0 ? (
+                      <div className="grid grid-cols-4 gap-2 border border-border rounded-lg p-2 bg-muted/20">
+                        {modal.product.images.map((img) => (
+                          <div key={img.publicId} className="relative aspect-square rounded border border-border overflow-hidden bg-background">
+                            <img src={img.url} alt={img.alt || ""} className="h-full w-full object-cover" />
+                            {img.isPrimary && (
+                              <span className="absolute bottom-0 left-0 right-0 bg-primary/85 text-[10px] text-primary-foreground text-center py-0.5 font-medium">Primary</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground italic px-1">No vendor images provided.</p>
+                    )}
+                  </div>
+
+                  {/* Admin Image Upload Section */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground block">Admin Added Images</label>
+                    <label
+                      className={`flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed border-border p-4 text-center transition-colors hover:border-primary/50 bg-muted/10 ${
+                        uploading && 'pointer-events-none opacity-60'
+                      }`}
+                    >
+                      {uploading ? (
+                        <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                      ) : (
+                        <Upload className="h-5 w-5 text-muted-foreground" />
+                      )}
+                      <span className="text-xs font-medium text-foreground">
+                        {uploading ? 'Uploading...' : 'Click to add images'}
+                      </span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        disabled={uploading}
+                        onChange={(e) => {
+                          void handleUpload(e.target.files)
+                          e.target.value = ''
+                        }}
+                      />
+                    </label>
+
+                    {adminImages.length > 0 && (
+                      <div className="grid grid-cols-4 gap-2 border border-border rounded-lg p-2 bg-muted/20">
+                        {adminImages.map((img) => (
+                          <div key={img.publicId} className="group relative aspect-square rounded border border-border overflow-hidden bg-background">
+                            <img src={img.url} alt="" className="h-full w-full object-cover" />
+                            <button
+                              type="button"
+                              aria-label="Remove image"
+                              onClick={() => removeAdminImage(img.publicId)}
+                              className="absolute right-0.5 top-0.5 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-black/70 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Image Handling Strategy (Merge Mode) */}
+                  {adminImages.length > 0 && (
+                    <div>
+                      <label className="text-sm font-medium text-foreground block mb-1.5">Image Handling Strategy</label>
+                      <div className="flex gap-4">
+                        <label className="flex items-center gap-2 text-xs font-medium text-foreground cursor-pointer">
+                          <input
+                            type="radio"
+                            name="imageMergeMode"
+                            value="append"
+                            checked={imageMergeMode === 'append'}
+                            onChange={() => setImageMergeMode('append')}
+                            className="h-3.5 w-3.5 border-input accent-primary"
+                          />
+                          Append to vendor images
+                        </label>
+                        <label className="flex items-center gap-2 text-xs font-medium text-foreground cursor-pointer">
+                          <input
+                            type="radio"
+                            name="imageMergeMode"
+                            value="replace"
+                            checked={imageMergeMode === 'replace'}
+                            onChange={() => setImageMergeMode('replace')}
+                            className="h-3.5 w-3.5 border-input accent-primary"
+                          />
+                          Replace vendor images
+                        </label>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex justify-end gap-3 pt-2">
                     <button
                       type="button"
@@ -156,11 +291,15 @@ export default function ReviewQueuePage() {
                     </button>
                     <button
                       type="submit"
-                      disabled={reviewMutation.isPending}
+                      disabled={reviewMutation.isPending || uploading}
                       className="inline-flex items-center gap-2 rounded-xl bg-success-600 px-4 py-2 text-sm font-medium text-white hover:bg-success-700 transition-colors disabled:opacity-50"
                     >
-                      <Check className="h-4 w-4" />
-                      {reviewMutation.isPending ? 'Approving...' : 'Approve'}
+                      {uploading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Check className="h-4 w-4" />
+                      )}
+                      {reviewMutation.isPending ? 'Approving...' : uploading ? 'Uploading...' : 'Approve'}
                     </button>
                   </div>
                 </form>
