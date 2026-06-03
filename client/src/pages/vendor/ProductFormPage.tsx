@@ -5,8 +5,7 @@ import { Save, Send, AlertTriangle, ArrowLeft, XCircle } from 'lucide-react'
 import { vendorApi } from '@/services/vendorApi'
 import { categoryApi, brandApi } from '@/services'
 import { AdminPageHeader } from '@/components/admin'
-import { ErrorFallback } from '@/components/ui/error'
-import { Loader, Skeleton } from '@/components/ui/loader'
+import { Loader } from '@/components/ui/loader'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import type { VendorProductFormData, Category, Brand } from '@/types'
@@ -232,7 +231,7 @@ export default function ProductFormPage() {
           <Badge
             variant={
               product.approvalStatus === 'approved' ? 'success' :
-              product.approvalStatus === 'rejected' ? 'error' :
+              product.approvalStatus === 'rejected' ? 'destructive' :
               product.approvalStatus === 'pending_review' ? 'warning' : 'secondary'
             }
           >

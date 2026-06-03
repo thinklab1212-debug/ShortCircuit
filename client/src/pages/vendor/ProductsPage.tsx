@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router'
-import { Package, Plus, Send, Eye, Edit2, Trash2 } from 'lucide-react'
+import { Package, Plus, Send, Edit2, Trash2 } from 'lucide-react'
 import { vendorApi } from '@/services/vendorApi'
 import { AdminPageHeader } from '@/components/admin'
 import { Badge } from '@/components/ui/badge'
@@ -22,11 +22,11 @@ const STATUS_TABS: { label: string; value: ApprovalStatus | 'all' }[] = [
   { label: 'Rejected', value: 'rejected' },
 ]
 
-const STATUS_BADGE_VARIANT: Record<string, 'default' | 'secondary' | 'success' | 'warning' | 'error'> = {
+const STATUS_BADGE_VARIANT: Record<string, 'default' | 'secondary' | 'success' | 'warning' | 'destructive'> = {
   draft: 'secondary',
   pending_review: 'warning',
   approved: 'success',
-  rejected: 'error',
+  rejected: 'destructive',
 }
 
 const STATUS_LABELS: Record<string, string> = {
