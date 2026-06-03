@@ -188,6 +188,14 @@ export function Navbar() {
                           </DropdownLink>
                         </>
                       )}
+                      {user?.role === 'vendor' && (
+                        <>
+                          <div className="my-1 border-t border-border" />
+                          <DropdownLink href="/vendor" icon={<Zap className="h-4 w-4" />} onClick={() => setIsProfileOpen(false)}>
+                            Vendor Dashboard
+                          </DropdownLink>
+                        </>
+                      )}
                       <div className="my-1 border-t border-border" />
                       <button
                         onClick={handleLogout}

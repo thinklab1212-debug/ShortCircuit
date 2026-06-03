@@ -6,6 +6,7 @@
 // ============================================================================
 
 import mongoose from 'mongoose';
+import crypto from 'crypto';
 import User from '../models/User.model.js';
 import VendorProfile from '../models/VendorProfile.model.js';
 import Product from '../models/Product.model.js';
@@ -85,6 +86,31 @@ export class VendorService {
     }
 
     return profile;
+  }
+
+  /**
+   * Resets the password of the user associated with a vendor profile.
+   * Generates a secure temporary password and returns it.
+   */
+  public static async resetVendorPassword(vendorId: string): Promise<string> {
+    const profile = await VendorProfile.findById(vendorId);
+    if (!profile) {
+      throw ApiError.notFound('Vendor profile not found.');
+    }
+
+    const user = await User.findById(profile.user);
+    if (!user) {
+      throw ApiError.notFound('Associated user not found.');
+    }
+
+    // Generate a secure 12-character hexadecimal password
+    const newPassword = crypto.randomBytes(6).toString('hex');
+    
+    // Set password and save to trigger the pre-save bcrypt hash hook
+    user.password = newPassword;
+    await user.save();
+
+    return newPassword;
   }
 
   // =========================================================================

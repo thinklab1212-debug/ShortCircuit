@@ -147,6 +147,7 @@ const API_ROUTES = {
     BY_ID: (id: string) => `/admin/vendors/${id}`,
     REVIEW_QUEUE: '/admin/vendors/products/review-queue',
     REVIEW: (id: string) => `/admin/vendors/products/${id}/review`,
+    RESET_PASSWORD: (id: string) => `/admin/vendors/${id}/reset-password`,
   },
 } as const
 

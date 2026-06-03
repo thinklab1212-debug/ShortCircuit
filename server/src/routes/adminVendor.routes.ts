@@ -33,6 +33,12 @@ router.get(
   VendorController.getVendorById
 );
 
+router.post(
+  '/:id/reset-password',
+  validate({ params: z.object({ id: objectIdSchema }) }),
+  VendorController.resetVendorPassword
+);
+
 // ─── Product Review Queue ────────────────────────────────────────────────────
 
 router.get('/products/review-queue', VendorController.getReviewQueue);

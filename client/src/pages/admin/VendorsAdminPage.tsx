@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Users, Plus, X } from 'lucide-react'
+import { Users, Plus, X, KeyRound } from 'lucide-react'
 import { adminVendorApi } from '@/services/vendorApi'
 import { AdminPageHeader } from '@/components/admin'
 import { ErrorFallback } from '@/components/ui/error'
@@ -43,6 +43,23 @@ export default function VendorsAdminPage() {
     },
     onError: (err: any) => {
       toast.error(err?.response?.data?.message || 'Failed to create vendor')
+    },
+  })
+
+  const [confirmResetVendor, setConfirmResetVendor] = useState<{ id: string; name: string } | null>(null)
+  const [resetPasswordData, setResetPasswordData] = useState<{ businessName: string; password: string } | null>(null)
+
+  const resetPasswordMutation = useMutation({
+    mutationFn: ({ id }: { id: string; name: string }) => adminVendorApi.resetPassword(id).then((res) => res.data),
+    onSuccess: (data, variables) => {
+      toast.success('Credentials reset successfully')
+      setResetPasswordData({
+        businessName: variables.name,
+        password: data.data.password,
+      })
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || 'Failed to reset vendor credentials')
     },
   })
 
@@ -228,6 +245,7 @@ export default function VendorsAdminPage() {
                 <th className="px-4 py-3 hidden md:table-cell">Email</th>
                 <th className="px-4 py-3 hidden lg:table-cell">Phone</th>
                 <th className="px-4 py-3 hidden lg:table-cell">Joined</th>
+                <th className="px-4 py-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -252,6 +270,14 @@ export default function VendorsAdminPage() {
                     </td>
                     <td className="px-4 py-3 hidden lg:table-cell text-sm text-muted-foreground">
                       {formatDate(vendor.createdAt)}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        onClick={() => setConfirmResetVendor({ id: vendor._id, name: vendor.businessName })}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent transition-colors"
+                      >
+                        Reset Credentials
+                      </button>
                     </td>
                   </tr>
                 )
@@ -281,6 +307,80 @@ export default function VendorsAdminPage() {
           >
             Next
           </button>
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {confirmResetVendor && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setConfirmResetVendor(null)} />
+          <div className="relative z-10 w-full max-w-md mx-4 rounded-2xl border border-border bg-card p-6 shadow-2xl space-y-4">
+            <h3 className="text-lg font-semibold text-foreground">Reset Vendor Credentials</h3>
+            <p className="text-sm text-muted-foreground">
+              Are you sure you want to reset the credentials for <strong>{confirmResetVendor.name}</strong>? This will immediately invalidate their current password.
+            </p>
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setConfirmResetVendor(null)}
+                className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-accent transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const vendorId = confirmResetVendor.id
+                  const vendorName = confirmResetVendor.name
+                  setConfirmResetVendor(null)
+                  resetPasswordMutation.mutate({ id: vendorId, name: vendorName })
+                }}
+                disabled={resetPasswordMutation.isPending}
+                className="rounded-xl bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 transition-colors disabled:opacity-50"
+              >
+                {resetPasswordMutation.isPending ? 'Resetting...' : 'Yes, Reset Password'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Success / Show Password Modal */}
+      {resetPasswordData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
+          <div className="relative z-10 w-full max-w-md mx-4 rounded-2xl border border-border bg-card p-6 shadow-2xl space-y-4">
+            <div className="flex items-center gap-3 text-warning">
+              <KeyRound className="h-6 w-6 text-primary" />
+              <h3 className="text-lg font-semibold text-foreground">Credentials Reset</h3>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Here is the new temporary password for <strong>{resetPasswordData.businessName}</strong>. 
+              This will only be displayed <strong>once</strong>. Please copy it now:
+            </p>
+            <div className="flex items-center gap-2 rounded-lg bg-muted p-3 font-mono text-sm border border-border justify-between">
+              <span className="select-all font-bold text-foreground">{resetPasswordData.password}</span>
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(resetPasswordData.password)
+                  toast.success('Password copied to clipboard')
+                }}
+                className="text-xs font-semibold text-primary hover:underline"
+              >
+                Copy
+              </button>
+            </div>
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => setResetPasswordData(null)}
+                className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+              >
+                Close & Done
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

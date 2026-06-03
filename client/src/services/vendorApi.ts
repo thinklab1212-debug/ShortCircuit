@@ -62,6 +62,11 @@ export const adminVendorApi = {
       data
     ),
 
+  resetPassword: (id: string) =>
+    apiClient.post<ApiResponse<{ password: string }>>(
+      API_ROUTES.ADMIN_VENDORS.RESET_PASSWORD(id)
+    ),
+
   // Product Review
   getReviewQueue: (params?: { page?: number; limit?: number }) =>
     apiClient.get<PaginatedResponse<Product>>(API_ROUTES.ADMIN_VENDORS.REVIEW_QUEUE, { params }),

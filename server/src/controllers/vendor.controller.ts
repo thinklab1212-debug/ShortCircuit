@@ -30,6 +30,13 @@ export const getVendorById = asyncHandler(async (req: Request, res: Response) =>
   res.status(200).json(new ApiResponse(200, profile, 'Vendor details retrieved.'));
 });
 
+export const resetVendorPassword = asyncHandler(async (req: Request, res: Response) => {
+  const newPassword = await VendorService.resetVendorPassword(req.params.id);
+  res.status(200).json(
+    new ApiResponse(200, { password: newPassword }, 'Vendor password reset successfully.')
+  );
+});
+
 // ─── Admin: Product Review ───────────────────────────────────────────────────
 
 export const getReviewQueue = asyncHandler(async (req: Request, res: Response) => {

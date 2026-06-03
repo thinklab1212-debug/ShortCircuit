@@ -80,7 +80,14 @@ export function useLogin(options?: { onSuccess?: () => void }) {
         const params = new URLSearchParams(location.search)
         const redirect = params.get('redirect')
         const fromState = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname
-        const destination = redirect || fromState || (user.role === 'admin' ? '/admin' : '/')
+        const destination =
+          redirect ||
+          fromState ||
+          (user.role === 'admin'
+            ? '/admin'
+            : user.role === 'vendor'
+              ? '/vendor'
+              : '/')
         navigate(destination, { replace: true })
       }
     },
