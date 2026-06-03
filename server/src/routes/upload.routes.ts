@@ -62,7 +62,7 @@ router.post('/image', uploadImages.single('image'), UploadController.uploadSingl
  *       200:
  *         description: Images uploaded successfully
  */
-router.post('/images', uploadImages.array('images', 8), UploadController.uploadMultipleImages);
+router.post('/images', uploadImages.array('images', 15), UploadController.uploadMultipleImages);
 
 /**
  * @openapi

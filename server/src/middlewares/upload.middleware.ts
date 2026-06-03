@@ -57,7 +57,7 @@ export const uploadImages = multer({
   fileFilter: imageFilter,
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB limit
-    files: 8, // Max 8 files per request
+    files: 15, // Max 15 files per request
   },
 });
 

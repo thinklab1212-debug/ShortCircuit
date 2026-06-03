@@ -42,6 +42,17 @@ export function globalErrorHandler(
     else if (err.name === 'ValidationError') {
       error = ApiError.fromMongooseValidation(err);
     }
+
+    // Classify Multer errors (file uploads size/count constraints)
+    else if (err.name === 'MulterError') {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        error = new ApiError(400, 'File size too large. Maximum limit is 5MB.');
+      } else if (err.code === 'LIMIT_FILE_COUNT') {
+        error = new ApiError(400, 'Too many files uploaded in a single request.');
+      } else {
+        error = new ApiError(400, `Upload error: ${err.message}`);
+      }
+    }
     
     // 4. Classify MongoDB Duplicate Key Error (Code 11000)
     else if (err.code === 11000) {

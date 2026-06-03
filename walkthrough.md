@@ -1,6 +1,6 @@
 # Walkthrough — Admin Image Upload Feature
 
-We successfully extended the product review queue to support optional admin image uploads during the pricing/approval phase, including configurable append/replace modes.
+We successfully extended the product review queue to support optional admin image uploads during the pricing/approval phase, including configurable append/replace modes. In addition, we implemented robust error handling to resolve potential 500 crashes during the image upload step.
 
 ## Summary of Changes
 
@@ -24,6 +24,14 @@ We successfully extended the product review queue to support optional admin imag
    * Automatically flagged the product's `imageUploadSource = 'admin'` if admin images were uploaded.
    * Ensured a primary image (`isPrimary: true`) exists in the updated image set.
    * Enforced the 15-image limit constraints.
+
+4. **Multer & Upload Route Limits**
+   * Files: [upload.middleware.ts](file:///d:/ShortCircuit/server/src/middlewares/upload.middleware.ts), [upload.routes.ts](file:///d:/ShortCircuit/server/src/routes/upload.routes.ts)
+   * Increased the maximum file array upload count limit from `8` to `15` to match the new database schema limit.
+
+5. **Centralized Error Handling**
+   * File: [errorHandler.middleware.ts](file:///d:/ShortCircuit/server/src/middlewares/errorHandler.middleware.ts)
+   * Intercepted `MulterError` exceptions (such as file size limits `LIMIT_FILE_SIZE` and request counts `LIMIT_FILE_COUNT`) and mapped them to user-friendly `400 Bad Request` responses. This prevents unhandled size limit exceptions from throwing general `500 Internal Server Errors`.
 
 ### Frontend Changes
 
