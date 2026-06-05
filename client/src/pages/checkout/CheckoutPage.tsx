@@ -158,8 +158,19 @@ export default function CheckoutPage() {
   const { data: addresses, isLoading: addressesLoading } = useAddresses()
   const placeOrder = usePlaceOrder()
 
+  const isCodAllowed = useMemo(() => {
+    const saved = localStorage.getItem('store-preferences')
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved)
+        return parsed.cod !== false
+      } catch {}
+    }
+    return true
+  }, [])
+
   const [selectedAddressId, setSelectedAddressId] = useState<string>('')
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cod')
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(isCodAllowed ? 'cod' : 'razorpay')
   const [customerNote, setCustomerNote] = useState('')
 
   const [couponInput, setCouponInput] = useState('')
@@ -416,13 +427,15 @@ export default function CheckoutPage() {
               <h2 className="text-lg font-semibold text-foreground">Payment Method</h2>
             </div>
             <div className="space-y-3">
-              <PaymentOption
-                selected={paymentMethod === 'cod'}
-                onSelect={() => setPaymentMethod('cod')}
-                icon={<Banknote className="h-5 w-5" />}
-                title="Cash on Delivery"
-                description="Pay with cash when your order arrives"
-              />
+              {isCodAllowed && (
+                <PaymentOption
+                  selected={paymentMethod === 'cod'}
+                  onSelect={() => setPaymentMethod('cod')}
+                  icon={<Banknote className="h-5 w-5" />}
+                  title="Cash on Delivery"
+                  description="Pay with cash when your order arrives"
+                />
+              )}
               <PaymentOption
                 selected={paymentMethod === 'razorpay'}
                 onSelect={() => setPaymentMethod('razorpay')}
@@ -491,17 +504,27 @@ export default function CheckoutPage() {
                 Coupon code
               </label>
               {appliedCoupon ? (
-                <div className="flex items-center justify-between rounded-lg border border-success-300 bg-success-50 px-3 py-2 dark:border-success-800 dark:bg-success-950/40">
-                  <span className="text-sm font-medium text-success-700 dark:text-success-400">
-                    {appliedCoupon} applied
-                  </span>
-                  <button
-                    type="button"
-                    onClick={handleRemoveCoupon}
-                    className="text-xs font-medium text-muted-foreground hover:text-error-500"
-                  >
-                    Remove
-                  </button>
+                <div className="space-y-1.5">
+                  <div className={cn(
+                    "flex items-center justify-between rounded-lg border px-3 py-2",
+                    totals?.couponError
+                      ? "border-destructive/30 bg-destructive/5 text-destructive"
+                      : "border-success-300 bg-success-50 text-success-700 dark:border-success-800 dark:bg-success-950/40 dark:text-success-400"
+                  )}>
+                    <span className="text-sm font-medium">
+                      {appliedCoupon} {totals?.couponError ? 'invalid' : 'applied'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleRemoveCoupon}
+                      className="text-xs font-medium text-muted-foreground hover:text-error-500"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                  {totals?.couponError && (
+                    <p className="text-xs text-destructive">{totals.couponError}</p>
+                  )}
                 </div>
               ) : (
                 <div className="flex gap-2">

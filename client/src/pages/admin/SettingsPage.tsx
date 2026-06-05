@@ -24,15 +24,28 @@ const TOGGLES: ToggleSetting[] = [
 export default function SettingsPage() {
   const user = useAuthStore((s) => s.user)
 
-  const [toggles, setToggles] = useState<Record<string, boolean>>({
-    maintenance: false,
-    cod: true,
-    guestCheckout: false,
-    emailNotifications: true,
+  const [toggles, setToggles] = useState<Record<string, boolean>>(() => {
+    const saved = localStorage.getItem('store-preferences')
+    if (saved) {
+      try {
+        return JSON.parse(saved)
+      } catch {}
+    }
+    return {
+      maintenance: false,
+      cod: true,
+      guestCheckout: false,
+      emailNotifications: true,
+    }
   })
 
-  const setToggle = (key: string, value: boolean) =>
-    setToggles((prev) => ({ ...prev, [key]: value }))
+  const setToggle = (key: string, value: boolean) => {
+    setToggles((prev) => {
+      const updated = { ...prev, [key]: value }
+      localStorage.setItem('store-preferences', JSON.stringify(updated))
+      return updated
+    })
+  }
 
   return (
     <div>

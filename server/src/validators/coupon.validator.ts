@@ -137,6 +137,13 @@ export const validateCouponSchema = z.object({
     .trim()
     .toUpperCase()
     .min(1, 'Coupon code cannot be empty'),
+  cartTotal: z
+    .number({ required_error: 'Cart total is required' })
+    .nonnegative('Cart total cannot be negative'),
+  cartCategoryIds: z
+    .array(z.string())
+    .optional()
+    .default([]),
 });
 
 export default {
