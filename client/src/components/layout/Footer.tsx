@@ -69,15 +69,15 @@ export function Footer() {
             <ul className="space-y-3">
               <li className="flex items-start gap-3 text-sm text-muted-foreground">
                 <MapPin className="h-4 w-4 mt-0.5 shrink-0" />
-                <span>123 Electronics Hub, Tech Street, Mumbai 400001</span>
+                <span>Sector 15, NOIDA, Uttar Pradesh 201301</span>
               </li>
               <li className="flex items-center gap-3 text-sm text-muted-foreground">
                 <Phone className="h-4 w-4 shrink-0" />
-                <span>+91 98765 43210</span>
+                <span>+91 92199 98403</span>
               </li>
               <li className="flex items-center gap-3 text-sm text-muted-foreground">
                 <Mail className="h-4 w-4 shrink-0" />
-                <span>support@electrokart.in</span>
+                <span>think.lab1212@gmail.com</span>
               </li>
             </ul>
           </div>
