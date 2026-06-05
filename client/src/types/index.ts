@@ -508,7 +508,7 @@ export interface CreateOrderData {
 }
 
 export interface UpdateOrderStatusData {
-  orderStatus: OrderStatus
+  status: OrderStatus
   note?: string
 }
 

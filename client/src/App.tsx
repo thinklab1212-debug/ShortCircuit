@@ -21,9 +21,12 @@ function App() {
       <AuthBootstrap />
       <RouterProvider router={router} />
       <Toaster
-        position="top-right"
+        position="top-center"
+        containerStyle={{
+          top: '4.5rem',
+        }}
         toastOptions={{
-          duration: 4000,
+          duration: 2000,
           style: {
             background: 'hsl(var(--popover))',
             color: 'hsl(var(--popover-foreground))',

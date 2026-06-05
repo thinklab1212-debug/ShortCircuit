@@ -55,7 +55,7 @@ export default function OrderDetailAdminPage() {
 
   const statusMutation = useMutation({
     mutationFn: () =>
-      orderApi.updateStatus(id, { orderStatus: statusValue, note: note || undefined }),
+      orderApi.updateStatus(id, { status: statusValue, note: note || undefined }),
     onSuccess: () => {
       toast.success('Order status updated')
       setNote('')

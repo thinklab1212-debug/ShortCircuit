@@ -66,3 +66,4 @@ firebase-debug.log
 .vercel
 .netlify
 debug_plan.md
+*.md
