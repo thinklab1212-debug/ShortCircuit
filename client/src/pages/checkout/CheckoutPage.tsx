@@ -239,7 +239,6 @@ export default function CheckoutPage() {
 
   const itemsPrice = totals?.itemsPrice ?? cart?.totalPrice ?? 0
   const shippingPrice = totals?.shippingPrice ?? 0
-  const taxPrice = totals?.taxPrice ?? 0
   const discountAmount = totals?.discountAmount ?? 0
   const totalPrice = totals?.totalPrice ?? cart?.totalPrice ?? 0
 
