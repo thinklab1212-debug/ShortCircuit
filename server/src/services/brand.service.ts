@@ -10,22 +10,47 @@ import { ApiError } from '../utils/index.js';
 
 export class BrandService {
   /**
+   * Computes live product counts per brand from the source of truth.
+   *
+   * The denormalized `productCount` on the Brand document was never refreshed on
+   * product create/update/delete, so it always read 0. Counting on read keeps the
+   * "popular brands" section accurate. Returns a map of brandId -> active count.
+   */
+  private static async getProductCounts(): Promise<Map<string, number>> {
+    const counts = await Product.aggregate<{ _id: unknown; count: number }>([
+      { $match: { isActive: true } },
+      { $group: { _id: '$brand', count: { $sum: 1 } } },
+    ]);
+    return new Map(counts.map((c) => [String(c._id), c.count]));
+  }
+
+  /**
    * Retrieves all active brands.
    */
-  public static async getBrands(includeInactive: boolean = false): Promise<InstanceType<typeof Brand>[]> {
+  public static async getBrands(includeInactive: boolean = false): Promise<any[]> {
     const query = includeInactive ? {} : { isActive: true };
-    return Brand.find(query).sort({ name: 1 });
+    const [brands, countMap] = await Promise.all([
+      Brand.find(query).sort({ name: 1 }).lean(),
+      this.getProductCounts(),
+    ]);
+
+    return brands.map((brand) => ({
+      ...brand,
+      productCount: countMap.get(String(brand._id)) ?? 0,
+    }));
   }
 
   /**
    * Retrieves a single brand profile by its unique URL slug.
    */
-  public static async getBrandBySlug(slug: string): Promise<InstanceType<typeof Brand>> {
-    const brand = await Brand.findOne({ slug, isActive: true });
+  public static async getBrandBySlug(slug: string): Promise<any> {
+    const brand = await Brand.findOne({ slug, isActive: true }).lean();
     if (!brand) {
       throw ApiError.notFound('Brand not found.');
     }
-    return brand;
+
+    const productCount = await Product.countDocuments({ brand: brand._id, isActive: true });
+    return { ...brand, productCount };
   }
 
   /**

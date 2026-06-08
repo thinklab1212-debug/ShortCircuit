@@ -10,19 +10,44 @@ import { ApiError } from '../utils/index.js';
 
 export class CategoryService {
   /**
+   * Computes live product counts per category from the source of truth.
+   *
+   * The denormalized `productCount` on the Category document only gets refreshed
+   * on admin product create/update/delete, so it drifts for seeded/bulk-imported
+   * products. Counting on read guarantees the home and category pages are accurate.
+   * Returns a map of categoryId -> active product count.
+   */
+  private static async getProductCounts(): Promise<Map<string, number>> {
+    const counts = await Product.aggregate<{ _id: unknown; count: number }>([
+      { $match: { isActive: true } },
+      { $group: { _id: '$category', count: { $sum: 1 } } },
+    ]);
+    return new Map(counts.map((c) => [String(c._id), c.count]));
+  }
+
+  /**
    * Retrieves all categories, flat or grouped (Admin).
    */
-  public static async getCategories(): Promise<InstanceType<typeof Category>[]> {
-    return Category.find().sort({ displayOrder: 1, name: 1 });
+  public static async getCategories(): Promise<any[]> {
+    const [categories, countMap] = await Promise.all([
+      Category.find().sort({ displayOrder: 1, name: 1 }).lean(),
+      this.getProductCounts(),
+    ]);
+
+    return categories.map((cat) => ({
+      ...cat,
+      productCount: countMap.get(String(cat._id)) ?? 0,
+    }));
   }
 
   /**
    * Builds and returns a nested category tree representation for navigation.
    */
   public static async getCategoryTree(): Promise<any[]> {
-    const flatCategories = await Category.find({ isActive: true })
-      .sort({ displayOrder: 1, name: 1 })
-      .lean();
+    const [flatCategories, countMap] = await Promise.all([
+      Category.find({ isActive: true }).sort({ displayOrder: 1, name: 1 }).lean(),
+      this.getProductCounts(),
+    ]);
 
     const categoryMap: Record<string, any> = {};
     const rootCategories: any[] = [];
@@ -31,6 +56,7 @@ export class CategoryService {
     for (const cat of flatCategories) {
       categoryMap[cat._id.toString()] = {
         ...cat,
+        productCount: countMap.get(String(cat._id)) ?? 0,
         subcategories: [],
       };
     }
