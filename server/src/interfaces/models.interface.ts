@@ -93,7 +93,7 @@ export interface IProductVariantDTO {
 export interface IProductSpecificationDTO {
   key: string;
   value: string;
-  group?: 'Electrical' | 'Mechanical' | 'Communication' | 'Environmental' | 'Performance' | 'Compatibility' | 'Physical';
+  group?: 'Electrical' | 'Mechanical' | 'Communication' | 'Environmental' | 'Performance' | 'Compatibility' | 'Physical' | 'General';
 }
 
 export interface IProductDimensionsDTO {

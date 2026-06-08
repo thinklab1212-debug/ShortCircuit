@@ -205,6 +205,7 @@ const specificationSchema = new Schema<ISpecification>(
         'Performance',
         'Compatibility',
         'Physical',
+        'General',
       ],
     },
   },

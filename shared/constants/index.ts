@@ -89,6 +89,7 @@ export const SPECIFICATION_GROUPS = [
   'Performance',
   'Compatibility',
   'Physical',
+  'General',
 ] as const;
 
 // ---------------------------------------------------------------------------
