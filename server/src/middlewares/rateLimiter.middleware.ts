@@ -39,11 +39,23 @@ export const publicLimiter = rateLimit({
 
 /**
  * Limiters for auth routes (e.g., login, register, password-reset).
- * Strict threshold: 5 attempts per 15 minutes window.
+ * Threshold: 10 attempts per 15 minutes window.
+ *
+ * Keyed per user (by email) rather than purely per IP, so users sharing a
+ * NAT/proxy/VPN egress IP don't exhaust one another's budget. Only *failed*
+ * attempts count (`skipSuccessfulRequests`), so a legitimate user logging in,
+ * registering, or resetting their password is never throttled — the counter
+ * exists solely to slow brute-force guessing.
  */
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5,
+  max: 10,
+  skipSuccessfulRequests: true,
+  keyGenerator: (req: any) => {
+    const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+    // Identify by email when available; otherwise fall back to the request IP.
+    return email ? `auth:user:${email}` : `auth:ip:${req.ip}`;
+  },
   message: 'Too many login or registration attempts. Please try again after 15 minutes.',
   standardHeaders: true,
   legacyHeaders: false,
