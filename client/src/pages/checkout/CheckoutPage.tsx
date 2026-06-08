@@ -158,7 +158,7 @@ export default function CheckoutPage() {
   const { data: addresses, isLoading: addressesLoading } = useAddresses()
   const placeOrder = usePlaceOrder()
 
-  const isCodAllowed = useMemo(() => {
+  const isCodAllowed = (() => {
     const saved = localStorage.getItem('store-preferences')
     if (saved) {
       try {
@@ -167,7 +167,7 @@ export default function CheckoutPage() {
       } catch {}
     }
     return true
-  }, [])
+  })()
 
   const [selectedAddressId, setSelectedAddressId] = useState<string>('')
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(isCodAllowed ? 'cod' : 'razorpay')
