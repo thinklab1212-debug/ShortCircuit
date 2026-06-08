@@ -77,7 +77,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
             You save {formatPrice(product.price - price)} ({discount}% off)
           </p>
         )}
-        <p className="text-xs text-muted-foreground">Inclusive of all taxes</p>
+        <p className="text-xs text-muted-foreground">(Including all taxes)</p>
       </div>
 
       {/* Short Description */}
