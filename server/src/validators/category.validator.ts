@@ -46,6 +46,13 @@ export const createCategorySchema = z.object({
     .int()
     .optional()
     .default(0),
+    
+  image: z
+    .object({
+      url: z.string().url('Image must be a valid URL'),
+      publicId: z.string().min(1, 'Image public ID is required'),
+    })
+    .optional(),
 });
 
 /**
