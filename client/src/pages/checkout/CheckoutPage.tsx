@@ -106,12 +106,14 @@ function AddressCard({
 
 function PaymentOption({
   selected,
+  disabled,
   onSelect,
   icon,
   title,
   description,
 }: {
   selected: boolean
+  disabled?: boolean
   onSelect: () => void
   icon: React.ReactNode
   title: string
@@ -120,12 +122,14 @@ function PaymentOption({
   return (
     <button
       type="button"
+      disabled={disabled}
       onClick={onSelect}
       className={cn(
         'flex w-full items-center gap-3 rounded-xl border p-4 text-left transition-all',
         selected
           ? 'border-primary bg-primary/5 ring-1 ring-primary'
-          : 'border-border hover:border-primary/40'
+          : 'border-border hover:border-primary/40',
+        disabled && 'opacity-50 cursor-not-allowed hover:border-border'
       )}
     >
       <span
@@ -427,15 +431,14 @@ export default function CheckoutPage() {
               <h2 className="text-lg font-semibold text-foreground">Payment Method</h2>
             </div>
             <div className="space-y-3">
-              {isCodAllowed && (
-                <PaymentOption
-                  selected={paymentMethod === 'cod'}
-                  onSelect={() => setPaymentMethod('cod')}
-                  icon={<Banknote className="h-5 w-5" />}
-                  title="Cash on Delivery"
-                  description="Pay with cash when your order arrives"
-                />
-              )}
+              <PaymentOption
+                selected={paymentMethod === 'cod'}
+                disabled={!isCodAllowed}
+                onSelect={() => setPaymentMethod('cod')}
+                icon={<Banknote className="h-5 w-5" />}
+                title="Cash on Delivery"
+                description={isCodAllowed ? "Pay with cash when your order arrives" : "Currently disabled"}
+              />
               <PaymentOption
                 selected={paymentMethod === 'razorpay'}
                 onSelect={() => setPaymentMethod('razorpay')}

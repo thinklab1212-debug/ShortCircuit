@@ -414,12 +414,12 @@ orderSchema.pre<IOrder>('save', async function (next) {
     // Shipping: free above ₹999
     this.shippingPrice = this.itemsPrice >= 999 ? 0 : 49;
 
-    // GST 18% on items
-    this.taxPrice = Math.round(this.itemsPrice * 0.18 * 100) / 100;
+    // GST 18% inclusive in items
+    const netSubtotal = this.itemsPrice - this.discountAmount;
+    this.taxPrice = Math.round(netSubtotal - (netSubtotal / 1.18));
 
-    // Total
-    this.totalPrice =
-      this.itemsPrice + this.shippingPrice + this.taxPrice - this.discountAmount;
+    // Total (tax is already included in itemsPrice)
+    this.totalPrice = netSubtotal + this.shippingPrice;
   }
 
   next();
