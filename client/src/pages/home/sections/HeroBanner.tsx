@@ -10,23 +10,23 @@ import { useActiveBanners } from '@/hooks/useHomeData'
 const fallbackBanners = [
   {
     _id: '1',
-    title: 'Next-Gen Electronics',
-    subtitle: 'Discover cutting-edge gadgets at unbeatable prices. Smartphones, laptops, and more.',
+    title: 'Power Your Innovation',
+    subtitle: 'High-quality development boards, microcontrollers, and electrical components for science projects, engineering research, and prototyping.',
     link: '/shop',
     gradient: 'from-slate-900 via-slate-800 to-slate-950',
   },
   {
     _id: '2',
-    title: 'Summer Tech Sale',
-    subtitle: 'Up to 40% off on premium electronics. Limited time offers on top brands.',
-    link: '/deals',
+    title: 'Academic & Research Gear',
+    subtitle: 'Find specialized sensors, IoT modules, power supplies, and communication chips curated for thesis, lab tests, and academic prototypes.',
+    link: '/shop',
     gradient: 'from-slate-900 via-slate-700 to-slate-900',
   },
   {
     _id: '3',
-    title: 'Student Specials',
-    subtitle: 'Exclusive discounts for students. Laptops, tablets, and accessories at student-friendly prices.',
-    link: '/shop?tag=student',
+    title: 'Student Project Essentials',
+    subtitle: 'Get Arduino boards, robotics components, breadboards, and drone electronics at student-friendly rates. Built for student innovators.',
+    link: '/shop',
     gradient: 'from-zinc-950 via-slate-900 to-zinc-900',
   },
 ]
@@ -192,9 +192,8 @@ export default function HeroBanner() {
             <button
               key={i}
               onClick={() => setCurrent(i)}
-              className={`h-2 rounded-full transition-all duration-300 ${
-                i === current ? 'w-8 bg-white' : 'w-2 bg-white/40 hover:bg-white/60'
-              }`}
+              className={`h-2 rounded-full transition-all duration-300 ${i === current ? 'w-8 bg-white' : 'w-2 bg-white/40 hover:bg-white/60'
+                }`}
               aria-label={`Go to slide ${i + 1}`}
             />
           ))}

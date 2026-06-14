@@ -71,7 +71,7 @@ export function generateAccessToken(user: IUser): string {
 
   const options: SignOptions = {
     expiresIn: config.accessExpiry as any,
-    issuer: 'electrokart',
+    issuer: 'shortcircuit',
     subject: user._id.toString(),
   };
 

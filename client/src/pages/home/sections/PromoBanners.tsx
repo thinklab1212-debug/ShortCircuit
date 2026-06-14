@@ -24,19 +24,19 @@ export default function PromoBanners() {
             <div className="relative z-10 space-y-4">
               <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-sm font-medium text-white backdrop-blur-sm">
                 <Zap className="h-3.5 w-3.5" />
-                Flash Deals
+                Lab Bundles
               </div>
               <h3 className="text-display-xs sm:text-display-sm font-heading text-white">
-                Lightning Deals<br />Every Hour
+                Engineering Kits<br />& Starter Packs
               </h3>
               <p className="text-body-md text-white/70 max-w-sm">
-                Don't miss out on hourly rotating deals with up to 60% off on premium electronics.
+                Curated starter kits containing development boards, sensors, and essential components for rapid academic prototyping.
               </p>
             </div>
             <div className="relative z-10 mt-6">
               <Button asChild className="bg-white text-slate-900 hover:bg-white/90 group">
-                <Link to="/deals">
-                  Shop Deals
+                <Link to="/shop">
+                  Browse Kits
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Link>
               </Button>
@@ -59,15 +59,15 @@ export default function PromoBanners() {
                 Student Offer
               </div>
               <h3 className="text-display-xs sm:text-display-sm font-heading text-white">
-                Extra 10% Off<br />For Students
+                Extra 10% Off<br />For Academics
               </h3>
               <p className="text-body-md text-white/70 max-w-sm">
-                Verify your student status and unlock exclusive discounts on laptops, tablets & more.
+                Verify your student status and unlock exclusive discounts on microcontrollers, sensors, and electrical components.
               </p>
             </div>
             <div className="relative z-10 mt-6">
               <Button asChild className="bg-white text-slate-900 hover:bg-white/90 group">
-                <Link to="/shop?tag=student">
+                <Link to="/shop">
                   Explore Offers
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Link>

@@ -14,7 +14,7 @@ import { logger } from './utils/index.js';
 let server: http.Server;
 
 async function startServer() {
-  logger.info('🚀 Starting ElectroKart API Server...');
+  logger.info('🚀 Starting Short Circuit API Server...');
 
   // 1. Establish Database Connection (fails application if connection fails)
   await connectDatabase();
@@ -60,13 +60,13 @@ async function gracefulShutdown(signal: string) {
       await disconnectDatabase();
 
       clearTimeout(forceQuitTimeout);
-      logger.info('👋 ElectroKart shutdown complete.');
+      logger.info('👋 Short Circuit shutdown complete.');
       process.exit(0);
     });
   } else {
     await disconnectDatabase();
     clearTimeout(forceQuitTimeout);
-    logger.info('👋 ElectroKart shutdown complete.');
+    logger.info('👋 Short Circuit shutdown complete.');
     process.exit(0);
   }
 }

@@ -1,5 +1,5 @@
 // ============================================================================
-// ElectroKart — Database Seeder Runner
+// Short Circuit — Database Seeder Runner
 // ============================================================================
 // Establishes database connection, executes all seeders sequentially, and closes
 // database connections gracefully.
@@ -12,7 +12,7 @@ import { seedBrands } from './brands.seeder.js';
 import { seedCoupons } from './coupon.seeder.js';
 
 async function runSeeders() {
-  console.log('🌱 Starting ElectroKart Database Seeding...');
+  console.log('🌱 Starting Short Circuit Database Seeding...');
   
   try {
     // 1. Connect to MongoDB database

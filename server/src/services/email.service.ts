@@ -39,18 +39,18 @@ export class EmailService {
    * Sends a welcome email upon user registration.
    */
   public static async sendWelcomeEmail(to: string, firstName: string): Promise<boolean> {
-    const subject = 'Welcome to ElectroKart! ⚡';
+    const subject = 'Welcome to Short Circuit! ⚡';
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
-        <h2 style="color: #2563eb; text-align: center;">Welcome to ElectroKart!</h2>
+        <h2 style="color: #2563eb; text-align: center;">Welcome to Short Circuit!</h2>
         <p>Hi ${firstName},</p>
-        <p>Thank you for creating an account with ElectroKart. We are thrilled to have you as part of our community of engineering students and makers!</p>
-        <p>ElectroKart provides startup-ready electronics components, development boards (Arduino, ESP32, Raspberry Pi), robotics kits, drone electronics, and engineering tools at students-friendly prices.</p>
+        <p>Thank you for creating an account with Short Circuit. We are thrilled to have you as part of our community of engineering students and makers!</p>
+        <p>Short Circuit provides startup-ready electronics components, development boards (Arduino, ESP32, Raspberry Pi), robotics kits, drone electronics, and engineering tools at student-friendly prices.</p>
         <div style="text-align: center; margin: 30px 0;">
           <a href="${env.CLIENT_URL}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Start Exploring Catalog</a>
         </div>
         <hr style="border: 0; border-top: 1px solid #eeeeee;" />
-        <p style="font-size: 12px; color: #777777; text-align: center;">This is an automated transactional email from ElectroKart. Please do not reply directly.</p>
+        <p style="font-size: 12px; color: #777777; text-align: center;">This is an automated transactional email from Short Circuit. Please do not reply directly.</p>
       </div>
     `;
     return this.sendEmail(to, subject, html);
@@ -60,12 +60,12 @@ export class EmailService {
    * Sends a password reset instruction email.
    */
   public static async sendPasswordResetEmail(to: string, firstName: string, resetUrl: string): Promise<boolean> {
-    const subject = 'ElectroKart — Reset Your Password 🔑';
+    const subject = 'Short Circuit — Reset Your Password 🔑';
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
         <h2 style="color: #dc2626; text-align: center;">Password Reset Request</h2>
         <p>Hi ${firstName},</p>
-        <p>We received a request to reset your password for your ElectroKart account. Click the button below to choose a new password. This link is valid for 1 hour.</p>
+        <p>We received a request to reset your password for your Short Circuit account. Click the button below to choose a new password. This link is valid for 1 hour.</p>
         <div style="text-align: center; margin: 30px 0;">
           <a href="${resetUrl}" style="background-color: #dc2626; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Reset Password</a>
         </div>
@@ -73,7 +73,7 @@ export class EmailService {
         <p style="word-break: break-all; color: #2563eb;">${resetUrl}</p>
         <p>If you did not make this request, you can safely ignore this email — your password will remain secure.</p>
         <hr style="border: 0; border-top: 1px solid #eeeeee;" />
-        <p style="font-size: 12px; color: #777777; text-align: center;">This is an automated transactional email from ElectroKart.</p>
+        <p style="font-size: 12px; color: #777777; text-align: center;">This is an automated transactional email from Short Circuit.</p>
       </div>
     `;
     return this.sendEmail(to, subject, html);
@@ -88,7 +88,7 @@ export class EmailService {
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
         <h2 style="color: #10b981; text-align: center;">Order Confirmed!</h2>
         <p>Hi ${firstName},</p>
-        <p>Thank you for shopping at ElectroKart! Your order <strong>${orderId}</strong> has been successfully placed.</p>
+        <p>Thank you for shopping at Short Circuit! Your order <strong>${orderId}</strong> has been successfully placed.</p>
         <p>We are preparing your components for shipping. You will receive a tracking link as soon as your order has been dispatched.</p>
         <div style="background-color: #f3f4f6; padding: 15px; border-radius: 5px; margin: 20px 0;">
           <h4 style="margin: 0 0 10px 0; color: #374151;">Order Summary</h4>
@@ -99,7 +99,7 @@ export class EmailService {
           <a href="${env.CLIENT_URL}/profile/orders" style="background-color: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">View Order History</a>
         </div>
         <hr style="border: 0; border-top: 1px solid #eeeeee;" />
-        <p style="font-size: 12px; color: #777777; text-align: center;">This is an automated transactional email from ElectroKart.</p>
+        <p style="font-size: 12px; color: #777777; text-align: center;">This is an automated transactional email from Short Circuit.</p>
       </div>
     `;
     return this.sendEmail(to, subject, html);
@@ -151,7 +151,7 @@ export class EmailService {
           <a href="${env.CLIENT_URL}/profile/orders" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Check Order Status</a>
         </div>
         <hr style="border: 0; border-top: 1px solid #eeeeee;" />
-        <p style="font-size: 12px; color: #777777; text-align: center;">This is an automated transactional email from ElectroKart.</p>
+        <p style="font-size: 12px; color: #777777; text-align: center;">This is an automated transactional email from Short Circuit.</p>
       </div>
     `;
     return this.sendEmail(to, subject, html);
@@ -177,7 +177,7 @@ export class EmailService {
         </div>
         <p>If you have already paid for this order, your refund will be processed separately according to our refund policies.</p>
         <hr style="border: 0; border-top: 1px solid #eeeeee;" />
-        <p style="font-size: 12px; color: #777777; text-align: center;">This is an automated transactional email from ElectroKart.</p>
+        <p style="font-size: 12px; color: #777777; text-align: center;">This is an automated transactional email from Short Circuit.</p>
       </div>
     `;
     return this.sendEmail(to, subject, html);
@@ -207,7 +207,7 @@ export class EmailService {
           <a href="${env.CLIENT_URL}/profile/orders" style="background-color: #dc2626; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">View Order</a>
         </div>
         <hr style="border: 0; border-top: 1px solid #eeeeee;" />
-        <p style="font-size: 12px; color: #777777; text-align: center;">This is an automated transactional email from ElectroKart.</p>
+        <p style="font-size: 12px; color: #777777; text-align: center;">This is an automated transactional email from Short Circuit.</p>
       </div>
     `;
     return this.sendEmail(to, subject, html);

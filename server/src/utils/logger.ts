@@ -108,7 +108,7 @@ const logger = winston.createLogger({
   level: env.IS_PRODUCTION ? 'info' : 'debug',
   format: env.IS_PRODUCTION ? productionFormat : developmentFormat,
   defaultMeta: {
-    service: 'electrokart-api',
+    service: 'shortcircuit-api',
   },
   transports,
   // Don't exit on handled exceptions
