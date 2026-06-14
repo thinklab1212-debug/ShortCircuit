@@ -39,6 +39,11 @@ export const createOrderSchema = z.object({
     errorMap: () => ({ message: "Payment method must be 'razorpay', 'upi', or 'cod'." }),
   }),
   
+  email: z
+    .string({ required_error: 'Order communication email is required.' })
+    .trim()
+    .email('Please provide a valid email address.'),
+  
   couponCode: z
     .string()
     .trim()

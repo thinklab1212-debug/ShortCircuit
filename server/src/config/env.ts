@@ -108,17 +108,6 @@ const envSchema = z.object({
     .optional()
     .describe('Cookie domain mapping (for cross-subdomain sharing)'),
 
-  GMAIL_USER: z
-    .string()
-    .email()
-    .default('u.k.s200503@gmail.com')
-    .describe('Gmail address for dynamic nodemailer sending'),
-
-  GMAIL_APP_PASSWORD: z
-    .string()
-    .optional()
-    .describe('App Password for GMail account'),
-
   // -----------------------------------------------------------------------
   // Cloudinary
   // -----------------------------------------------------------------------

@@ -176,6 +176,7 @@ export default function CheckoutPage() {
   const [selectedAddressId, setSelectedAddressId] = useState<string>('')
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(isCodAllowed ? 'cod' : 'razorpay')
   const [customerNote, setCustomerNote] = useState('')
+  const [orderEmail, setOrderEmail] = useState(user?.email || '')
 
   const [couponInput, setCouponInput] = useState('')
   const [appliedCoupon, setAppliedCoupon] = useState<string | undefined>(undefined)
@@ -285,6 +286,18 @@ export default function CheckoutPage() {
       return
     }
 
+    const trimmedEmail = orderEmail.trim()
+    if (!trimmedEmail) {
+      toast.error('Please enter an email address for order updates')
+      return
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(trimmedEmail)) {
+      toast.error('Please enter a valid email address')
+      return
+    }
+
     setSubmitting(true)
     try {
       if (paymentMethod === 'cod') {
@@ -293,6 +306,7 @@ export default function CheckoutPage() {
           paymentMethod: 'cod',
           couponCode: appliedCoupon,
           customerNote: customerNote.trim() || undefined,
+          email: trimmedEmail,
         })
         toast.success('Order placed successfully!')
         navigate(`/orders/${order._id}`)
@@ -305,6 +319,7 @@ export default function CheckoutPage() {
         paymentMethod: 'razorpay',
         couponCode: appliedCoupon,
         customerNote: customerNote.trim() || undefined,
+        email: trimmedEmail,
       })
 
       const rzRes = await paymentApi.createOrder({
@@ -345,7 +360,7 @@ export default function CheckoutPage() {
         },
         prefill: {
           name: getUserName(user),
-          email: user?.email,
+          email: orderEmail.trim() || user?.email,
         },
         theme: { color: '#8b5cf6' },
       })
@@ -416,6 +431,26 @@ export default function CheckoutPage() {
                     Add address
                   </Link>
                 </Button>
+              </div>
+            )}
+
+            {!addressesLoading && (
+              <div className="mt-6 border-t border-border pt-5">
+                <label htmlFor="orderEmail" className="block text-sm font-semibold text-foreground mb-1.5">
+                  Order Notification Email
+                </label>
+                <Input
+                  id="orderEmail"
+                  type="email"
+                  required
+                  value={orderEmail}
+                  onChange={(e) => setOrderEmail(e.target.value)}
+                  placeholder="Enter email address"
+                  className="max-w-md"
+                />
+                <p className="mt-1.5 text-xs text-muted-foreground">
+                  This email will be used for order-related communication.
+                </p>
               </div>
             )}
           </motion.section>

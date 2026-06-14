@@ -10,13 +10,14 @@ import { ApiResponse, asyncHandler } from '../utils/index.js';
 
 export const placeOrder = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user!._id;
-  const { shippingAddressId, paymentMethod, couponCode, customerNote } = req.body;
+  const { shippingAddressId, paymentMethod, couponCode, customerNote, email } = req.body;
   const order = await OrderService.placeOrder(
     userId,
     shippingAddressId,
     paymentMethod,
     couponCode,
-    customerNote
+    customerNote,
+    email
   );
   res.status(201).json(new ApiResponse(201, order, 'Order placed successfully.'));
 });

@@ -27,7 +27,8 @@ export class OrderService {
     shippingAddressId: string,
     paymentMethod: 'razorpay' | 'upi' | 'cod',
     couponCode?: string,
-    customerNote?: string
+    customerNote?: string,
+    email?: string
   ): Promise<InstanceType<typeof Order>> {
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -115,6 +116,7 @@ export class OrderService {
         state: address.state,
         pincode: address.pincode,
         country: address.country || 'India',
+        email: email || user.email,
       };
 
       // 8. Create Order document (ID auto-generation happens in pre-save hook)
@@ -153,7 +155,7 @@ export class OrderService {
       session.endSession();
 
       // Send Order Confirmation Email (non-blocking)
-      EmailService.sendOrderConfirmationEmail(user.email, user.firstName, order.orderId, order.totalPrice);
+      EmailService.sendOrderConfirmationEmail(order.shippingAddress.email || user.email, user.firstName, order.orderId, order.totalPrice);
 
       return order;
     } catch (error) {
@@ -341,7 +343,7 @@ export class OrderService {
     const user = await User.findById(userId).select('email firstName');
     if (user) {
       await EmailService.sendCancellationSubmittedEmail(
-        user.email,
+        order.shippingAddress.email || user.email,
         user.firstName,
         order.orderId,
         category,
@@ -380,7 +382,7 @@ export class OrderService {
       }
 
       const user = await User.findById(order.user).session(session);
-      const customerEmail = user?.email || '';
+      const customerEmail = order.shippingAddress.email || user?.email || '';
       const customerName = user?.firstName || 'Customer';
 
       if (action === 'approve') {

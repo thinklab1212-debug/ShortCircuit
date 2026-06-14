@@ -128,6 +128,7 @@ export interface ShippingAddressSnapshot {
   state: string;
   pincode: string;
   country: string;
+  email?: string;
 }
 
 export interface RazorpayPaymentDetails {

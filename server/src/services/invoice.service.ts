@@ -73,7 +73,7 @@ export class InvoiceService {
         buyer: {
           name: snap.customer.name,
           phone: snap.customer.phone,
-          email: userEmail,
+          email: order.shippingAddress.email || userEmail,
           address: snap.customer.address,
         },
         seller: {
@@ -116,7 +116,7 @@ export class InvoiceService {
       buyer: {
         name: order.shippingAddress.fullName,
         phone: order.shippingAddress.phone,
-        email: userEmail,
+        email: order.shippingAddress.email || userEmail,
         address: `${order.shippingAddress.addressLine1}${order.shippingAddress.addressLine2 ? ', ' + order.shippingAddress.addressLine2 : ''}${order.shippingAddress.landmark ? ', ' + order.shippingAddress.landmark : ''}, ${order.shippingAddress.city}, ${order.shippingAddress.state} - ${order.shippingAddress.pincode}, ${order.shippingAddress.country || 'India'}`,
       },
       seller: {

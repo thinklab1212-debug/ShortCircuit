@@ -46,8 +46,8 @@ export class AuthService {
       phone: dto.phone,
     });
 
-    // Send Welcome Email (non-blocking)
-    EmailService.sendWelcomeEmail(user.email, user.firstName);
+    // Send Welcome Email (disabled)
+    // EmailService.sendWelcomeEmail(user.email, user.firstName);
 
     return user;
   }

@@ -47,6 +47,7 @@ interface IShippingAddress {
   state: string;
   pincode: string;
   country: string;
+  email?: string;
 }
 
 interface IPaymentDetails {
@@ -243,6 +244,7 @@ const shippingAddressSchema = new Schema<IShippingAddress>(
     state: { type: String, required: true },
     pincode: { type: String, required: true },
     country: { type: String, default: 'India' },
+    email: { type: String, required: [true, 'Order email is required'] },
   },
   { _id: false }
 );

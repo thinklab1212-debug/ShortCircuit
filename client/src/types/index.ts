@@ -445,15 +445,16 @@ export interface OrderItem {
 }
 
 export interface ShippingAddressSnapshot {
-  fullName: string
-  phone: string
-  addressLine1: string
-  addressLine2?: string
-  landmark?: string
-  city: string
-  state: string
-  pincode: string
-  country: string
+  fullName: string;
+  phone: string;
+  addressLine1: string;
+  addressLine2?: string;
+  landmark?: string;
+  city: string;
+  state: string;
+  pincode: string;
+  country: string;
+  email?: string;
 }
 
 export interface OrderStatusHistoryEntry {
@@ -521,10 +522,11 @@ export interface Order {
 
 /** POST /orders body */
 export interface CreateOrderData {
-  shippingAddressId: string
-  paymentMethod: PaymentMethod
-  couponCode?: string
-  customerNote?: string
+  shippingAddressId: string;
+  paymentMethod: PaymentMethod;
+  couponCode?: string;
+  customerNote?: string;
+  email: string;
 }
 
 export interface UpdateOrderStatusData {
