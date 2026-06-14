@@ -307,7 +307,7 @@ export class VendorService {
         { path: 'category', select: 'name slug' },
         { path: 'brand', select: 'name slug' },
       ],
-      select: '+vendorPrice',
+      select: '+vendorPrice -price -salePrice',
     });
   }
 
@@ -319,7 +319,7 @@ export class VendorService {
     productId: string
   ): Promise<InstanceType<typeof Product>> {
     const product = await Product.findById(productId)
-      .select('+vendorPrice')
+      .select('+vendorPrice -price -salePrice')
       .populate('category', 'name slug')
       .populate('brand', 'name slug');
 

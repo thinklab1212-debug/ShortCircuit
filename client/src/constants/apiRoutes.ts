@@ -90,6 +90,12 @@ const API_ROUTES = {
     ADMIN_TRACKING: (id: string) => `/orders/admin/${id}/tracking`,
   },
 
+  // Invoice Settings
+  INVOICE_SETTINGS: {
+    BASE: '/admin/invoice-settings',
+    PREVIEW: '/admin/invoice-settings/preview',
+  },
+
   // Coupons
   COUPONS: {
     VALIDATE: '/coupons/validate',

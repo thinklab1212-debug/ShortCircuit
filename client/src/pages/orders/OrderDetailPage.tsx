@@ -221,10 +221,19 @@ export default function OrderDetailPage() {
   const handleInvoice = async () => {
     setInvoiceLoading(true)
     try {
-      await orderApi.getInvoice(order._id)
-      toast.success('Invoice ready')
+      const response = await orderApi.getInvoice(order._id)
+      const blob = new Blob([response.data], { type: 'application/pdf' })
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `Invoice-${order.orderId}.pdf`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+      toast.success('Invoice downloaded successfully')
     } catch {
-      toast.error('Could not download invoice')
+      toast.error('Could not download invoice. Confirm the order is paid and delivered.')
     } finally {
       setInvoiceLoading(false)
     }
@@ -256,16 +265,22 @@ export default function OrderDetailPage() {
             </div>
             <div className="flex flex-col items-end gap-3">
               <OrderStatusBadge status={order.orderStatus} />
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleInvoice}
-                  loading={invoiceLoading}
-                >
-                  <Download className="h-4 w-4 mr-1" />
-                  Download Invoice
-                </Button>
+              <div className="flex flex-col items-end gap-2">
+                {order.orderStatus === 'delivered' && order.paymentStatus === 'paid' ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleInvoice}
+                    loading={invoiceLoading}
+                  >
+                    <Download className="h-4 w-4 mr-1" />
+                    Download Invoice
+                  </Button>
+                ) : (
+                  <p className="max-w-xs text-right text-xs text-muted-foreground italic">
+                    Invoice will be available after successful delivery and payment completion.
+                  </p>
+                )}
                 {canCancel && (
                   <Button
                     variant="soft-destructive"

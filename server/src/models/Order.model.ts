@@ -62,6 +62,52 @@ interface IStatusHistoryEntry {
   updatedBy?: mongoose.Types.ObjectId;
 }
 
+export interface ITaxRateSnapshot {
+  gstPercentage: number;
+  cgstPercentage: number;
+  sgstPercentage: number;
+  igstPercentage: number;
+}
+
+export interface IInvoiceSnapshotProduct {
+  name: string;
+  sku: string;
+  quantity: number;
+  price: number;
+}
+
+export interface IInvoiceSnapshotSeller {
+  companyName: string;
+  gstin: string;
+  address: string;
+  phone: string;
+  email: string;
+  logoUrl?: string;
+  stampUrl?: string;
+}
+
+export interface IInvoiceSnapshotCustomer {
+  name: string;
+  phone: string;
+  address: string;
+}
+
+export interface IInvoiceSnapshot {
+  invoiceNumber: string;
+  invoiceDate: Date;
+  settingsId?: string;
+  seller: IInvoiceSnapshotSeller;
+  customer: IInvoiceSnapshotCustomer;
+  products: IInvoiceSnapshotProduct[];
+  taxBreakdown: ITaxRateSnapshot;
+  subtotal: number;
+  taxAmount: number;
+  shippingAmount: number;
+  grandTotal: number;
+  paymentMethod: string;
+  paymentStatus: string;
+}
+
 // ---------------------------------------------------------------------------
 // Main interface
 // ---------------------------------------------------------------------------
@@ -106,6 +152,8 @@ export interface IOrder extends Document {
   // Invoice
   invoiceUrl?: string;                // Cloudinary PDF URL
   invoiceNumber?: string;             // e.g., INV-2026-0001
+  taxRateSnapshot?: ITaxRateSnapshot;
+  invoiceSnapshot?: IInvoiceSnapshot;
 
   // Notes
   customerNote?: string;
@@ -323,6 +371,51 @@ const orderSchema = new Schema<IOrder, IOrderModel>(
     // Invoice
     invoiceUrl: { type: String },
     invoiceNumber: { type: String, unique: true, sparse: true },
+    taxRateSnapshot: {
+      gstPercentage: { type: Number, default: 18 },
+      cgstPercentage: { type: Number, default: 9 },
+      sgstPercentage: { type: Number, default: 9 },
+      igstPercentage: { type: Number, default: 18 },
+    },
+    invoiceSnapshot: {
+      invoiceNumber: { type: String },
+      invoiceDate: { type: Date },
+      settingsId: { type: String },
+      seller: {
+        companyName: { type: String },
+        gstin: { type: String },
+        address: { type: String },
+        phone: { type: String },
+        email: { type: String },
+        logoUrl: { type: String },
+        stampUrl: { type: String },
+      },
+      customer: {
+        name: { type: String },
+        phone: { type: String },
+        address: { type: String },
+      },
+      products: [
+        {
+          name: { type: String },
+          sku: { type: String },
+          quantity: { type: Number },
+          price: { type: Number },
+        },
+      ],
+      taxBreakdown: {
+        gstPercentage: { type: Number },
+        cgstPercentage: { type: Number },
+        sgstPercentage: { type: Number },
+        igstPercentage: { type: Number },
+      },
+      subtotal: { type: Number },
+      taxAmount: { type: Number },
+      shippingAmount: { type: Number },
+      grandTotal: { type: Number },
+      paymentMethod: { type: String },
+      paymentStatus: { type: String },
+    },
 
     // Notes
     customerNote: { type: String, trim: true, maxlength: 500 },
@@ -370,13 +463,32 @@ orderSchema.statics.generateOrderId = async function (): Promise<string> {
 };
 
 /**
- * Generates an invoice number: INV-YYYY-XXXXXXX
+ * Generates an invoice number: e.g. SC-2026-000001
  */
 orderSchema.statics.generateInvoiceNumber = async function (): Promise<string> {
+  const InvoiceSettings = mongoose.model('InvoiceSettings');
+  
+  // Concurrency-safe atomic increment
+  const settings = await InvoiceSettings.findOneAndUpdate(
+    {},
+    { $inc: { nextInvoiceNumber: 1 } },
+    { new: false, upsert: true, setDefaultsOnInsert: true }
+  );
+
+  let num = 1;
+  let prefix = 'SC';
+  
+  if (settings) {
+    num = settings.nextInvoiceNumber;
+    prefix = settings.invoicePrefix || 'SC';
+  } else {
+    num = 1;
+  }
+  
   const year = new Date().getFullYear();
-  const totalOrders = await this.countDocuments();
-  const sequence = String(totalOrders + 1).padStart(7, '0');
-  return `INV-${year}-${sequence}`;
+  const sequence = String(num).padStart(6, '0');
+  
+  return `${prefix}-${year}-${sequence}`;
 };
 
 // ---------------------------------------------------------------------------
@@ -414,12 +526,104 @@ orderSchema.pre<IOrder>('save', async function (next) {
     // Shipping: free above ₹999
     this.shippingPrice = this.itemsPrice >= 999 ? 0 : 49;
 
-    // GST 18% inclusive in items
+    // Fetch InvoiceSettings to get dynamic tax values
+    const InvoiceSettings = mongoose.model('InvoiceSettings');
+    let settings = await InvoiceSettings.findOne();
+    if (!settings) {
+      settings = await InvoiceSettings.create({});
+    }
+
+    const gstRate = settings.gstPercentage || 18;
+
+    // GST inclusive in items
     const netSubtotal = this.itemsPrice - this.discountAmount;
-    this.taxPrice = Math.round(netSubtotal - (netSubtotal / 1.18));
+    const taxableValue = netSubtotal / (1 + gstRate / 100);
+    this.taxPrice = Number((netSubtotal - taxableValue).toFixed(2));
 
     // Total (tax is already included in itemsPrice)
     this.totalPrice = netSubtotal + this.shippingPrice;
+
+    // Snapshot the active tax rate in the order
+    this.taxRateSnapshot = {
+      gstPercentage: gstRate,
+      cgstPercentage: settings.cgstPercentage || (gstRate / 2),
+      sgstPercentage: settings.sgstPercentage || (gstRate / 2),
+      igstPercentage: settings.igstPercentage || gstRate,
+    };
+  }
+
+  // Assign invoiceNumber and invoiceSnapshot immediately when status becomes Delivered + Paid
+  if (this.orderStatus === 'delivered' && this.paymentStatus === 'paid' && !this.invoiceNumber) {
+    const Order = mongoose.model('Order') as IOrderModel;
+    const InvoiceSettings = mongoose.model('InvoiceSettings');
+
+    // 1. Generate atomic invoice number
+    const invNum = await Order.generateInvoiceNumber();
+    this.invoiceNumber = invNum;
+
+    // 2. Fetch invoice settings
+    let settings = await InvoiceSettings.findOne();
+    if (!settings) {
+      settings = await InvoiceSettings.create({});
+    }
+
+    // Default company info fallback
+    const companyName = settings.companyName || 'EngineersBuy Instruments';
+    const businessAddress = settings.businessAddress || 'H. No. - T1, Mavi Mohalla, Tekhand Village, Near DLF Prime Tower, Okhla, Delhi - 110044';
+    const contactNumber = settings.contactNumber || '8920266426';
+    const supportEmail = settings.supportEmail || 'sales.shortcircuit@gmail.com';
+    const gstin = settings.gstin || '07EGQPP9381B1ZU';
+
+    const gstRate = settings.gstPercentage || 18;
+    const cgstRate = settings.cgstPercentage || (gstRate / 2);
+    const sgstRate = settings.sgstPercentage || (gstRate / 2);
+    const igstRate = settings.igstPercentage || gstRate;
+
+    // Calculate inclusive pricing snapshot values
+    const inclusiveTotal = this.itemsPrice - this.discountAmount;
+    const taxableValueTotal = Number((inclusiveTotal / (1 + gstRate / 100)).toFixed(2));
+    const taxAmountTotal = Number((inclusiveTotal - taxableValueTotal).toFixed(2));
+
+    const addr = this.shippingAddress;
+    const formattedCustomerAddress = `${addr.addressLine1}${addr.addressLine2 ? ', ' + addr.addressLine2 : ''}${addr.landmark ? ', ' + addr.landmark : ''}, ${addr.city}, ${addr.state} - ${addr.pincode}, ${addr.country || 'India'}`;
+
+    this.invoiceSnapshot = {
+      invoiceNumber: invNum,
+      invoiceDate: new Date(),
+      settingsId: settings._id.toString(),
+      seller: {
+        companyName,
+        gstin,
+        address: businessAddress,
+        phone: contactNumber,
+        email: supportEmail,
+        logoUrl: settings.companyLogo || '',
+        stampUrl: settings.companyStamp || '',
+      },
+      customer: {
+        name: addr.fullName,
+        phone: addr.phone,
+        address: formattedCustomerAddress,
+      },
+      products: this.items.map(item => ({
+        name: item.name + (item.variant ? ` (${item.variant.name}: ${item.variant.value})` : ''),
+        sku: item.sku,
+        quantity: item.quantity,
+        price: item.price,
+      })),
+      taxBreakdown: {
+        gstPercentage: gstRate,
+        cgstPercentage: cgstRate,
+        sgstPercentage: sgstRate,
+        igstPercentage: igstRate,
+      },
+      subtotal: taxableValueTotal,
+      taxAmount: taxAmountTotal,
+      shippingAmount: this.shippingPrice,
+      grandTotal: this.totalPrice,
+      paymentMethod: this.paymentMethod,
+      paymentStatus: this.paymentStatus,
+    };
   }
 
   next();

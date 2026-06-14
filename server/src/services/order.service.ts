@@ -306,11 +306,6 @@ export class OrderService {
       if (order.paymentMethod === 'cod') {
         order.paymentStatus = 'paid'; // COD collected
       }
-      
-      // Generate invoice number on delivery if not already set
-      if (!order.invoiceNumber) {
-        order.invoiceNumber = await (Order as any).generateInvoiceNumber();
-      }
     }
 
     order.statusHistory.push({
@@ -368,7 +363,47 @@ export class OrderService {
     const user = await User.findById(order.user).select('email');
     const userEmail = user?.email || '';
 
-    return InvoiceService.compileInvoiceMetadata(order, userEmail);
+    const InvoiceSettings = mongoose.model('InvoiceSettings');
+    const settings = await InvoiceSettings.findOne() || await InvoiceSettings.create({});
+
+    return InvoiceService.compileInvoiceMetadata(order, userEmail, settings as any);
+  }
+
+  /**
+   * Generates a raw PDF buffer for the invoice.
+   */
+  public static async generateInvoicePdf(orderId: string, userId: string, userRole: string): Promise<Buffer> {
+    const order = await Order.findById(orderId);
+    if (!order) {
+      throw ApiError.notFound('Order not found.');
+    }
+
+    // Authorization: Admin or Order Owner
+    if (userRole !== 'admin' && order.user.toString() !== userId.toString()) {
+      throw ApiError.forbidden('You do not have permission to access this invoice.');
+    }
+
+    const InvoiceSettings = mongoose.model('InvoiceSettings');
+    const settings = await InvoiceSettings.findOne() || await InvoiceSettings.create({});
+
+    // Enforce delivery and payment rules based on settings toggle
+    const mustBeDeliveredAndPaid = settings.allowOnlyDeliveredAndPaid !== false;
+    
+    if (mustBeDeliveredAndPaid) {
+      if (order.orderStatus !== 'delivered' || order.paymentStatus !== 'paid') {
+        throw new ApiError(403, 'Invoice will be available after successful delivery and payment completion.');
+      }
+    }
+
+    // Enforce that invoice has been generated (which happens when order became Delivered + Paid)
+    if (!order.invoiceNumber || !order.invoiceSnapshot) {
+      throw new ApiError(400, 'Invoice has not been generated for this order yet.');
+    }
+
+    const user = await User.findById(order.user).select('email');
+    const userEmail = user?.email || '';
+
+    return InvoiceService.generateInvoicePdfBuffer(order, userEmail, settings as any);
   }
 }
 

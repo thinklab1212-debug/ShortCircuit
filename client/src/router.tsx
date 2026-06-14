@@ -41,6 +41,8 @@ import AdminAnalyticsPage from '@/pages/admin/AnalyticsPage'
 import AdminSettingsPage from '@/pages/admin/SettingsPage'
 import AdminVendorsPage from '@/pages/admin/VendorsAdminPage'
 import AdminReviewQueuePage from '@/pages/admin/ReviewQueuePage'
+import AdminInvoiceSettingsPage from '@/pages/admin/InvoiceSettingsPage'
+import AdminInvoicesPage from '@/pages/admin/InvoicesPage'
 // Vendor
 import VendorDashboardPage from '@/pages/vendor/DashboardPage'
 import VendorProductsPage from '@/pages/vendor/ProductsPage'
@@ -112,6 +114,8 @@ export const router = createBrowserRouter([
       { path: 'settings', element: <AdminSettingsPage /> },
       { path: 'vendors', element: <AdminVendorsPage /> },
       { path: 'review-queue', element: <AdminReviewQueuePage /> },
+      { path: 'invoice-settings', element: <AdminInvoiceSettingsPage /> },
+      { path: 'invoices', element: <AdminInvoicesPage /> },
     ],
   },
 

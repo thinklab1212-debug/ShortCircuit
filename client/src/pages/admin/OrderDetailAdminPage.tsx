@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useParams, Link } from 'react-router'
 import toast from 'react-hot-toast'
-import { ArrowLeft, MapPin, Package, Truck, User as UserIcon } from 'lucide-react'
+import { ArrowLeft, MapPin, Package, Truck, User as UserIcon, Download } from 'lucide-react'
 import { orderApi } from '@/services'
 import { AdminPageHeader, AdminSection } from '@/components/admin'
 import { Button } from '@/components/ui/button'
@@ -44,6 +44,29 @@ export default function OrderDetailAdminPage() {
   const [note, setNote] = useState('')
   const [carrier, setCarrier] = useState('')
   const [trackingId, setTrackingId] = useState('')
+  const [invoiceLoading, setInvoiceLoading] = useState(false)
+
+  const handleInvoice = async () => {
+    if (!order) return
+    setInvoiceLoading(true)
+    try {
+      const response = await orderApi.getInvoice(order._id)
+      const blob = new Blob([response.data], { type: 'application/pdf' })
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `Invoice-${order.orderId}.pdf`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+      toast.success('Invoice downloaded successfully')
+    } catch {
+      toast.error('Failed to download invoice. Check if order status is delivered and paid.')
+    } finally {
+      setInvoiceLoading(false)
+    }
+  }
 
   useEffect(() => {
     if (order) {
@@ -92,9 +115,21 @@ export default function OrderDetailAdminPage() {
         title={`Order ${order.orderId}`}
         description={`Placed on ${formatDateTime(order.createdAt)}`}
         action={
-          <Button asChild variant="outline" leftIcon={<ArrowLeft />}>
-            <Link to="/admin/orders">Back to orders</Link>
-          </Button>
+          <div className="flex gap-2">
+            {(order.invoiceNumber || (order.orderStatus === 'delivered' && order.paymentStatus === 'paid')) && (
+              <Button
+                variant="outline"
+                loading={invoiceLoading}
+                onClick={handleInvoice}
+                leftIcon={<Download />}
+              >
+                Download Invoice
+              </Button>
+            )}
+            <Button asChild variant="outline" leftIcon={<ArrowLeft />}>
+              <Link to="/admin/orders">Back to orders</Link>
+            </Button>
+          </div>
         }
       />
 

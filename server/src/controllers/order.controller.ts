@@ -91,6 +91,10 @@ export const downloadInvoice = asyncHandler(async (req: Request, res: Response) 
   const userId = req.user!._id;
   const userRole = req.user!.role;
   const orderId = req.params.orderId || req.params.id;
-  const metadata = await OrderService.getInvoiceMetadata(orderId, userId, userRole);
-  res.status(200).json(new ApiResponse(200, metadata, 'Invoice metadata compiled successfully.'));
+  
+  const pdfBuffer = await OrderService.generateInvoicePdf(orderId, userId, userRole);
+  
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `attachment; filename="Invoice-${orderId}.pdf"`);
+  res.status(200).send(pdfBuffer);
 });

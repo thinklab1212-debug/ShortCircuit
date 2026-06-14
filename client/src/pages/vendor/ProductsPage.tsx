@@ -146,7 +146,6 @@ export default function ProductsPage() {
               <tr className="border-b border-border bg-muted/30 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 <th className="px-4 py-3">Product</th>
                 <th className="px-4 py-3 hidden sm:table-cell">Vendor Price</th>
-                <th className="px-4 py-3 hidden md:table-cell">Selling Price</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3 text-right">Actions</th>
               </tr>
@@ -177,11 +176,6 @@ export default function ProductsPage() {
                   </td>
                   <td className="px-4 py-3 hidden sm:table-cell text-sm font-medium text-foreground">
                     {product.vendorPrice != null ? formatPrice(product.vendorPrice) : '—'}
-                  </td>
-                  <td className="px-4 py-3 hidden md:table-cell text-sm text-muted-foreground">
-                    {product.price && product.price > 0
-                      ? formatPrice(product.salePrice || product.price)
-                      : <span className="text-xs italic">Pending</span>}
                   </td>
                   <td className="px-4 py-3">
                     <Badge variant={STATUS_BADGE_VARIANT[product.approvalStatus || 'draft']} size="sm">

@@ -23,7 +23,16 @@ const orderApi = {
     apiClient.patch<ApiResponse<Order>>(API_ROUTES.ORDERS.CANCEL(id), { cancellationReason }),
 
   getInvoice: (id: string) =>
-    apiClient.get<ApiResponse<unknown>>(API_ROUTES.ORDERS.INVOICE(id)),
+    apiClient.get<Blob>(API_ROUTES.ORDERS.INVOICE(id), { responseType: 'blob' }),
+
+  getInvoiceSettings: () =>
+    apiClient.get<ApiResponse<any>>(API_ROUTES.INVOICE_SETTINGS.BASE),
+
+  updateInvoiceSettings: (data: any) =>
+    apiClient.put<ApiResponse<any>>(API_ROUTES.INVOICE_SETTINGS.BASE, data),
+
+  getInvoicePreview: () =>
+    apiClient.get<Blob>(API_ROUTES.INVOICE_SETTINGS.PREVIEW, { responseType: 'blob' }),
 
   // ── Admin ──
   getAll: (params?: { page?: number; limit?: number; orderStatus?: string; paymentStatus?: string; search?: string }) =>

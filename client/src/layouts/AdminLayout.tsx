@@ -17,6 +17,7 @@ import {
   Menu,
   Store,
   ClipboardCheck,
+  Receipt,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { APP } from '@/constants'
@@ -32,12 +33,14 @@ const sidebarLinks = [
   { label: 'Categories', href: '/admin/categories', icon: Tags },
   { label: 'Brands', href: '/admin/brands', icon: Building2 },
   { label: 'Orders', href: '/admin/orders', icon: ShoppingBag },
+  { label: 'Invoices', href: '/admin/invoices', icon: Receipt },
   { label: 'Users', href: '/admin/users', icon: Users },
   { label: 'Vendors', href: '/admin/vendors', icon: Store },
   { label: 'Review Queue', href: '/admin/review-queue', icon: ClipboardCheck },
   { label: 'Coupons', href: '/admin/coupons', icon: Ticket },
   { label: 'Banners', href: '/admin/banners', icon: Image },
   { label: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
+  { label: 'Invoice Settings', href: '/admin/invoice-settings', icon: Settings },
   { label: 'Settings', href: '/admin/settings', icon: Settings },
 ]
 

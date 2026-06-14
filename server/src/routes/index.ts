@@ -23,6 +23,7 @@ import uploadRoutes from './upload.routes.js';
 import searchRoutes from './search.routes.js';
 import vendorRoutes from './vendor.routes.js';
 import adminVendorRoutes from './adminVendor.routes.js';
+import invoiceSettingsRoutes from './invoiceSettings.routes.js';
 
 const router = Router();
 
@@ -44,5 +45,7 @@ router.use('/upload', uploadRoutes);
 router.use('/search', searchRoutes);
 router.use('/vendor', vendorRoutes);
 router.use('/admin/vendors', adminVendorRoutes);
+router.use('/admin/invoice-settings', invoiceSettingsRoutes);
+
 
 export default router;
