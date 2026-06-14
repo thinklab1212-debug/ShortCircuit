@@ -70,6 +70,16 @@ function renderInlineStyles(text: string) {
   })
 }
 
+// Helper to parse GDrive file sharing URL to Google's direct file preview/embed stream
+function getDrivePreviewUrl(url: string): string {
+  if (!url) return ''
+  const match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || url.match(/[?&]id=([a-zA-Z0-9_-]+)/)
+  if (match && match[1]) {
+    return `https://drive.google.com/file/d/${match[1]}/preview`
+  }
+  return url
+}
+
 // ─── Zoomable/Pannable Wiring Diagram Viewer Component ───────────────────────
 interface ZoomableWiringProps {
   imageUrl: string
@@ -270,24 +280,26 @@ export default function ProjectKitDetailPage() {
           <div className="lg:col-span-8 space-y-6">
             <div className="flex border-b border-border overflow-x-auto no-scrollbar gap-6">
               {[
-                { id: 'components', label: '📋 Components BOM', icon: Layers },
-                { id: 'instructions', label: '📖 Build Guide', icon: BookOpen },
-                { id: 'wiring', label: '⚡ Wiring Diagram', icon: Zap },
-                { id: 'documents', label: '📄 Documents', icon: FileText },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)}
-                  className={`flex items-center gap-2 pb-3 text-sm font-semibold border-b-2 whitespace-nowrap transition-all duration-200 ${
-                    activeTab === tab.id
-                      ? 'border-primary text-primary'
-                      : 'border-transparent text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  <tab.icon className="h-4 w-4" />
-                  {tab.label}
-                </button>
-              ))}
+                { id: 'components', label: '📋 Components BOM', icon: Layers, visible: true },
+                { id: 'instructions', label: '📖 Build Guide', icon: BookOpen, visible: project.instructions && project.instructions.length > 0 },
+                { id: 'wiring', label: '⚡ Wiring Diagram', icon: Zap, visible: project.wiringDiagrams && project.wiringDiagrams.length > 0 },
+                { id: 'documents', label: '📄 Project Guide (PDF)', icon: FileText, visible: project.documents && project.documents.length > 0 },
+              ]
+                .filter((tab) => tab.visible)
+                .map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id as any)}
+                    className={`flex items-center gap-2 pb-3 text-sm font-semibold border-b-2 whitespace-nowrap transition-all duration-200 ${
+                      activeTab === tab.id
+                        ? 'border-primary text-primary'
+                        : 'border-transparent text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    <tab.icon className="h-4 w-4" />
+                    {tab.label}
+                  </button>
+                ))}
             </div>
 
             {/* Content Tabs */}
@@ -469,41 +481,73 @@ export default function ProjectKitDetailPage() {
               {activeTab === 'documents' && (
                 <div className="space-y-6">
                   <div>
-                    <h3 className="text-xl font-bold mb-1">Reference Documents</h3>
+                    <h3 className="text-xl font-bold mb-1">Project Guide & Documents</h3>
                     <p className="text-xs text-muted-foreground">
-                      Datasheets, class reports, and complete project code files uploaded on Google Drive.
+                      Datasheets, complete guide instructions, and wiring schematics compiled in the project guide.
                     </p>
                   </div>
 
                   {project.documents && project.documents.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {project.documents.map((doc, idx) => (
-                        <a
-                          key={idx}
-                          href={doc.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="flex items-center gap-4 p-4 rounded-2xl border border-border hover:border-primary/40 bg-card hover:bg-muted/40 transition-all group shadow-sm hover:shadow"
-                        >
-                          <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-105 transition-transform">
-                            <FileText className="h-5 w-5" />
+                    <div className="space-y-6">
+                      {/* If exactly 1 document, embed it directly as a PDF viewer for premium experience! */}
+                      {project.documents.length === 1 ? (
+                        <div className="space-y-4">
+                          <div className="flex justify-between items-center bg-muted/30 px-4 py-3 rounded-2xl border border-border">
+                            <span className="text-xs font-semibold text-foreground flex items-center gap-2">
+                              <FileText className="h-4 w-4 text-primary" />
+                              {project.documents[0].title}
+                            </span>
+                            <Button asChild size="sm" variant="outline" className="rounded-xl h-8 text-[11px] font-bold">
+                              <a
+                                href={project.documents[0].url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="flex items-center gap-1"
+                              >
+                                Open in New Tab <ExternalLink className="h-3 w-3" />
+                              </a>
+                            </Button>
                           </div>
-                          <div className="min-w-0 flex-1">
-                            <h4 className="font-bold text-sm text-foreground truncate group-hover:text-primary transition-colors">
-                              {doc.title}
-                            </h4>
-                            <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mt-0.5">
-                              {doc.type || 'Datasheet'}
-                            </p>
+                          <div className="w-full h-[600px] border border-border rounded-3xl overflow-hidden bg-slate-900/5 shadow-inner relative">
+                            <iframe
+                              src={getDrivePreviewUrl(project.documents[0].url)}
+                              className="w-full h-full border-none"
+                              allow="autoplay"
+                              title={project.documents[0].title}
+                            />
                           </div>
-                          <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                        </a>
-                      ))}
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {project.documents.map((doc, idx) => (
+                            <a
+                              key={idx}
+                              href={doc.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="flex items-center gap-4 p-4 rounded-2xl border border-border hover:border-primary/40 bg-card hover:bg-muted/40 transition-all group shadow-sm hover:shadow"
+                            >
+                              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-105 transition-transform">
+                                <FileText className="h-5 w-5" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <h4 className="font-bold text-sm text-foreground truncate group-hover:text-primary transition-colors">
+                                  {doc.title}
+                                </h4>
+                                <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mt-0.5">
+                                  {doc.type || 'Datasheet'}
+                                </p>
+                              </div>
+                              <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                            </a>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div className="text-center py-10">
                       <HelpCircle className="h-10 w-10 text-muted-foreground mx-auto mb-3 opacity-60" />
-                      <p className="text-sm text-muted-foreground">No external files linked for reference.</p>
+                      <p className="text-sm text-muted-foreground">No reference documents linked yet.</p>
                     </div>
                   )}
                 </div>

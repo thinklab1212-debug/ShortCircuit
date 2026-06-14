@@ -59,28 +59,12 @@ interface FormState {
   applicationArea: string
   tags: string
   estimatedTime: string
+  pdfUrl: string
   components: {
     product: Product
     quantity: number
     note: string
     isOptional: boolean
-  }[]
-  instructions: {
-    stepNumber: number
-    title: string
-    content: string
-    imageUrl: string
-    tip: string
-  }[]
-  wiringDiagrams: {
-    imageUrl: string
-    title: string
-    description: string
-  }[]
-  documents: {
-    title: string
-    url: string
-    type: 'schematic' | 'datasheet' | 'report' | 'presentation' | 'other'
   }[]
   isActive: boolean
   isFeatured: boolean
@@ -95,10 +79,8 @@ const emptyForm: FormState = {
   applicationArea: 'Robotics',
   tags: '',
   estimatedTime: '',
+  pdfUrl: '',
   components: [],
-  instructions: [],
-  wiringDiagrams: [],
-  documents: [],
   isActive: true,
   isFeatured: false,
   displayOrder: 0,
@@ -120,7 +102,7 @@ export default function ProjectKitsAdminPage() {
   const [editing, setEditing] = useState<ProjectKit | null>(null)
   const [form, setForm] = useState<FormState>(emptyForm)
   const [uploading, setUploading] = useState(false)
-  const [activeFormTab, setActiveFormTab] = useState<'basic' | 'bom' | 'guide' | 'wiring-docs'>('basic')
+  const [activeFormTab, setActiveFormTab] = useState<'basic' | 'bom'>('basic')
 
   // Product search states for BOM association
   const [productQuery, setProductQuery] = useState('')
@@ -175,28 +157,12 @@ export default function ProjectKitsAdminPage() {
       applicationArea: kit.applicationArea,
       tags: kit.tags ? kit.tags.join(', ') : '',
       estimatedTime: kit.estimatedTime || '',
+      pdfUrl: kit.documents?.[0]?.url || '',
       components: kit.components.map((c) => ({
         product: c.product,
         quantity: c.quantity,
         note: c.note || '',
         isOptional: c.isOptional || false,
-      })),
-      instructions: kit.instructions.map((i) => ({
-        stepNumber: i.stepNumber,
-        title: i.title,
-        content: i.content,
-        imageUrl: i.imageUrl || '',
-        tip: i.tip || '',
-      })),
-      wiringDiagrams: kit.wiringDiagrams.map((w) => ({
-        imageUrl: w.imageUrl,
-        title: w.title || '',
-        description: w.description || '',
-      })),
-      documents: kit.documents.map((d) => ({
-        title: d.title,
-        url: d.url,
-        type: d.type || 'datasheet',
       })),
       isActive: kit.isActive,
       isFeatured: kit.isFeatured,
@@ -273,83 +239,6 @@ export default function ProjectKitsAdminPage() {
       return { ...f, components: next }
     })
   }
-
-  // Instruction helpers
-  const addStep = () => {
-    const nextStepNum = form.instructions.length + 1
-    setForm((f) => ({
-      ...f,
-      instructions: [
-        ...f.instructions,
-        { stepNumber: nextStepNum, title: '', content: '', imageUrl: '', tip: '' },
-      ],
-    }))
-  }
-
-  const updateStep = (idx: number, field: string, val: any) => {
-    setForm((f) => {
-      const next = [...f.instructions]
-      next[idx] = { ...next[idx], [field]: val }
-      return { ...f, instructions: next }
-    })
-  }
-
-  const removeStep = (idx: number) => {
-    setForm((f) => {
-      const next = f.instructions.filter((_, i) => i !== idx).map((step, index) => ({
-        ...step,
-        stepNumber: index + 1, // Re-index steps
-      }))
-      return { ...f, instructions: next }
-    })
-  }
-
-  // Wiring diagram helpers
-  const addWiring = () => {
-    setForm((f) => ({
-      ...f,
-      wiringDiagrams: [...f.wiringDiagrams, { imageUrl: '', title: '', description: '' }],
-    }))
-  }
-
-  const updateWiring = (idx: number, field: string, val: string) => {
-    setForm((f) => {
-      const next = [...f.wiringDiagrams]
-      next[idx] = { ...next[idx], [field]: val }
-      return { ...f, wiringDiagrams: next }
-    })
-  }
-
-  const removeWiring = (idx: number) => {
-    setForm((f) => ({
-      ...f,
-      wiringDiagrams: f.wiringDiagrams.filter((_, i) => i !== idx),
-    }))
-  }
-
-  // Document helpers
-  const addDoc = () => {
-    setForm((f) => ({
-      ...f,
-      documents: [...f.documents, { title: '', url: '', type: 'schematic' }],
-    }))
-  }
-
-  const updateDoc = (idx: number, field: string, val: string) => {
-    setForm((f) => {
-      const next = [...f.documents]
-      next[idx] = { ...next[idx], [field]: val }
-      return { ...f, documents: next }
-    })
-  }
-
-  const removeDoc = (idx: number) => {
-    setForm((f) => ({
-      ...f,
-      documents: f.documents.filter((_, i) => i !== idx),
-    }))
-  }
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!form.name.trim()) {
@@ -393,23 +282,17 @@ export default function ProjectKitsAdminPage() {
         note: c.note.trim() || undefined,
         isOptional: c.isOptional,
       })),
-      instructions: form.instructions.map((i) => ({
-        stepNumber: i.stepNumber,
-        title: i.title.trim(),
-        content: i.content.trim(),
-        imageUrl: cleanDriveUrl(i.imageUrl) || undefined,
-        tip: i.tip.trim() || undefined,
-      })),
-      wiringDiagrams: form.wiringDiagrams.map((w) => ({
-        imageUrl: cleanDriveUrl(w.imageUrl),
-        title: w.title.trim() || undefined,
-        description: w.description.trim() || undefined,
-      })),
-      documents: form.documents.map((d) => ({
-        title: d.title.trim(),
-        url: d.url.trim(),
-        type: d.type,
-      })),
+      instructions: [],
+      wiringDiagrams: [],
+      documents: form.pdfUrl.trim()
+        ? [
+            {
+              title: `${form.name.trim()} Guide PDF`,
+              url: cleanDriveUrl(form.pdfUrl.trim()),
+              type: 'schematic',
+            },
+          ]
+        : [],
       isActive: form.isActive,
       isFeatured: form.isFeatured,
       displayOrder: Number(form.displayOrder),
@@ -581,8 +464,6 @@ export default function ProjectKitsAdminPage() {
                 {[
                   { id: 'basic', label: '1. Basic Info' },
                   { id: 'bom', label: '2. Components BOM' },
-                  { id: 'guide', label: '3. Build Guide' },
-                  { id: 'wiring-docs', label: '4. Wiring & Docs' },
                 ].map((tab) => (
                   <button
                     key={tab.id}
@@ -664,6 +545,15 @@ export default function ProjectKitsAdminPage() {
                         value={form.tags}
                         onChange={(e) => setForm({ ...form, tags: e.target.value })}
                         placeholder="e.g. esp8266, pump, agriculture, sensor"
+                      />
+                    </FormField>
+
+                    <FormField label="Google Drive PDF Project Guide URL" required>
+                      <Input
+                        value={form.pdfUrl}
+                        onChange={(e) => setForm({ ...form, pdfUrl: e.target.value })}
+                        placeholder="https://drive.google.com/file/d/FILE_ID/view?usp=sharing"
+                        required
                       />
                     </FormField>
 
@@ -843,248 +733,6 @@ export default function ProjectKitsAdminPage() {
                   </div>
                 )}
 
-                {/* ─── TAB 3: BUILD GUIDE STEPS ─── */}
-                {activeFormTab === 'guide' && (
-                  <div className="space-y-6">
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                        Step-by-Step Timelines
-                      </span>
-                      <Button
-                        type="button"
-                        onClick={addStep}
-                        variant="outline"
-                        size="sm"
-                        leftIcon={<Plus className="h-4 w-4" />}
-                        className="rounded-xl"
-                      >
-                        Add Guide Step
-                      </Button>
-                    </div>
-
-                    {form.instructions.length === 0 ? (
-                      <div className="text-center py-12 border border-dashed border-border rounded-3xl text-sm text-muted-foreground">
-                        No guide steps added yet. Add steps to help users compile their project.
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {form.instructions.map((step, idx) => (
-                          <div
-                            key={idx}
-                            className="border border-border rounded-3xl p-5 space-y-3 bg-muted/5 relative"
-                          >
-                            <span className="absolute -left-3 top-4 flex items-center justify-center h-7 w-7 rounded-full bg-primary text-primary-foreground font-extrabold text-xs shadow-md">
-                              {step.stepNumber}
-                            </span>
-
-                            <div className="flex justify-between items-center pl-4">
-                              <span className="text-xs font-bold text-foreground">Step #{step.stepNumber}</span>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon-sm"
-                                onClick={() => removeStep(idx)}
-                                className="text-error-500 hover:text-error-600"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-
-                            <div className="pl-4 space-y-3">
-                              <FormField label="Step Title" required>
-                                <Input
-                                  value={step.title}
-                                  onChange={(e) => updateStep(idx, 'title', e.target.value)}
-                                  placeholder="e.g. Installing Arduino IDE & Driver Library"
-                                  required
-                                />
-                              </FormField>
-
-                              <FormField label="Google Drive Image URL (Direct stream view enabled)">
-                                <Input
-                                  value={step.imageUrl}
-                                  onChange={(e) => updateStep(idx, 'imageUrl', e.target.value)}
-                                  placeholder="https://drive.google.com/file/d/FILE_ID/view"
-                                />
-                              </FormField>
-
-                              <FormField label="Step Content" required>
-                                <Textarea
-                                  value={step.content}
-                                  onChange={(e) => updateStep(idx, 'content', e.target.value)}
-                                  placeholder="Timeline details, components wiring directions."
-                                  className="h-24 text-xs"
-                                  required
-                                />
-                              </FormField>
-
-                              <FormField label="Pro Tip / Warning Callout (Optional)">
-                                <Input
-                                  value={step.tip}
-                                  onChange={(e) => updateStep(idx, 'tip', e.target.value)}
-                                  placeholder="e.g. Ensure you ground the driver before applying voltage."
-                                />
-                              </FormField>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* ─── TAB 4: WIRING DIAGRAMS & DOCUMENTS ─── */}
-                {activeFormTab === 'wiring-docs' && (
-                  <div className="space-y-8">
-                    {/* WIRING SECTION */}
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                          Wiring Diagrams (Drive Images)
-                        </span>
-                        <Button
-                          type="button"
-                          onClick={addWiring}
-                          variant="outline"
-                          size="sm"
-                          leftIcon={<Plus className="h-4 w-4" />}
-                          className="rounded-xl"
-                        >
-                          Add Diagram
-                        </Button>
-                      </div>
-
-                      {form.wiringDiagrams.length === 0 ? (
-                        <div className="text-center py-6 border border-dashed border-border rounded-3xl text-xs text-muted-foreground">
-                          No wiring diagrams added. Paste Google Drive image link.
-                        </div>
-                      ) : (
-                        <div className="space-y-4">
-                          {form.wiringDiagrams.map((diag, idx) => (
-                            <div key={idx} className="border border-border p-4 rounded-3xl space-y-3 relative">
-                              <div className="flex justify-between items-center">
-                                <span className="text-xs font-bold text-foreground">Diagram #{idx + 1}</span>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon-sm"
-                                  onClick={() => removeWiring(idx)}
-                                  className="text-error-500 hover:text-error-600"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-
-                              <div className="space-y-3">
-                                <FormField label="Google Drive Image URL" required>
-                                  <Input
-                                    value={diag.imageUrl}
-                                    onChange={(e) => updateWiring(idx, 'imageUrl', e.target.value)}
-                                    placeholder="https://drive.google.com/file/d/FILE_ID/view"
-                                    required
-                                  />
-                                </FormField>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  <FormField label="Title">
-                                    <Input
-                                      value={diag.title}
-                                      onChange={(e) => updateWiring(idx, 'title', e.target.value)}
-                                      placeholder="e.g. Master Power Schematic"
-                                    />
-                                  </FormField>
-                                  <FormField label="Brief Caption Description">
-                                    <Input
-                                      value={diag.description}
-                                      onChange={(e) => updateWiring(idx, 'description', e.target.value)}
-                                      placeholder="e.g. Connection schematic for pins D1 to TX."
-                                    />
-                                  </FormField>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* DOCUMENTS SECTION */}
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                          Reference PDFs & Google Drive Docs
-                        </span>
-                        <Button
-                          type="button"
-                          onClick={addDoc}
-                          variant="outline"
-                          size="sm"
-                          leftIcon={<Plus className="h-4 w-4" />}
-                          className="rounded-xl"
-                        >
-                          Add Document
-                        </Button>
-                      </div>
-
-                      {form.documents.length === 0 ? (
-                        <div className="text-center py-6 border border-dashed border-border rounded-3xl text-xs text-muted-foreground">
-                          No document sheets or datasheets linked.
-                        </div>
-                      ) : (
-                        <div className="space-y-4">
-                          {form.documents.map((doc, idx) => (
-                            <div key={idx} className="border border-border p-4 rounded-3xl space-y-3 relative">
-                              <div className="flex justify-between items-center">
-                                <span className="text-xs font-bold text-foreground">Document #{idx + 1}</span>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon-sm"
-                                  onClick={() => removeDoc(idx)}
-                                  className="text-error-500 hover:text-error-600"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-
-                              <div className="space-y-3">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  <FormField label="Document Title" required>
-                                    <Input
-                                      value={doc.title}
-                                      onChange={(e) => updateDoc(idx, 'title', e.target.value)}
-                                      placeholder="e.g. L298N Motor Driver Datasheet"
-                                      required
-                                    />
-                                  </FormField>
-                                  <FormField label="Document Resource Type" required>
-                                    <Select
-                                      value={doc.type}
-                                      onChange={(e) => updateDoc(idx, 'type', e.target.value)}
-                                    >
-                                      <option value="schematic">Schematic</option>
-                                      <option value="datasheet">Datasheet</option>
-                                      <option value="report">Report Blueprint</option>
-                                      <option value="presentation">Presentation Slide</option>
-                                      <option value="other">Other File</option>
-                                    </Select>
-                                  </FormField>
-                                </div>
-                                <FormField label="Google Drive / PDF Web URL" required>
-                                  <Input
-                                    value={doc.url}
-                                    onChange={(e) => updateDoc(idx, 'url', e.target.value)}
-                                    placeholder="https://drive.google.com/open?id=FILE_ID"
-                                    required
-                                  />
-                                </FormField>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
               </form>
 
               {/* Action Buttons */}
