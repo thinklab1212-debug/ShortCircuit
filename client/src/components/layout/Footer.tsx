@@ -69,15 +69,18 @@ export function Footer() {
             <ul className="space-y-3">
               <li className="flex items-start gap-3 text-sm text-muted-foreground">
                 <MapPin className="h-4 w-4 mt-0.5 shrink-0" />
-                <span>Sector 15, NOIDA, Uttar Pradesh 201301</span>
+                <span>B-Block, New Ashok Nagar, New Delhi, Pin - 110096</span>
               </li>
-              <li className="flex items-center gap-3 text-sm text-muted-foreground">
-                <Phone className="h-4 w-4 shrink-0" />
-                <span>+91 92199 98403</span>
+              <li className="flex items-start gap-3 text-sm text-muted-foreground">
+                <Phone className="h-4 w-4 mt-0.5 shrink-0" />
+                <div className="flex flex-col">
+                  <span>+91 93354 06525</span>
+                  <span>+91 92199 98403</span>
+                </div>
               </li>
               <li className="flex items-center gap-3 text-sm text-muted-foreground">
                 <Mail className="h-4 w-4 shrink-0" />
-                <span>think.lab1212@gmail.com</span>
+                <span>sales.shortcircuit@gmail.com</span>
               </li>
             </ul>
           </div>

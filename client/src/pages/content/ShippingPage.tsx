@@ -47,7 +47,7 @@ export default function ShippingPage() {
       <LegalSection heading="Damaged or missing items">
         <p>
           If your package arrives damaged or an item is missing, please contact us at
-          support@electrokart.com within 48 hours of delivery with photos so we can resolve it quickly.
+          sales.shortcircuit@gmail.com within 48 hours of delivery with photos so we can resolve it quickly.
         </p>
       </LegalSection>
     </LegalLayout>

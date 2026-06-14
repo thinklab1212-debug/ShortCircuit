@@ -19,12 +19,13 @@ interface ContactForm {
 const EMPTY: ContactForm = { name: '', email: '', subject: '', message: '' }
 
 const DETAILS = [
-  { icon: Mail, label: 'Email us', value: 'support@electrokart.com', href: 'mailto:support@electrokart.com' },
-  { icon: Phone, label: 'Call us', value: '+91 1800 200 4567', href: 'tel:+9118002004567' },
+  { icon: Mail, label: 'Email us', value: 'sales.shortcircuit@gmail.com', href: 'mailto:sales.shortcircuit@gmail.com' },
+  { icon: Phone, label: 'Call us (Primary)', value: '+91 93354 06525', href: 'tel:+919335406525' },
+  { icon: Phone, label: 'Call us (Secondary)', value: '+91 92199 98403', href: 'tel:+919219998403' },
   {
     icon: MapPin,
     label: 'Visit us',
-    value: '4th Floor, Tech Tower, Outer Ring Road, Bengaluru, Karnataka 560103',
+    value: 'B-Block, New Ashok Nagar, New Delhi, Pin - 110096',
   },
 ]
 

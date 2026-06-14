@@ -50,14 +50,14 @@ export default function PrivacyPage() {
       <LegalSection heading="Your rights">
         <p>
           You may access, update or request deletion of your personal information at any time by
-          contacting us at support@electrokart.com. We will respond in line with applicable Indian
+          contacting us at sales.shortcircuit@gmail.com. We will respond in line with applicable Indian
           data-protection laws.
         </p>
       </LegalSection>
 
       <LegalSection heading="Contact">
         <p>
-          For any privacy-related questions, write to us at support@electrokart.com.
+          For any privacy-related questions, write to us at sales.shortcircuit@gmail.com.
         </p>
       </LegalSection>
     </LegalLayout>

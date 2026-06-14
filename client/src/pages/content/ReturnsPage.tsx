@@ -25,7 +25,7 @@ export default function ReturnsPage() {
       <LegalSection heading="How to request a return">
         <p>
           Go to the Orders section in your account, select the item and choose "Return". Alternatively,
-          email support@electrokart.com with your order ID and reason. Our team will arrange a pickup or
+          email sales.shortcircuit@gmail.com with your order ID and reason. Our team will arrange a pickup or
           share return instructions.
         </p>
       </LegalSection>
@@ -47,7 +47,7 @@ export default function ReturnsPage() {
 
       <LegalSection heading="Need help?">
         <p>
-          For any return or refund query, reach out to support@electrokart.com and we'll be glad to assist.
+          For any return or refund query, reach out to sales.shortcircuit@gmail.com and we'll be glad to assist.
         </p>
       </LegalSection>
     </LegalLayout>

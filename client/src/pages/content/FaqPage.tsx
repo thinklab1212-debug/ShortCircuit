@@ -50,7 +50,7 @@ const FAQS: Faq[] = [
   {
     question: 'Do you offer bulk or institutional orders?',
     answer:
-      'Yes. We support bulk orders for colleges, labs and businesses, often with special pricing. Write to support@electrokart.com with your requirements and our team will prepare a quote.',
+      'Yes. We support bulk orders for colleges, labs and businesses, often with special pricing. Write to sales.shortcircuit@gmail.com with your requirements and our team will prepare a quote.',
   },
 ]
 

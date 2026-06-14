@@ -23,7 +23,7 @@ const options: swaggerJSDoc.Options = {
       description: 'Production-ready, enterprise-grade E-Commerce API for engineering students purchasing electronics, robotics, IoT, and DIY components.',
       contact: {
         name: 'ElectroKart Engineering Support',
-        email: 'support@electrokart.com',
+        email: 'sales.shortcircuit@gmail.com',
         url: env.CLIENT_URL,
       },
     },
