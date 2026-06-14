@@ -242,7 +242,9 @@ export function getCookieOptions(
   domain?: string;
 } {
   const config = ROLE_SESSION_CONFIG[role] || ROLE_SESSION_CONFIG.customer;
-  const expiry = type === 'access' ? config.accessExpiry : config.refreshExpiry;
+  // Always use the refresh token's expiry for the cookie maxAge so the expired access token cookie
+  // isn't prematurely deleted by the browser before it can be used for token rotation.
+  const expiry = config.refreshExpiry;
   const maxAge = parseDurationToMs(expiry);
 
   const options: any = {
