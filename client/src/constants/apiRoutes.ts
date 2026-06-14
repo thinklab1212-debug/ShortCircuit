@@ -144,6 +144,7 @@ const API_ROUTES = {
   UPLOADS: {
     IMAGE: '/upload/image',
     IMAGES: '/upload/images',
+    PDF: '/upload/pdf',
     DELETE: (publicId: string) => `/upload/${encodeURIComponent(publicId)}`,
   },
 

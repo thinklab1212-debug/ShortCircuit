@@ -102,6 +102,7 @@ export default function ProjectKitsAdminPage() {
   const [editing, setEditing] = useState<ProjectKit | null>(null)
   const [form, setForm] = useState<FormState>(emptyForm)
   const [uploading, setUploading] = useState(false)
+  const [uploadingPdf, setUploadingPdf] = useState(false)
   const [activeFormTab, setActiveFormTab] = useState<'basic' | 'bom'>('basic')
 
   // Product search states for BOM association
@@ -192,6 +193,22 @@ export default function ProjectKitsAdminPage() {
       toast.error('Upload failed')
     } finally {
       setUploading(false)
+    }
+  }
+
+  const handlePdfUpload = async (file: File) => {
+    setUploadingPdf(true)
+    try {
+      const res = await uploadApi.pdf(file)
+      setForm((f) => ({
+        ...f,
+        pdfUrl: res.data.data.url,
+      }))
+      toast.success('PDF guide uploaded successfully')
+    } catch {
+      toast.error('PDF upload failed')
+    } finally {
+      setUploadingPdf(false)
     }
   }
 
@@ -550,13 +567,31 @@ export default function ProjectKitsAdminPage() {
                       />
                     </FormField>
 
-                    <FormField label="Google Drive PDF Project Guide URL" required>
-                      <Input
-                        value={form.pdfUrl}
-                        onChange={(e) => setForm({ ...form, pdfUrl: e.target.value })}
-                        placeholder="https://drive.google.com/file/d/FILE_ID/view?usp=sharing"
-                        required
-                      />
+                    <FormField label="Project Guide PDF (Upload file or paste Google Drive URL)" required>
+                      <div className="space-y-3">
+                        <Input
+                          value={form.pdfUrl}
+                          onChange={(e) => setForm({ ...form, pdfUrl: e.target.value })}
+                          placeholder="https://drive.google.com/file/d/FILE_ID/view?usp=sharing or uploaded PDF URL"
+                          required
+                        />
+                        <div className="flex items-center gap-4">
+                          <label className="inline-flex cursor-pointer items-center gap-2 rounded-2xl border border-input bg-background px-4 py-2 text-xs hover:bg-muted font-bold transition-all shadow-sm">
+                            <Upload className="h-4 w-4" />
+                            {uploadingPdf ? 'Uploading PDF...' : 'Upload PDF File'}
+                            <input
+                              type="file"
+                              accept="application/pdf"
+                              className="hidden"
+                              disabled={uploadingPdf}
+                              onChange={(e) => {
+                                const file = e.target.files?.[0]
+                                if (file) handlePdfUpload(file)
+                              }}
+                            />
+                          </label>
+                        </div>
+                      </div>
                     </FormField>
 
                     <FormField label="Short Description Summary" required>

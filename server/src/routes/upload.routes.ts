@@ -6,7 +6,7 @@
 
 import { Router } from 'express';
 import { UploadController } from '../controllers/index.js';
-import { authenticate, authorize, validate, uploadImages } from '../middlewares/index.js';
+import { authenticate, authorize, validate, uploadImages, uploadDatasheet } from '../middlewares/index.js';
 import { z } from 'zod';
 
 const router = Router();
@@ -37,6 +37,30 @@ router.use(authenticate, authorize('admin'));
  *         description: Image uploaded successfully
  */
 router.post('/image', uploadImages.single('image'), UploadController.uploadSingleImage);
+
+/**
+ * @openapi
+ * /upload/pdf:
+ *   post:
+ *     summary: Upload a single PDF file to Cloudinary (Admin only)
+ *     tags: [Upload]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               pdf:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: PDF uploaded successfully
+ */
+router.post('/pdf', uploadDatasheet.single('pdf'), UploadController.uploadSinglePdf);
 
 /**
  * @openapi

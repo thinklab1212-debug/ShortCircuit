@@ -19,6 +19,17 @@ export const uploadSingleImage = asyncHandler(async (req: Request, res: Response
   res.status(200).json(new ApiResponse(200, result, 'Image uploaded successfully.'));
 });
 
+export const uploadSinglePdf = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.file) {
+    throw ApiError.badRequest('No PDF file was uploaded.');
+  }
+
+  const folder = (req.query.folder as string) || 'documents';
+  const result = await UploadService.uploadBuffer(req.file.buffer, folder);
+
+  res.status(200).json(new ApiResponse(200, result, 'PDF uploaded successfully.'));
+});
+
 export const uploadMultipleImages = asyncHandler(async (req: Request, res: Response) => {
   const files = req.files;
   if (!files || (Array.isArray(files) && files.length === 0)) {

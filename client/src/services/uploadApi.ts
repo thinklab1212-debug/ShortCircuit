@@ -11,6 +11,14 @@ const uploadApi = {
     })
   },
 
+  pdf: (file: File) => {
+    const form = new FormData()
+    form.append('pdf', file)
+    return apiClient.post<ApiResponse<UploadResponse>>(API_ROUTES.UPLOADS.PDF, form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+  },
+
   images: (files: File[]) => {
     const form = new FormData()
     files.forEach((file) => form.append('images', file))
