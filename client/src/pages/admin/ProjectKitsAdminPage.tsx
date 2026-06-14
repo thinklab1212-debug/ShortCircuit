@@ -120,8 +120,10 @@ export default function ProjectKitsAdminPage() {
   // Handle product lookup
   useEffect(() => {
     if (!productQuery.trim()) {
-      setFoundProducts([])
-      return
+      const timer = setTimeout(() => {
+        setFoundProducts([])
+      }, 0)
+      return () => clearTimeout(timer)
     }
 
     const delay = setTimeout(async () => {
@@ -186,7 +188,7 @@ export default function ProjectKitsAdminPage() {
         coverImage: { url: res.data.data.url, publicId: res.data.data.publicId },
       }))
       toast.success('Cover image uploaded')
-    } catch (err) {
+    } catch {
       toast.error('Upload failed')
     } finally {
       setUploading(false)
@@ -461,14 +463,14 @@ export default function ProjectKitsAdminPage() {
 
               {/* Form tabs */}
               <div className="flex border-b border-border bg-muted/10 px-6">
-                {[
+                {([
                   { id: 'basic', label: '1. Basic Info' },
                   { id: 'bom', label: '2. Components BOM' },
-                ].map((tab) => (
+                ] as const).map((tab) => (
                   <button
                     key={tab.id}
                     type="button"
-                    onClick={() => setActiveFormTab(tab.id as any)}
+                    onClick={() => setActiveFormTab(tab.id)}
                     className={`py-3.5 px-4 text-xs font-bold border-b-2 -mb-[1px] transition-colors ${
                       activeFormTab === tab.id
                         ? 'border-primary text-primary'
@@ -498,7 +500,7 @@ export default function ProjectKitsAdminPage() {
                       <FormField label="Difficulty Level" required>
                         <Select
                           value={form.difficulty}
-                          onChange={(e) => setForm({ ...form, difficulty: e.target.value as any })}
+                          onChange={(e) => setForm({ ...form, difficulty: e.target.value as 'beginner' | 'intermediate' | 'advanced' })}
                         >
                           {DIFFICULTIES.map((d) => (
                             <option key={d} value={d}>
