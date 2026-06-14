@@ -1,3 +1,4 @@
+import { lazy } from 'react'
 import { createBrowserRouter } from 'react-router'
 import { DefaultLayout, AuthLayout, AdminLayout, VendorLayout } from '@/layouts'
 import { ProtectedRoute, AdminRoute, GuestRoute, VendorRoute } from '@/components/guards'
@@ -26,29 +27,32 @@ import { CheckoutPage } from '@/pages/checkout'
 import { OrdersPage, OrderDetailPage } from '@/pages/orders'
 import { ProfilePage } from '@/pages/profile'
 import { AddressesPage } from '@/pages/account'
-// Admin
-import AdminDashboardPage from '@/pages/admin/DashboardPage'
-import AdminProductsPage from '@/pages/admin/ProductsAdminPage'
-import AdminProductFormPage from '@/pages/admin/ProductFormPage'
-import AdminCategoriesPage from '@/pages/admin/CategoriesAdminPage'
-import AdminBrandsPage from '@/pages/admin/BrandsAdminPage'
-import AdminOrdersPage from '@/pages/admin/OrdersAdminPage'
-import AdminOrderDetailPage from '@/pages/admin/OrderDetailAdminPage'
-import AdminUsersPage from '@/pages/admin/UsersAdminPage'
-import AdminCouponsPage from '@/pages/admin/CouponsAdminPage'
-import AdminBannersPage from '@/pages/admin/BannersAdminPage'
-import AdminAnalyticsPage from '@/pages/admin/AnalyticsPage'
-import AdminSettingsPage from '@/pages/admin/SettingsPage'
-import AdminVendorsPage from '@/pages/admin/VendorsAdminPage'
-import AdminReviewQueuePage from '@/pages/admin/ReviewQueuePage'
-import AdminInvoiceSettingsPage from '@/pages/admin/InvoiceSettingsPage'
-import AdminInvoicesPage from '@/pages/admin/InvoicesPage'
-import AdminCancellationRequestsPage from '@/pages/admin/CancellationRequestsAdminPage'
-// Vendor
-import VendorDashboardPage from '@/pages/vendor/DashboardPage'
-import VendorProductsPage from '@/pages/vendor/ProductsPage'
-import VendorProductFormPage from '@/pages/vendor/ProductFormPage'
-import VendorProfilePage from '@/pages/vendor/ProfilePage'
+
+// Admin (lazy loaded for SEO performance)
+const AdminDashboardPage = lazy(() => import('@/pages/admin/DashboardPage'))
+const AdminProductsPage = lazy(() => import('@/pages/admin/ProductsAdminPage'))
+const AdminProductFormPage = lazy(() => import('@/pages/admin/ProductFormPage'))
+const AdminCategoriesPage = lazy(() => import('@/pages/admin/CategoriesAdminPage'))
+const AdminBrandsPage = lazy(() => import('@/pages/admin/BrandsAdminPage'))
+const AdminOrdersPage = lazy(() => import('@/pages/admin/OrdersAdminPage'))
+const AdminOrderDetailPage = lazy(() => import('@/pages/admin/OrderDetailAdminPage'))
+const AdminUsersPage = lazy(() => import('@/pages/admin/UsersAdminPage'))
+const AdminCouponsPage = lazy(() => import('@/pages/admin/CouponsAdminPage'))
+const AdminBannersPage = lazy(() => import('@/pages/admin/BannersAdminPage'))
+const AdminAnalyticsPage = lazy(() => import('@/pages/admin/AnalyticsPage'))
+const AdminSettingsPage = lazy(() => import('@/pages/admin/SettingsPage'))
+const AdminVendorsPage = lazy(() => import('@/pages/admin/VendorsAdminPage'))
+const AdminReviewQueuePage = lazy(() => import('@/pages/admin/ReviewQueuePage'))
+const AdminInvoiceSettingsPage = lazy(() => import('@/pages/admin/InvoiceSettingsPage'))
+const AdminInvoicesPage = lazy(() => import('@/pages/admin/InvoicesPage'))
+const AdminCancellationRequestsPage = lazy(() => import('@/pages/admin/CancellationRequestsAdminPage'))
+
+// Vendor (lazy loaded for SEO performance)
+const VendorDashboardPage = lazy(() => import('@/pages/vendor/DashboardPage'))
+const VendorProductsPage = lazy(() => import('@/pages/vendor/ProductsPage'))
+const VendorProductFormPage = lazy(() => import('@/pages/vendor/ProductFormPage'))
+const VendorProfilePage = lazy(() => import('@/pages/vendor/ProfilePage'))
+
 
 // ─── Router Configuration ───────────────────────────────────────────────────────
 

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useParams } from 'react-router'
 import { motion } from 'framer-motion'
 import { ChevronLeft, ChevronRight, PackageSearch } from 'lucide-react'
-import { useCategories, useProducts, useAddToCart, useToggleWishlist } from '@/hooks'
+import { useCategories, useProducts, useAddToCart, useToggleWishlist, useDocumentMetadata } from '@/hooks'
 import { Breadcrumb } from '@/components/ui/breadcrumb'
 import { Button } from '@/components/ui/button'
 import { Select } from '@/components/ui/select'
@@ -37,6 +37,12 @@ export default function CategoryProductsPage() {
 
   const { data: categories } = useCategories()
   const category = categories?.find((c) => c.slug === slug)
+
+  // Dynamic document metadata for SEO
+  useDocumentMetadata(
+    category ? `${category.name} Catalog` : 'Category Products',
+    category?.description || 'Browse electronics products in this category at student-friendly prices.'
+  )
 
   const { data, isLoading, isError } = useProducts({
     category: slug,

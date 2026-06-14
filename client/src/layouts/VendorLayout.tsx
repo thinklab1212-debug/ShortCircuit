@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { Outlet, Link, useLocation } from 'react-router'
 import { motion } from 'framer-motion'
 import {
@@ -8,6 +8,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Menu,
+  Loader2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { APP } from '@/constants'
@@ -130,7 +131,13 @@ export function VendorLayout() {
             animate={{ opacity: 1, y: 0 } as const}
             transition={{ duration: 0.2 }}
           >
-            <Outlet />
+            <Suspense fallback={
+              <div className="flex items-center justify-center min-h-[400px]">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            }>
+              <Outlet />
+            </Suspense>
           </motion.div>
         </main>
       </div>

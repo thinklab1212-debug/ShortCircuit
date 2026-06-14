@@ -5,7 +5,7 @@ import { Breadcrumb } from '@/components/ui/breadcrumb'
 import { Button } from '@/components/ui/button'
 import { useProductBySlug } from '@/hooks/useProductDetail'
 import { useTrackView } from '@/hooks/useRecentlyViewed'
-import { useAddToCart, useToggleWishlist } from '@/hooks'
+import { useAddToCart, useToggleWishlist, useDocumentMetadata } from '@/hooks'
 import { useAuthStore, useWishlistStore } from '@/store'
 import {
   ProductGallery,
@@ -56,6 +56,12 @@ function ProductDetailSkeleton() {
 export default function ProductDetailPage() {
   const { slug } = useParams<{ slug: string }>()
   const { data: product, isLoading, isError, refetch } = useProductBySlug(slug || '')
+
+  // Dynamic document metadata for SEO
+  useDocumentMetadata(
+    product?.name || '',
+    product?.shortDescription || product?.description?.substring(0, 160)
+  )
 
   // Track recently viewed
   useTrackView(product)
@@ -133,8 +139,56 @@ export default function ProductDetailPage() {
 
   const categoryId = typeof product.category === 'object' ? product.category._id : product.category
 
+  // Construct dynamic JSON-LD Product Schema
+  const price = product ? (product.salePrice ?? product.price) : 0
+  const brandName = product && typeof product.brand === 'object' && product.brand ? product.brand.name : 'Short Circuit'
+  const categoryName = product && typeof product.category === 'object' && product.category ? product.category.name : ''
+  const imagesArray = product?.images?.map((img) => img.url) || []
+
+  const productSchema = product ? {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    'name': product.name,
+    'image': imagesArray.length > 0 ? imagesArray : ['/placeholder.png'],
+    'description': product.shortDescription || product.description?.substring(0, 300),
+    'sku': product.sku,
+    'mpn': product.sku,
+    'brand': {
+      '@type': 'Brand',
+      'name': brandName,
+    },
+    'category': categoryName,
+    'offers': {
+      '@type': 'Offer',
+      'url': window.location.href,
+      'priceCurrency': 'INR',
+      'price': price,
+      'itemCondition': 'https://schema.org/NewCondition',
+      'availability': product.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+      'priceValidUntil': '2030-12-31',
+      'seller': {
+        '@type': 'Organization',
+        'name': 'Short Circuit',
+      },
+    },
+    ...(product.ratingsCount > 0 ? {
+      'aggregateRating': {
+        '@type': 'AggregateRating',
+        'ratingValue': product.ratingsAverage,
+        'reviewCount': product.ratingsCount,
+      },
+    } : {}),
+  } : null
+
   return (
     <div className="container py-6 lg:py-8">
+      {/* Dynamic SEO & Schema */}
+      {productSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
+        />
+      )}
       {/* Breadcrumb */}
       <div className="flex items-center justify-between mb-6">
         <Breadcrumb items={breadcrumbItems} />

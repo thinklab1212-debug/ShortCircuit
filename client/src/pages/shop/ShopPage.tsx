@@ -8,6 +8,7 @@ import { useShopFilters } from '@/hooks/useShopFilters'
 import { useProducts } from '@/hooks/useProducts'
 import { useCategories, useBrands } from '@/hooks/useHomeData'
 import { useProductActions } from '@/hooks/useProductActions'
+import { useDocumentMetadata } from '@/hooks'
 import {
   FilterSidebar,
   ActiveFilterTags,
@@ -57,6 +58,13 @@ function ListSkeleton() {
 
 export default function ShopPage() {
   const { filters, setFilters, clearFilters, activeFilterCount } = useShopFilters()
+
+  // Dynamic document metadata for SEO
+  useDocumentMetadata(
+    filters.search ? `Search results for "${filters.search}"` : 'Shop Electronics Catalog',
+    'Browse and search our selection of microcontrollers, Arduino boards, Raspberry Pi kits, sensors, motors, and drone robotics parts at student-friendly prices.'
+  )
+
   const { data, isLoading, isError, refetch, isFetching } = useProducts(filters)
   const { data: categories } = useCategories()
   const { data: brands } = useBrands()

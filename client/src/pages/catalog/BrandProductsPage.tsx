@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useParams } from 'react-router'
 import { motion } from 'framer-motion'
 import { ChevronLeft, ChevronRight, PackageSearch } from 'lucide-react'
-import { useBrands, useProducts, useAddToCart, useToggleWishlist } from '@/hooks'
+import { useBrands, useProducts, useAddToCart, useToggleWishlist, useDocumentMetadata } from '@/hooks'
 import { Breadcrumb } from '@/components/ui/breadcrumb'
 import { Button } from '@/components/ui/button'
 import { Select } from '@/components/ui/select'
@@ -37,6 +37,12 @@ export default function BrandProductsPage() {
 
   const { data: brands } = useBrands()
   const brand = brands?.find((b) => b.slug === slug)
+
+  // Dynamic document metadata for SEO
+  useDocumentMetadata(
+    brand ? `${brand.name} Electronics` : 'Brand Products',
+    brand?.description || 'Browse electronics components and developer products from this brand at student-friendly prices.'
+  )
 
   const { data, isLoading, isError } = useProducts({
     brand: slug,

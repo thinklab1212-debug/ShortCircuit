@@ -44,6 +44,8 @@ export default function ProductGallery({ images, name }: ProductGalleryProps) {
             src={allImages[selected].url}
             alt={allImages[selected].alt || name}
             className="h-full w-full object-contain"
+            fetchPriority={selected === 0 ? "high" : "auto"}
+            loading={selected === 0 ? "eager" : "lazy"}
             style={
               zoomed
                 ? {
@@ -75,6 +77,7 @@ export default function ProductGallery({ images, name }: ProductGalleryProps) {
                 src={img.url}
                 alt={img.alt || `${name} ${i + 1}`}
                 className="h-full w-full object-contain"
+                loading="lazy"
               />
             </button>
           ))}

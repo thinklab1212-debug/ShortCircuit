@@ -1,0 +1,22 @@
+User-agent: *
+Allow: /
+Allow: /sitemap.xml
+
+# Block Indexation of Protected and Dynamic State Pages
+Disallow: /cart
+Disallow: /wishlist
+Disallow: /checkout
+Disallow: /profile
+Disallow: /orders
+Disallow: /addresses
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+Disallow: /reset-password
+
+# Block Dashboard Paths
+Disallow: /admin/
+Disallow: /vendor/
+
+# Sitemap Location
+Sitemap: https://shortcircuit.com/sitemap.xml
