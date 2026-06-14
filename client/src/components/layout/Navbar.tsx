@@ -84,7 +84,7 @@ export function Navbar() {
             <NavLink href="/projects">Projects</NavLink>
             <NavLink href="/categories">Categories</NavLink>
             <NavLink href="/brands">Brands</NavLink>
-            <NavLink href="/deals">Deals</NavLink>
+            {/* <NavLink href="/deals">Deals</NavLink> */}
           </nav>
 
           {/* Desktop Search */}
