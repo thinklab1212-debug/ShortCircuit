@@ -32,7 +32,12 @@ export const corsOptions: CorsOptions = {
       return callback(null, true);
     }
 
-    if (ALLOWED_ORIGINS.indexOf(origin) !== -1 || env.IS_DEVELOPMENT) {
+    const isAllowed =
+      ALLOWED_ORIGINS.indexOf(origin) !== -1 ||
+      origin.endsWith('.vercel.app') ||
+      env.IS_DEVELOPMENT;
+
+    if (isAllowed) {
       callback(null, true);
     } else {
       callback(new Error(`Not allowed by CORS: Origin ${origin} is not whitelisted.`));
