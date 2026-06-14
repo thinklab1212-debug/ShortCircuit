@@ -7,7 +7,8 @@ const router = Router();
 
 router.get('/sitemap.xml', async (req, res, next) => {
   try {
-    const DOMAIN = 'https://shortcircuit.com';
+    const rawClientUrl = process.env.CLIENT_URL || 'https://www.shortcircuit.co.in';
+    const DOMAIN = rawClientUrl.replace(/\/$/, '');
 
     // Fetch active and approved models with slugs
     const products = await Product.find({ approvalStatus: 'approved', isActive: true }, 'slug updatedAt');
