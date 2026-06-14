@@ -22,14 +22,20 @@ export const sendContactEmail = asyncHandler(async (req: Request, res: Response)
     throw ApiError.internal('Contact SMTP service is not configured. Please define GMAIL_APP_PASSWORD in your environment.');
   }
 
-  // Create transporter using service 'gmail' (recommended for Google accounts using App Passwords)
+  // Create transporter using explicit host and port 465 (secure SSL)
+  // This is more robust on certain hosting environments than the 'gmail' service alias.
   const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
+    family: 4, // Force IPv4 to prevent IPv6 ENETUNREACH error on host environment
     auth: {
       user: smtpUser,
       pass: smtpPass,
     },
-  });
+    connectionTimeout: 10000, // 10 seconds connection timeout limit
+    greetingTimeout: 10000,
+  } as any);
 
   const mailOptions = {
     from: `"Short Circuit Contact Form" <${smtpUser}>`,
