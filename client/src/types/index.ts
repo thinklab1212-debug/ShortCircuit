@@ -468,6 +468,25 @@ export interface PaymentDetails {
   razorpaySignature?: string
 }
 
+export interface CancellationRequest {
+  requested: boolean
+  requestedAt?: string
+  category?:
+    | 'ordered_by_mistake'
+    | 'found_better_price'
+    | 'delivery_delay'
+    | 'address_issue'
+    | 'financial_reason'
+    | 'duplicate_order'
+    | 'other'
+  reason: string
+  status: 'pending' | 'approved' | 'rejected'
+  adminResponse?: string
+  internalAdminNote?: string
+  reviewedAt?: string
+  reviewedBy?: string
+}
+
 export interface Order {
   _id: string
   orderId: string
@@ -492,6 +511,7 @@ export interface Order {
   shippingCarrier?: string
   cancelledAt?: string
   cancellationReason?: string
+  cancellationRequest?: CancellationRequest
   invoiceUrl?: string
   invoiceNumber?: string
   customerNote?: string

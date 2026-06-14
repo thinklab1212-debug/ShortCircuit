@@ -27,7 +27,7 @@ export {
 } from './useProductDetail'
 export { useCart, useAddToCart, useUpdateCartItem, useRemoveCartItem, useClearCart, useCartTotals } from './useCart'
 export { useWishlist, useToggleWishlist, useRemoveFromWishlist } from './useWishlist'
-export { useMyOrders, useOrder, usePlaceOrder, useCancelOrder } from './useOrders'
+export { useMyOrders, useOrder, usePlaceOrder, useCancelOrder, useRequestCancellation } from './useOrders'
 export {
   useAddresses,
   useCreateAddress,

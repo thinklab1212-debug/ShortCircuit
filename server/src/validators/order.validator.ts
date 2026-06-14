@@ -86,10 +86,47 @@ export const trackingUpdateSchema = z.object({
     .min(3, 'Tracking ID must be at least 3 characters'),
 });
 
+export const cancellationRequestSchema = z.object({
+  category: z.enum([
+    'ordered_by_mistake',
+    'found_better_price',
+    'delivery_delay',
+    'address_issue',
+    'financial_reason',
+    'duplicate_order',
+    'other'
+  ], {
+    errorMap: () => ({ message: 'Invalid cancellation category.' }),
+  }),
+  reason: z
+    .string({ required_error: 'Reason is required.' })
+    .trim()
+    .min(20, 'Reason must be at least 20 characters.')
+    .max(500, 'Reason must not exceed 500 characters.'),
+});
+
+export const adminReviewCancellationSchema = z.object({
+  action: z.enum(['approve', 'reject'], {
+    errorMap: () => ({ message: "Action must be either 'approve' or 'reject'." }),
+  }),
+  adminResponse: z
+    .string()
+    .trim()
+    .max(500, 'Customer response must not exceed 500 characters.')
+    .optional(),
+  internalAdminNote: z
+    .string()
+    .trim()
+    .max(1000, 'Internal note must not exceed 1000 characters.')
+    .optional(),
+});
+
 export default {
   createOrderSchema,
   updateOrderStatusSchema,
   trackingUpdateSchema,
+  cancellationRequestSchema,
+  adminReviewCancellationSchema,
   ORDER_STATUSES,
   PAYMENT_METHODS,
 };

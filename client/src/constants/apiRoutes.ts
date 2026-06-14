@@ -83,11 +83,15 @@ const API_ROUTES = {
     BASE: '/orders',
     BY_ID: (id: string) => `/orders/${id}`,
     CANCEL: (id: string) => `/orders/${id}/cancel`,
+    CANCELLATION_REQUEST: (id: string) => `/orders/${id}/cancellation-request`,
     INVOICE: (id: string) => `/orders/${id}/invoice`,
     ADMIN_ALL: '/orders/admin/all',
     ADMIN_BY_ID: (id: string) => `/orders/admin/${id}`,
     ADMIN_STATUS: (id: string) => `/orders/admin/${id}/status`,
     ADMIN_TRACKING: (id: string) => `/orders/admin/${id}/tracking`,
+    ADMIN_CANCELLATION_REQUESTS: '/admin/cancellation-requests',
+    ADMIN_CANCELLATION_REQUESTS_PENDING_COUNT: '/admin/cancellation-requests/pending-count',
+    ADMIN_CANCELLATION_REQUESTS_BY_ID: (id: string) => `/admin/cancellation-requests/${id}`,
   },
 
   // Invoice Settings

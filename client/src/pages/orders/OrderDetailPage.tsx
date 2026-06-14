@@ -17,7 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Textarea } from '@/components/ui/textarea'
 import { Loader } from '@/components/ui/loader'
-import { useOrder, useCancelOrder } from '@/hooks'
+import { useOrder, useRequestCancellation } from '@/hooks'
 import { orderApi } from '@/services'
 import { formatPrice, formatDate, formatDateTime, capitalize } from '@/utils'
 import { ORDER_STATUS_LABELS } from '@/constants'
@@ -37,21 +37,27 @@ const PROGRESSION: OrderStatus[] = [
   'delivered',
 ]
 
-// ─── Cancel Modal ─────────────────────────────────────────────────────────────
+// ─── Request Cancellation Modal ──────────────────────────────────────────────
 
-function CancelModal({
+function RequestCancellationModal({
   open,
   onClose,
   onConfirm,
   loading,
+  orderStatus,
 }: {
   open: boolean
   onClose: () => void
-  onConfirm: (reason: string) => void
+  onConfirm: (category: string, reason: string) => void
   loading: boolean
+  orderStatus: string
 }) {
+  const [category, setCategory] = useState('')
   const [reason, setReason] = useState('')
+
   if (!open) return null
+
+  const isValid = category !== '' && reason.trim().length >= 20 && reason.trim().length <= 500
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm">
@@ -60,29 +66,73 @@ function CancelModal({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-lg"
       >
-        <h3 className="text-lg font-semibold text-foreground">Cancel Order</h3>
+        <h3 className="text-lg font-semibold text-foreground">Request Order Cancellation</h3>
         <p className="mt-1 text-sm text-muted-foreground">
-          Please tell us why you are cancelling this order.
+          Submit a request to cancel your order. Admin review is required.
         </p>
-        <Textarea
-          className="mt-4"
-          rows={3}
-          placeholder="Reason for cancellation..."
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
-        />
+
+        {orderStatus === 'shipped' && (
+          <div className="mt-3 rounded-lg border border-yellow-200 bg-yellow-50/50 p-3 text-xs text-yellow-800 dark:border-yellow-950/30 dark:bg-yellow-950/20 dark:text-yellow-300">
+            <strong>⚠️ Shipped Status Warning:</strong> This order has already been shipped. Cancellation approval may not be possible once the package is in transit with the courier.
+          </div>
+        )}
+
+        <div className="mt-4 space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">
+              Category
+            </label>
+            <select
+              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+            >
+              <option value="">Select cancellation reason category...</option>
+              <option value="ordered_by_mistake">Ordered by mistake</option>
+              <option value="found_better_price">Found better price</option>
+              <option value="delivery_delay">Delivery delay</option>
+              <option value="address_issue">Address issue</option>
+              <option value="financial_reason">Financial reason</option>
+              <option value="duplicate_order">Duplicate order</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">
+              Detailed Explanation ({reason.trim().length}/500)
+            </label>
+            <Textarea
+              rows={4}
+              placeholder="Please provide details (minimum 20 characters)..."
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+            />
+            {reason.trim().length > 0 && reason.trim().length < 20 && (
+              <p className="mt-1 text-xs text-error-500">
+                Reason must be at least 20 characters long.
+              </p>
+            )}
+            {reason.trim().length > 500 && (
+              <p className="mt-1 text-xs text-error-500">
+                Reason must not exceed 500 characters.
+              </p>
+            )}
+          </div>
+        </div>
+
         <div className="mt-5 flex justify-end gap-3">
           <Button variant="ghost" onClick={onClose} disabled={loading}>
-            Keep Order
+            Close
           </Button>
           <Button
             variant="destructive"
             loading={loading}
-            loadingText="Cancelling..."
-            disabled={reason.trim().length === 0}
-            onClick={() => onConfirm(reason.trim())}
+            loadingText="Submitting..."
+            disabled={!isValid}
+            onClick={() => onConfirm(category, reason.trim())}
           >
-            Cancel Order
+            Submit Request
           </Button>
         </div>
       </motion.div>
@@ -172,12 +222,26 @@ function StatusTimeline({
   )
 }
 
+const formatCategory = (category?: string) => {
+  if (!category) return '';
+  const labels: Record<string, string> = {
+    ordered_by_mistake: 'Ordered by mistake',
+    found_better_price: 'Found better price',
+    delivery_delay: 'Delivery delay',
+    address_issue: 'Address issue',
+    financial_reason: 'Financial reason',
+    duplicate_order: 'Duplicate order',
+    other: 'Other',
+  };
+  return labels[category] || capitalize(category.replace(/_/g, ' '));
+};
+
 // ─── Order Detail Page ────────────────────────────────────────────────────────
 
 export default function OrderDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { data: order, isLoading, isError } = useOrder(id || '')
-  const cancelOrder = useCancelOrder()
+  const requestCancellation = useRequestCancellation()
   const [cancelOpen, setCancelOpen] = useState(false)
   const [invoiceLoading, setInvoiceLoading] = useState(false)
 
@@ -208,12 +272,17 @@ export default function OrderDetailPage() {
     )
   }
 
-  const canCancel = order.orderStatus === 'placed' || order.orderStatus === 'confirmed'
+  const canRequestCancellation =
+    order.orderStatus !== 'delivered' &&
+    order.orderStatus !== 'cancelled' &&
+    order.orderStatus !== 'returned' &&
+    !order.cancellationRequest?.requested;
+
   const addr = order.shippingAddress
 
-  const handleCancel = (reason: string) => {
-    cancelOrder.mutate(
-      { id: order._id, reason },
+  const handleRequestCancellation = (category: string, reason: string) => {
+    requestCancellation.mutate(
+      { id: order._id, category, reason },
       { onSuccess: () => setCancelOpen(false) }
     )
   }
@@ -281,13 +350,13 @@ export default function OrderDetailPage() {
                     Invoice will be available after successful delivery and payment completion.
                   </p>
                 )}
-                {canCancel && (
+                {canRequestCancellation && (
                   <Button
                     variant="soft-destructive"
                     size="sm"
                     onClick={() => setCancelOpen(true)}
                   >
-                    Cancel Order
+                    Request Cancellation
                   </Button>
                 )}
               </div>
@@ -339,11 +408,71 @@ export default function OrderDetailPage() {
             <CardHeader>
               <CardTitle>Order Status</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-6">
               <StatusTimeline currentStatus={order.orderStatus} history={order.statusHistory} />
-              {order.cancellationReason && (
-                <div className="mt-4 rounded-lg bg-error-50 p-3 text-sm text-error-700 dark:bg-error-950/50 dark:text-error-300">
-                  Reason: {order.cancellationReason}
+              
+              {order.cancellationRequest?.requested && (
+                <div className="mt-6 border-t border-border pt-6">
+                  <h4 className="text-sm font-semibold flex items-center gap-2 text-error-600 dark:text-error-400 mb-4">
+                    <XCircle className="h-4 w-4 animate-pulse" /> Cancellation Request Details
+                  </h4>
+                  <div className="relative border-l border-border pl-4 ml-2 space-y-4">
+                    {/* Step 1: Requested */}
+                    <div className="relative">
+                      <span className="absolute -left-[21px] mt-1.5 flex h-2.5 w-2.5 rounded-full bg-primary" />
+                      <p className="text-xs font-semibold text-foreground">Cancellation Requested</p>
+                      {order.cancellationRequest.requestedAt && (
+                        <p className="text-[10px] text-muted-foreground">
+                          {formatDateTime(order.cancellationRequest.requestedAt)}
+                        </p>
+                      )}
+                      <p className="mt-1.5 text-xs text-muted-foreground">
+                        <strong>Category:</strong> {formatCategory(order.cancellationRequest.category)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        <strong>Reason:</strong> {order.cancellationRequest.reason}
+                      </p>
+                    </div>
+
+                    {/* Step 2: Pending Review */}
+                    {order.cancellationRequest.status === 'pending' && (
+                      <div className="relative">
+                        <span className="absolute -left-[21px] mt-1.5 flex h-2.5 w-2.5 rounded-full bg-yellow-500 animate-pulse" />
+                        <p className="text-xs font-semibold text-yellow-600 dark:text-yellow-400">Admin Review Pending</p>
+                        <p className="text-[10px] text-muted-foreground">Our support team is reviewing your request.</p>
+                      </div>
+                    )}
+
+                    {/* Step 3: Approved / Rejected */}
+                    {order.cancellationRequest.status !== 'pending' && (
+                      <div className="relative">
+                        <span
+                          className={cn(
+                            "absolute -left-[21px] mt-1.5 flex h-2.5 w-2.5 rounded-full",
+                            order.cancellationRequest.status === 'approved' ? 'bg-success-500' : 'bg-error-500'
+                          )}
+                        />
+                        <p
+                          className={cn(
+                            "text-xs font-semibold uppercase tracking-wider",
+                            order.cancellationRequest.status === 'approved' ? 'text-success-600 dark:text-success-400' : 'text-error-600 dark:text-error-400'
+                          )}
+                        >
+                          Cancellation Request {capitalize(order.cancellationRequest.status)}
+                        </p>
+                        {order.cancellationRequest.reviewedAt && (
+                          <p className="text-[10px] text-muted-foreground">
+                            {formatDateTime(order.cancellationRequest.reviewedAt)}
+                          </p>
+                        )}
+                        {order.cancellationRequest.adminResponse && (
+                          <div className="mt-1.5 rounded bg-muted p-2 text-xs text-foreground italic border-l-2 border-border">
+                            "{order.cancellationRequest.adminResponse}"
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </CardContent>
@@ -438,11 +567,12 @@ export default function OrderDetailPage() {
         </div>
       </div>
 
-      <CancelModal
+      <RequestCancellationModal
         open={cancelOpen}
         onClose={() => setCancelOpen(false)}
-        onConfirm={handleCancel}
-        loading={cancelOrder.isPending}
+        onConfirm={handleRequestCancellation}
+        loading={requestCancellation.isPending}
+        orderStatus={order.orderStatus}
       />
     </div>
   )

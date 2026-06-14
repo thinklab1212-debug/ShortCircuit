@@ -24,6 +24,7 @@ import searchRoutes from './search.routes.js';
 import vendorRoutes from './vendor.routes.js';
 import adminVendorRoutes from './adminVendor.routes.js';
 import invoiceSettingsRoutes from './invoiceSettings.routes.js';
+import adminCancellationRoutes from './adminCancellation.routes.js';
 
 const router = Router();
 
@@ -46,6 +47,7 @@ router.use('/search', searchRoutes);
 router.use('/vendor', vendorRoutes);
 router.use('/admin/vendors', adminVendorRoutes);
 router.use('/admin/invoice-settings', invoiceSettingsRoutes);
+router.use('/admin/cancellation-requests', adminCancellationRoutes);
 
 
 export default router;

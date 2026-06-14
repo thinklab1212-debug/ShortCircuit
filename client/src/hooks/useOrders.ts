@@ -53,3 +53,17 @@ export function useCancelOrder() {
     onError: (error: AxiosErrorLike) => toast.error(errMsg(error, 'Could not cancel order')),
   })
 }
+
+export function useRequestCancellation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, category, reason }: { id: string; category: string; reason: string }) =>
+      orderApi.requestCancellation(id, { category, reason }).then((res) => res.data.data),
+    onSuccess: (order) => {
+      toast.success('Cancellation request submitted')
+      queryClient.invalidateQueries({ queryKey: queryKeys.orders.all })
+      queryClient.setQueryData(queryKeys.orders.detail(order._id), order)
+    },
+    onError: (error: AxiosErrorLike) => toast.error(errMsg(error, 'Could not submit cancellation request')),
+  })
+}

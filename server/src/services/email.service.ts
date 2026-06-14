@@ -104,6 +104,114 @@ export class EmailService {
     `;
     return this.sendEmail(to, subject, html);
   }
+
+  /**
+   * Sends an email confirming a cancellation request has been submitted.
+   */
+  public static async sendCancellationSubmittedEmail(
+    to: string,
+    firstName: string,
+    orderId: string,
+    category: string,
+    reason: string
+  ): Promise<boolean> {
+    const subject = 'Order Cancellation Request Received';
+    const categoryLabels: Record<string, string> = {
+      ordered_by_mistake: 'Ordered by mistake',
+      found_better_price: 'Found better price',
+      delivery_delay: 'Delivery delay',
+      address_issue: 'Address issue',
+      financial_reason: 'Financial reason',
+      duplicate_order: 'Duplicate order',
+      other: 'Other',
+    };
+    const humanCategory = categoryLabels[category] || category;
+    const requestDate = new Date().toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+        <h2 style="color: #2563eb; text-align: center;">Cancellation Request Received</h2>
+        <p>Hi ${firstName},</p>
+        <p>We have received your request to cancel order <strong>${orderId}</strong>. Our team is currently reviewing your request.</p>
+        <div style="background-color: #f3f4f6; padding: 15px; border-radius: 5px; margin: 20px 0;">
+          <h4 style="margin: 0 0 10px 0; color: #374151;">Request Details</h4>
+          <p style="margin: 5px 0;"><strong>Order ID:</strong> ${orderId}</p>
+          <p style="margin: 5px 0;"><strong>Request Date:</strong> ${requestDate}</p>
+          <p style="margin: 5px 0;"><strong>Category:</strong> ${humanCategory}</p>
+          <p style="margin: 5px 0;"><strong>Reason:</strong> ${reason}</p>
+        </div>
+        <p>Please note that orders are processed quickly. If the order has already shipped, cancellation may not be possible.</p>
+        <div style="text-align: center; margin: 25px 0;">
+          <a href="${env.CLIENT_URL}/profile/orders" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Check Order Status</a>
+        </div>
+        <hr style="border: 0; border-top: 1px solid #eeeeee;" />
+        <p style="font-size: 12px; color: #777777; text-align: center;">This is an automated transactional email from ElectroKart.</p>
+      </div>
+    `;
+    return this.sendEmail(to, subject, html);
+  }
+
+  /**
+   * Sends an email confirming a cancellation request has been approved.
+   */
+  public static async sendCancellationApprovedEmail(
+    to: string,
+    firstName: string,
+    orderId: string
+  ): Promise<boolean> {
+    const subject = 'Order Cancellation Approved';
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+        <h2 style="color: #10b981; text-align: center;">Order Cancelled</h2>
+        <p>Hi ${firstName},</p>
+        <p>Your request to cancel order <strong>${orderId}</strong> has been approved. The order has been cancelled.</p>
+        <div style="background-color: #f3f4f6; padding: 15px; border-radius: 5px; margin: 20px 0;">
+          <p style="margin: 5px 0;"><strong>Order ID:</strong> ${orderId}</p>
+          <p style="margin: 5px 0;"><strong>Status:</strong> Cancelled</p>
+        </div>
+        <p>If you have already paid for this order, your refund will be processed separately according to our refund policies.</p>
+        <hr style="border: 0; border-top: 1px solid #eeeeee;" />
+        <p style="font-size: 12px; color: #777777; text-align: center;">This is an automated transactional email from ElectroKart.</p>
+      </div>
+    `;
+    return this.sendEmail(to, subject, html);
+  }
+
+  /**
+   * Sends an email confirming a cancellation request has been rejected.
+   */
+  public static async sendCancellationRejectedEmail(
+    to: string,
+    firstName: string,
+    orderId: string,
+    adminResponse?: string
+  ): Promise<boolean> {
+    const subject = 'Order Cancellation Request Rejected';
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+        <h2 style="color: #dc2626; text-align: center;">Cancellation Request Rejected</h2>
+        <p>Hi ${firstName},</p>
+        <p>Your request to cancel order <strong>${orderId}</strong> has been rejected. Your order will proceed as planned.</p>
+        <div style="background-color: #f3f4f6; padding: 15px; border-radius: 5px; margin: 20px 0;">
+          <p style="margin: 5px 0;"><strong>Order ID:</strong> ${orderId}</p>
+          ${adminResponse ? `<p style="margin: 5px 0;"><strong>Admin Response:</strong> ${adminResponse}</p>` : ''}
+        </div>
+        <p>If you have any questions or require further assistance, please contact our support team.</p>
+        <div style="text-align: center; margin: 25px 0;">
+          <a href="${env.CLIENT_URL}/profile/orders" style="background-color: #dc2626; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">View Order</a>
+        </div>
+        <hr style="border: 0; border-top: 1px solid #eeeeee;" />
+        <p style="font-size: 12px; color: #777777; text-align: center;">This is an automated transactional email from ElectroKart.</p>
+      </div>
+    `;
+    return this.sendEmail(to, subject, html);
+  }
 }
 
 export default EmailService;

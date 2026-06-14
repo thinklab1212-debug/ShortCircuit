@@ -43,6 +43,7 @@ import AdminVendorsPage from '@/pages/admin/VendorsAdminPage'
 import AdminReviewQueuePage from '@/pages/admin/ReviewQueuePage'
 import AdminInvoiceSettingsPage from '@/pages/admin/InvoiceSettingsPage'
 import AdminInvoicesPage from '@/pages/admin/InvoicesPage'
+import AdminCancellationRequestsPage from '@/pages/admin/CancellationRequestsAdminPage'
 // Vendor
 import VendorDashboardPage from '@/pages/vendor/DashboardPage'
 import VendorProductsPage from '@/pages/vendor/ProductsPage'
@@ -116,6 +117,7 @@ export const router = createBrowserRouter([
       { path: 'review-queue', element: <AdminReviewQueuePage /> },
       { path: 'invoice-settings', element: <AdminInvoiceSettingsPage /> },
       { path: 'invoices', element: <AdminInvoicesPage /> },
+      { path: 'cancellation-requests', element: <AdminCancellationRequestsPage /> },
     ],
   },
 

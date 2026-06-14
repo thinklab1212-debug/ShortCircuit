@@ -194,7 +194,9 @@ export class OrderService {
     userId: string,
     userRole: string
   ): Promise<InstanceType<typeof Order>> {
-    const order = await Order.findById(orderId);
+    const order = userRole === 'admin'
+      ? await Order.findById(orderId).select('+cancellationRequest.internalAdminNote +adminNote')
+      : await Order.findById(orderId);
     if (!order) {
       throw ApiError.notFound('Order not found.');
     }
@@ -225,9 +227,9 @@ export class OrderService {
         throw ApiError.notFound('Order not found.');
       }
 
-      // Check ownership
-      if (userRole !== 'admin' && order.user.toString() !== userId.toString()) {
-        throw ApiError.forbidden('You do not have permission to cancel this order.');
+      // Check role
+      if (userRole !== 'admin') {
+        throw ApiError.forbidden('Only administrators can cancel orders directly.');
       }
 
       // Cancel restrictions: only allow before shipping
@@ -254,6 +256,8 @@ export class OrderService {
       // Update order status
       order.orderStatus = 'cancelled';
       order.cancelledAt = new Date();
+      order.cancelledBy = new mongoose.Types.ObjectId(userId);
+      order.cancellationApprovedAt = new Date();
       order.cancellationReason = cancellationReason;
       
       // Update payment status if already paid
@@ -264,7 +268,7 @@ export class OrderService {
       order.statusHistory.push({
         status: 'cancelled',
         timestamp: new Date(),
-        note: `Order cancelled. Reason: ${cancellationReason}`,
+        note: `Order cancelled by admin. Reason: ${cancellationReason}`,
         updatedBy: userId as any,
       });
 
@@ -279,6 +283,226 @@ export class OrderService {
       session.endSession();
       throw error;
     }
+  }
+
+  /**
+   * Submits a cancellation request on behalf of a customer.
+   */
+  public static async requestCancellation(
+    orderId: string,
+    userId: string,
+    category: string,
+    reason: string
+  ): Promise<InstanceType<typeof Order>> {
+    const order = await Order.findById(orderId);
+    if (!order) {
+      throw ApiError.notFound('Order not found.');
+    }
+
+    // Check ownership
+    if (order.user.toString() !== userId.toString()) {
+      throw ApiError.forbidden('You do not have permission to request cancellation for this order.');
+    }
+
+    // Block cancellation after delivery, or if already cancelled/returned
+    if (
+      order.orderStatus === 'delivered' ||
+      order.orderStatus === 'cancelled' ||
+      order.orderStatus === 'returned'
+    ) {
+      throw ApiError.forbidden('Cannot request cancellation after delivery, or if the order is already cancelled or returned.');
+    }
+
+    // Prevent duplicate requests
+    if (order.cancellationRequest?.status === 'pending') {
+      throw ApiError.conflict('A cancellation request is already pending for this order.');
+    }
+
+    // Save cancellation request details
+    order.cancellationRequest = {
+      requested: true,
+      requestedAt: new Date(),
+      category: category as any,
+      reason,
+      status: 'pending',
+    };
+
+    // Add status history entry
+    order.statusHistory.push({
+      status: order.orderStatus,
+      timestamp: new Date(),
+      note: `Cancellation requested. Category: ${category}, Reason: ${reason}`,
+      updatedBy: new mongoose.Types.ObjectId(userId),
+    });
+
+    await order.save();
+
+    // Send confirmation email
+    const user = await User.findById(userId).select('email firstName');
+    if (user) {
+      await EmailService.sendCancellationSubmittedEmail(
+        user.email,
+        user.firstName,
+        order.orderId,
+        category,
+        reason
+      );
+    }
+
+    return order;
+  }
+
+  /**
+   * Administrative review of a cancellation request.
+   */
+  public static async reviewCancellationRequest(
+    orderId: string,
+    action: 'approve' | 'reject',
+    adminResponse: string | undefined,
+    internalAdminNote: string | undefined,
+    adminUserId: string
+  ): Promise<InstanceType<typeof Order>> {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      const order = await Order.findById(orderId).session(session);
+      if (!order) {
+        throw ApiError.notFound('Order not found.');
+      }
+
+      if (!order.cancellationRequest || !order.cancellationRequest.requested) {
+        throw ApiError.badRequest('No cancellation request exists for this order.');
+      }
+
+      if (order.cancellationRequest.status !== 'pending') {
+        throw ApiError.badRequest(`This cancellation request has already been ${order.cancellationRequest.status}.`);
+      }
+
+      const user = await User.findById(order.user).session(session);
+      const customerEmail = user?.email || '';
+      const customerName = user?.firstName || 'Customer';
+
+      if (action === 'approve') {
+        // Stock restoration rule: ONLY IF orderStatus !== 'delivered'
+        if (order.orderStatus !== 'delivered') {
+          for (const item of order.items) {
+            const variantName = item.variant?.name;
+            const variantValue = item.variant?.value;
+            
+            await ProductService.increaseStock(
+              item.product.toString(),
+              variantName,
+              variantValue,
+              item.quantity,
+              session
+            );
+          }
+        }
+
+        // Update order status
+        order.orderStatus = 'cancelled';
+        order.cancelledAt = new Date();
+        order.cancelledBy = new mongoose.Types.ObjectId(adminUserId);
+        order.cancellationApprovedAt = new Date();
+        order.cancellationReason = order.cancellationRequest.reason;
+
+        if (order.paymentStatus === 'paid') {
+          order.paymentStatus = 'refunded';
+        }
+
+        // Update cancellationRequest status
+        order.cancellationRequest.status = 'approved';
+        order.cancellationRequest.reviewedAt = new Date();
+        order.cancellationRequest.reviewedBy = new mongoose.Types.ObjectId(adminUserId);
+        order.cancellationRequest.adminResponse = adminResponse;
+        order.cancellationRequest.internalAdminNote = internalAdminNote;
+
+        order.statusHistory.push({
+          status: 'cancelled',
+          timestamp: new Date(),
+          note: `Order cancellation approved by admin. Response: ${adminResponse || 'None'}. Internal note: ${internalAdminNote || 'None'}`,
+          updatedBy: new mongoose.Types.ObjectId(adminUserId),
+        });
+
+        await order.save({ session });
+        await session.commitTransaction();
+        session.endSession();
+
+        // Send approval email
+        if (customerEmail) {
+          await EmailService.sendCancellationApprovedEmail(customerEmail, customerName, order.orderId);
+        }
+      } else {
+        // action === 'reject'
+        order.cancellationRequest.status = 'rejected';
+        order.cancellationRequest.reviewedAt = new Date();
+        order.cancellationRequest.reviewedBy = new mongoose.Types.ObjectId(adminUserId);
+        order.cancellationRequest.adminResponse = adminResponse;
+        order.cancellationRequest.internalAdminNote = internalAdminNote;
+
+        order.statusHistory.push({
+          status: order.orderStatus,
+          timestamp: new Date(),
+          note: `Order cancellation request rejected by admin. Response: ${adminResponse || 'None'}. Internal note: ${internalAdminNote || 'None'}`,
+          updatedBy: new mongoose.Types.ObjectId(adminUserId),
+        });
+
+        await order.save({ session });
+        await session.commitTransaction();
+        session.endSession();
+
+        // Send rejection email
+        if (customerEmail) {
+          await EmailService.sendCancellationRejectedEmail(
+            customerEmail,
+            customerName,
+            order.orderId,
+            adminResponse
+          );
+        }
+      }
+
+      return order;
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      throw error;
+    }
+  }
+
+  /**
+   * Retrieves orders with cancellation requests (paginated, for Admin).
+   */
+  public static async getCancellationRequests(queryParams: any) {
+    const { filter, sort } = buildOrderFilters(queryParams);
+    
+    // Constrain to cancellation requests
+    const updatedFilter: any = {
+      ...filter,
+      'cancellationRequest.requested': true,
+    };
+
+    // Filter by request status if specified
+    if (queryParams.requestStatus) {
+      updatedFilter['cancellationRequest.status'] = queryParams.requestStatus;
+    }
+
+    return executePaginatedQuery(Order, updatedFilter, {
+      ...queryParams,
+      sort: queryParams.sort || '-cancellationRequest.requestedAt',
+      populate: [{ path: 'user', select: 'firstName lastName email' }],
+    });
+  }
+
+  /**
+   * Fetches the count of pending cancellation requests (for Admin priority badge).
+   */
+  public static async getPendingCancellationCount(): Promise<number> {
+    return Order.countDocuments({
+      'cancellationRequest.requested': true,
+      'cancellationRequest.status': 'pending',
+    });
   }
 
   /**

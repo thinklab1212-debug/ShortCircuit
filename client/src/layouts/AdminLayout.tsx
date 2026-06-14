@@ -18,12 +18,15 @@ import {
   Store,
   ClipboardCheck,
   Receipt,
+  XCircle,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { APP } from '@/constants'
 import { BrandLogo } from '@/components/layout/BrandLogo'
 import { useIsMobile } from '@/hooks'
 import { ScrollToTop } from '@/components/layout/ScrollToTop'
+import { useQuery } from '@tanstack/react-query'
+import { orderApi } from '@/services'
 
 // ─── Admin Layout ───────────────────────────────────────────────────────────────
 
@@ -33,6 +36,7 @@ const sidebarLinks = [
   { label: 'Categories', href: '/admin/categories', icon: Tags },
   { label: 'Brands', href: '/admin/brands', icon: Building2 },
   { label: 'Orders', href: '/admin/orders', icon: ShoppingBag },
+  { label: 'Cancellation Requests', href: '/admin/cancellation-requests', icon: XCircle },
   { label: 'Invoices', href: '/admin/invoices', icon: Receipt },
   { label: 'Users', href: '/admin/users', icon: Users },
   { label: 'Vendors', href: '/admin/vendors', icon: Store },
@@ -49,6 +53,13 @@ export function AdminLayout() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const location = useLocation()
   const isMobile = useIsMobile()
+
+  const { data: countData } = useQuery({
+    queryKey: ['admin', 'cancellation-requests', 'pending-count'],
+    queryFn: () => orderApi.getPendingCancellationCount().then((res) => res.data.data),
+    refetchInterval: 30000,
+  })
+  const pendingCount = countData?.count || 0
 
   const isActive = (href: string) => {
     if (href === '/admin') return location.pathname === '/admin'
@@ -102,14 +113,21 @@ export function AdminLayout() {
                 to={link.href}
                 onClick={() => isMobile && setMobileOpen(false)}
                 className={cn(
-                  'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all',
+                  'flex items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium transition-all',
                   active
                     ? 'bg-primary/10 text-primary border border-primary/20'
                     : 'text-muted-foreground hover:bg-accent hover:text-foreground'
                 )}
               >
-                <Icon className="h-4 w-4 shrink-0" />
-                {!collapsed && <span>{link.label}</span>}
+                <div className="flex items-center gap-3">
+                  <Icon className="h-4 w-4 shrink-0" />
+                  {!collapsed && <span>{link.label}</span>}
+                </div>
+                {!collapsed && link.label === 'Cancellation Requests' && pendingCount > 0 && (
+                  <span className="flex h-5 items-center justify-center rounded-full bg-error-500 px-2 text-[10px] font-bold text-white leading-none">
+                    {pendingCount}
+                  </span>
+                )}
               </Link>
             )
           })}

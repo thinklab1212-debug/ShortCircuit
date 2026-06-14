@@ -13,6 +13,7 @@ import {
   trackingUpdateSchema,
   objectIdSchema,
   paginationQuerySchema,
+  cancellationRequestSchema,
 } from '../validators/index.js';
 import { z } from 'zod';
 
@@ -116,6 +117,38 @@ router.get('/:orderId', validate({ params: z.object({ orderId: objectIdSchema })
  *         description: Order cancelled successfully
  */
 router.patch('/:orderId/cancel', validate({ params: z.object({ orderId: objectIdSchema }), body: z.object({ cancellationReason: z.string({ required_error: 'Cancellation reason is required' }).trim().min(5, 'Reason must be at least 5 characters') }) }), OrderController.cancelOrder);
+
+/**
+ * @openapi
+ * /orders/{orderId}/cancellation-request:
+ *   post:
+ *     summary: Request cancellation for an order (Customer only)
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: orderId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [category, reason]
+ *             properties:
+ *               category:
+ *                 type: string
+ *               reason:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Cancellation request submitted successfully
+ */
+router.post('/:orderId/cancellation-request', validate({ params: z.object({ orderId: objectIdSchema }), body: cancellationRequestSchema }), OrderController.requestCancellation);
 
 /**
  * @openapi

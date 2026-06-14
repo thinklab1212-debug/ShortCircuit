@@ -108,6 +108,25 @@ export interface IInvoiceSnapshot {
   paymentStatus: string;
 }
 
+export interface ICancellationRequest {
+  requested: boolean;
+  requestedAt?: Date;
+  category?:
+    | 'ordered_by_mistake'
+    | 'found_better_price'
+    | 'delivery_delay'
+    | 'address_issue'
+    | 'financial_reason'
+    | 'duplicate_order'
+    | 'other';
+  reason: string;
+  status: 'pending' | 'approved' | 'rejected';
+  adminResponse?: string;
+  internalAdminNote?: string;
+  reviewedAt?: Date;
+  reviewedBy?: mongoose.Types.ObjectId;
+}
+
 // ---------------------------------------------------------------------------
 // Main interface
 // ---------------------------------------------------------------------------
@@ -147,7 +166,10 @@ export interface IOrder extends Document {
 
   // Cancellation
   cancelledAt?: Date;
+  cancelledBy?: mongoose.Types.ObjectId;
+  cancellationApprovedAt?: Date;
   cancellationReason?: string;
+  cancellationRequest?: ICancellationRequest;
 
   // Invoice
   invoiceUrl?: string;                // Cloudinary PDF URL
@@ -366,7 +388,34 @@ const orderSchema = new Schema<IOrder, IOrderModel>(
 
     // Cancellation
     cancelledAt: { type: Date },
+    cancelledBy: { type: Schema.Types.ObjectId, ref: 'User' },
+    cancellationApprovedAt: { type: Date },
     cancellationReason: { type: String, trim: true, maxlength: 500 },
+    cancellationRequest: {
+      requested: { type: Boolean, default: false },
+      requestedAt: { type: Date },
+      category: {
+        type: String,
+        enum: [
+          'ordered_by_mistake',
+          'found_better_price',
+          'delivery_delay',
+          'address_issue',
+          'financial_reason',
+          'duplicate_order',
+          'other'
+        ]
+      },
+      reason: { type: String, trim: true, maxlength: 500 },
+      status: {
+        type: String,
+        enum: ['pending', 'approved', 'rejected']
+      },
+      adminResponse: { type: String, trim: true, maxlength: 500 },
+      internalAdminNote: { type: String, trim: true, maxlength: 1000, select: false },
+      reviewedAt: { type: Date },
+      reviewedBy: { type: Schema.Types.ObjectId, ref: 'User' }
+    },
 
     // Invoice
     invoiceUrl: { type: String },

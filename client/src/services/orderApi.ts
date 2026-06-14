@@ -46,6 +46,18 @@ const orderApi = {
 
   updateTracking: (id: string, data: TrackingUpdateData) =>
     apiClient.patch<ApiResponse<Order>>(API_ROUTES.ORDERS.ADMIN_TRACKING(id), data),
+
+  requestCancellation: (id: string, data: { category: string; reason: string }) =>
+    apiClient.post<ApiResponse<Order>>(API_ROUTES.ORDERS.CANCELLATION_REQUEST(id), data),
+
+  getCancellationRequests: (params?: { page?: number; limit?: number; requestStatus?: string; search?: string }) =>
+    apiClient.get<PaginatedResponse<Order>>(API_ROUTES.ORDERS.ADMIN_CANCELLATION_REQUESTS, { params }),
+
+  getPendingCancellationCount: () =>
+    apiClient.get<ApiResponse<{ count: number }>>(API_ROUTES.ORDERS.ADMIN_CANCELLATION_REQUESTS_PENDING_COUNT),
+
+  reviewCancellationRequest: (id: string, data: { action: 'approve' | 'reject'; adminResponse?: string; internalAdminNote?: string }) =>
+    apiClient.patch<ApiResponse<Order>>(API_ROUTES.ORDERS.ADMIN_CANCELLATION_REQUESTS_BY_ID(id), data),
 }
 
 export default orderApi

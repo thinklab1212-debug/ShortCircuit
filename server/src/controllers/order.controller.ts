@@ -98,3 +98,37 @@ export const downloadInvoice = asyncHandler(async (req: Request, res: Response) 
   res.setHeader('Content-Disposition', `attachment; filename="Invoice-${orderId}.pdf"`);
   res.status(200).send(pdfBuffer);
 });
+
+export const requestCancellation = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.user!._id;
+  const orderId = req.params.orderId || req.params.id;
+  const { category, reason } = req.body;
+  const order = await OrderService.requestCancellation(orderId, userId, category, reason);
+  res.status(200).json(new ApiResponse(200, order, 'Cancellation request submitted successfully.'));
+});
+
+export const reviewCancellationRequest = asyncHandler(async (req: Request, res: Response) => {
+  const adminUserId = req.user!._id;
+  const orderId = req.params.orderId || req.params.id;
+  const { action, adminResponse, internalAdminNote } = req.body;
+  const order = await OrderService.reviewCancellationRequest(
+    orderId,
+    action,
+    adminResponse,
+    internalAdminNote,
+    adminUserId
+  );
+  res.status(200).json(new ApiResponse(200, order, `Cancellation request ${action}ed successfully.`));
+});
+
+export const getCancellationRequests = asyncHandler(async (req: Request, res: Response) => {
+  const result = await OrderService.getCancellationRequests(req.query);
+  res.status(200).json(
+    new ApiResponse(200, result.docs, 'Cancellation requests list retrieved.', result.pagination)
+  );
+});
+
+export const getPendingCancellationCount = asyncHandler(async (req: Request, res: Response) => {
+  const count = await OrderService.getPendingCancellationCount();
+  res.status(200).json(new ApiResponse(200, { count }, 'Pending cancellation count retrieved.'));
+});
