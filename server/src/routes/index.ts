@@ -51,6 +51,6 @@ router.use('/admin/vendors', adminVendorRoutes);
 router.use('/admin/invoice-settings', invoiceSettingsRoutes);
 router.use('/admin/cancellation-requests', adminCancellationRoutes);
 router.use('/contact', contactRoutes);
-
+router.use('/project-kits', projectKitRoutes);
 
 export default router;
