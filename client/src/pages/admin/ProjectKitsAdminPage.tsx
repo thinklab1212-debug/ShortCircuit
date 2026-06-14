@@ -118,6 +118,35 @@ export default function ProjectKitsAdminPage() {
   const updateMutation = useUpdateProjectKit()
   const deleteMutation = useDeleteProjectKit()
 
+  // Handle Google Drive OAuth Redirect callback token extraction
+  useEffect(() => {
+    const hash = window.location.hash
+    if (hash.includes('access_token=')) {
+      const params = new URLSearchParams(hash.substring(1))
+      const token = params.get('access_token')
+      if (token) {
+        sessionStorage.setItem('google_access_token', token)
+        toast.success('Successfully authorized Google Drive access!')
+      }
+      // Clean hash
+      window.history.replaceState(null, '', window.location.pathname)
+
+      // Restore form and re-open modal
+      const saved = sessionStorage.getItem('pending_project_kit_form')
+      if (saved) {
+        try {
+          const { form: savedForm, editing: savedEditing } = JSON.parse(saved)
+          setForm(savedForm)
+          setEditing(savedEditing)
+          setModalOpen(true)
+        } catch (err) {
+          console.error(err)
+        }
+        sessionStorage.removeItem('pending_project_kit_form')
+      }
+    }
+  }, [])
+
   // Handle product lookup
   useEffect(() => {
     if (!productQuery.trim()) {
@@ -197,16 +226,78 @@ export default function ProjectKitsAdminPage() {
   }
 
   const handlePdfUpload = async (file: File) => {
+    const token = sessionStorage.getItem('google_access_token')
+    if (!token) {
+      const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
+      if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID === 'your_google_client_id.apps.googleusercontent.com') {
+        toast.error('Google Client ID is not configured. Please set VITE_GOOGLE_CLIENT_ID in your client/.env file.')
+        return
+      }
+      sessionStorage.setItem('pending_project_kit_form', JSON.stringify({ form, editing }))
+      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${encodeURIComponent(window.location.origin + '/admin/project-kits')}&response_type=token&scope=https://www.googleapis.com/auth/drive.file`
+      window.location.href = authUrl
+      return
+    }
+
     setUploadingPdf(true)
     try {
-      const res = await uploadApi.pdf(file)
+      // 1. Create file metadata and upload using multipart/related
+      const metadata = {
+        name: file.name,
+        mimeType: file.type,
+      }
+
+      const formData = new FormData()
+      formData.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }))
+      formData.append('file', file)
+
+      const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&supportsAllDrives=true', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      })
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          sessionStorage.removeItem('google_access_token')
+          toast.error('Google authorization expired. Please try again.')
+          return
+        }
+        throw new Error('Upload failed')
+      }
+
+      const driveFile = await response.json()
+      const fileId = driveFile.id
+
+      // 2. Set permission to public/anyone reader so others can view/download
+      const permissionResponse = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/permissions`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          role: 'reader',
+          type: 'anyone',
+        }),
+      })
+
+      if (!permissionResponse.ok) {
+        throw new Error('Failed to set file permission to public')
+      }
+
+      const shareUrl = `https://drive.google.com/file/d/${fileId}/view?usp=sharing`
+      
       setForm((f) => ({
         ...f,
-        pdfUrl: res.data.data.url,
+        pdfUrl: shareUrl,
       }))
-      toast.success('PDF guide uploaded successfully')
-    } catch {
-      toast.error('PDF upload failed')
+      toast.success('PDF uploaded to Google Drive successfully!')
+    } catch (err) {
+      console.error(err)
+      toast.error('Failed to upload PDF to Google Drive')
     } finally {
       setUploadingPdf(false)
     }
@@ -567,7 +658,7 @@ export default function ProjectKitsAdminPage() {
                       />
                     </FormField>
 
-                    <FormField label="Project Guide PDF (Upload file or paste Google Drive URL)" required>
+                    <FormField label="Project Guide PDF (Upload to Google Drive or paste URL)" required>
                       <div className="space-y-3">
                         <Input
                           value={form.pdfUrl}
@@ -575,21 +666,26 @@ export default function ProjectKitsAdminPage() {
                           placeholder="https://drive.google.com/file/d/FILE_ID/view?usp=sharing or uploaded PDF URL"
                           required
                         />
-                        <div className="flex items-center gap-4">
-                          <label className="inline-flex cursor-pointer items-center gap-2 rounded-2xl border border-input bg-background px-4 py-2 text-xs hover:bg-muted font-bold transition-all shadow-sm">
-                            <Upload className="h-4 w-4" />
-                            {uploadingPdf ? 'Uploading PDF...' : 'Upload PDF File'}
-                            <input
-                              type="file"
-                              accept="application/pdf"
-                              className="hidden"
-                              disabled={uploadingPdf}
-                              onChange={(e) => {
-                                const file = e.target.files?.[0]
-                                if (file) handlePdfUpload(file)
-                              }}
-                            />
-                          </label>
+                        <div className="flex flex-col gap-1.5">
+                          <div className="flex items-center gap-4">
+                            <label className="inline-flex cursor-pointer items-center gap-2 rounded-2xl border border-input bg-background px-4 py-2 text-xs hover:bg-muted font-bold transition-all shadow-sm">
+                              <Upload className="h-4 w-4" />
+                              {uploadingPdf ? 'Uploading to Drive...' : 'Upload PDF to Google Drive'}
+                              <input
+                                type="file"
+                                accept="application/pdf"
+                                className="hidden"
+                                disabled={uploadingPdf}
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0]
+                                  if (file) handlePdfUpload(file)
+                                }}
+                              />
+                            </label>
+                          </div>
+                          <span className="text-[10px] text-muted-foreground">
+                            💡 Clicking this will ask you to authorize access to Google Drive (if not already authorized).
+                          </span>
                         </div>
                       </div>
                     </FormField>
