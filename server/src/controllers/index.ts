@@ -22,4 +22,4 @@ export * as UploadController from './upload.controller.js';
 export * as VendorController from './vendor.controller.js';
 export * as InvoiceSettingsController from './invoiceSettings.controller.js';
 export * as ContactController from './contact.controller.js';
-
+export * as ProjectKitController from './projectKit.controller.js';

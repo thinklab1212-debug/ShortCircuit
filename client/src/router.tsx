@@ -46,6 +46,10 @@ const AdminReviewQueuePage = lazy(() => import('@/pages/admin/ReviewQueuePage'))
 const AdminInvoiceSettingsPage = lazy(() => import('@/pages/admin/InvoiceSettingsPage'))
 const AdminInvoicesPage = lazy(() => import('@/pages/admin/InvoicesPage'))
 const AdminCancellationRequestsPage = lazy(() => import('@/pages/admin/CancellationRequestsAdminPage'))
+const AdminProjectKitsPage = lazy(() => import('@/pages/admin/ProjectKitsAdminPage'))
+
+const ProjectKitsPage = lazy(() => import('@/pages/projects/ProjectKitsPage'))
+const ProjectKitDetailPage = lazy(() => import('@/pages/projects/ProjectKitDetailPage'))
 
 // Vendor (lazy loaded for SEO performance)
 const VendorDashboardPage = lazy(() => import('@/pages/vendor/DashboardPage'))
@@ -76,6 +80,8 @@ export const router = createBrowserRouter([
       { path: 'terms', element: <TermsPage /> },
       { path: 'shipping', element: <ShippingPage /> },
       { path: 'returns', element: <ReturnsPage /> },
+      { path: 'projects', element: <ProjectKitsPage /> },
+      { path: 'projects/:slug', element: <ProjectKitDetailPage /> },
 
       // ── Protected Customer Routes ──
       { path: 'cart', element: <ProtectedRoute><CartPage /></ProtectedRoute> },
@@ -115,6 +121,7 @@ export const router = createBrowserRouter([
       { path: 'users', element: <AdminUsersPage /> },
       { path: 'coupons', element: <AdminCouponsPage /> },
       { path: 'banners', element: <AdminBannersPage /> },
+      { path: 'project-kits', element: <AdminProjectKitsPage /> },
       { path: 'analytics', element: <AdminAnalyticsPage /> },
       { path: 'settings', element: <AdminSettingsPage /> },
       { path: 'vendors', element: <AdminVendorsPage /> },

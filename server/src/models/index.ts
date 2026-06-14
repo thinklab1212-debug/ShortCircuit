@@ -20,3 +20,4 @@ export { default as Banner, type IBanner } from './Banner.model.js';
 export { default as VendorProfile, type IVendorProfile } from './VendorProfile.model.js';
 export { default as InvoiceSettings, type IInvoiceSettings } from './InvoiceSettings.model.js';
 export { default as SecurityLog, type ISecurityLog } from './SecurityLog.model.js';
+export { default as ProjectKit, type IProjectKit } from './ProjectKit.model.js';

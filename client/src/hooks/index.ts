@@ -40,4 +40,6 @@ export { useProductActions } from './useProductActions'
 export { useShopFilters } from './useShopFilters'
 export { useRecentlyViewed, useTrackView } from './useRecentlyViewed'
 export { useDocumentMetadata } from './useDocumentMetadata'
+export * from './useProjectKits'
+
 

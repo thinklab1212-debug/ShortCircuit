@@ -793,3 +793,124 @@ export interface VendorProductFormData {
   vendorNote?: string
   variants?: ProductVariant[]
 }
+
+// ─── Project Kits / Smart Project Builder ────────────────────────────────
+
+export interface BomItem {
+  _id: string
+  product: Product              // Populated from store
+  quantity: number
+  note?: string
+  isOptional: boolean
+}
+
+export interface WiringDiagram {
+  _id?: string
+  imageUrl: string              // Google Drive URL
+  title?: string
+  description?: string
+}
+
+export interface InstructionStep {
+  _id?: string
+  stepNumber: number
+  title: string
+  content: string
+  imageUrl?: string             // Google Drive URL
+  tip?: string
+}
+
+export interface DriveDocument {
+  _id?: string
+  title: string
+  url: string                   // Google Drive URL
+  type?: 'schematic' | 'datasheet' | 'report' | 'presentation' | 'other'
+}
+
+export interface ProjectKit {
+  _id: string
+  name: string
+  slug: string
+  description: string
+  shortDescription?: string
+  coverImage: CloudinaryAsset   // Cloudinary ONLY for cover
+  difficulty: 'beginner' | 'intermediate' | 'advanced'
+  applicationArea: string
+  tags: string[]
+  estimatedTime?: string
+  components: BomItem[]
+  instructions: InstructionStep[]
+  wiringDiagrams: WiringDiagram[]
+  documents: DriveDocument[]
+  isActive: boolean
+  isFeatured: boolean
+  viewCount: number
+  displayOrder: number;
+  totalComponents: number
+  createdAt: string
+  updatedAt?: string
+}
+
+export interface BomPricingSummary {
+  totalItems: number
+  totalQuantity: number
+  totalMrp: number
+  totalPrice: number
+  savings: number
+  allInStock: boolean
+  outOfStockCount: number
+}
+
+export interface BomWithPricing {
+  components: (BomItem & {
+    unitPrice: number
+    effectivePrice: number
+    subtotal: number
+    inStock: boolean
+    availableStock: number
+  })[]
+  summary: BomPricingSummary
+}
+
+export interface AddKitToCartResult {
+  added: { name: string; quantity: number }[]
+  skipped: { name: string; reason: string }[]
+  failed: { name: string; reason: string }[]
+}
+
+export interface ProjectKitFormData {
+  name: string
+  description: string
+  shortDescription?: string
+  coverImage: CloudinaryAsset
+  difficulty: 'beginner' | 'intermediate' | 'advanced'
+  applicationArea: string
+  tags?: string[]
+  estimatedTime?: string
+  components: {
+    product: string
+    quantity: number
+    note?: string
+    isOptional?: boolean
+  }[]
+  instructions?: {
+    stepNumber: number
+    title: string
+    content: string
+    imageUrl?: string
+    tip?: string
+  }[]
+  wiringDiagrams?: {
+    imageUrl: string
+    title?: string
+    description?: string
+  }[]
+  documents?: {
+    title: string
+    url: string
+    type?: string
+  }[]
+  isActive?: boolean
+  isFeatured?: boolean
+  displayOrder?: number
+}

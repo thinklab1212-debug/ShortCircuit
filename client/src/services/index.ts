@@ -14,3 +14,5 @@ export { default as paymentApi } from './paymentApi'
 export { default as analyticsApi } from './analyticsApi'
 export { default as uploadApi } from './uploadApi'
 export { default as contactApi } from './contactApi'
+export { default as projectKitApi } from './projectKitApi'
+

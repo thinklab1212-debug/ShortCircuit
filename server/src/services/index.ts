@@ -22,3 +22,4 @@ export { EmailService } from './email.service.js';
 export { InvoiceService } from './invoice.service.js';
 export { UploadService } from './upload.service.js';
 export { VendorService } from './vendor.service.js';
+export { ProjectKitService } from './projectKit.service.js';

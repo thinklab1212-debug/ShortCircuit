@@ -92,6 +92,17 @@ const queryKeys = {
     detail: (id: string) => [...queryKeys.banners.all, 'detail', id] as const,
   },
 
+  // Project Kits / Smart Project Builder
+  projectKits: {
+    all: ['projectKits'] as const,
+    lists: () => [...queryKeys.projectKits.all, 'list'] as const,
+    list: (params: Record<string, unknown>) => [...queryKeys.projectKits.lists(), params] as const,
+    featured: () => [...queryKeys.projectKits.all, 'featured'] as const,
+    details: () => [...queryKeys.projectKits.all, 'detail'] as const,
+    detail: (slug: string) => [...queryKeys.projectKits.details(), slug] as const,
+    bom: (slug: string) => [...queryKeys.projectKits.all, 'bom', slug] as const,
+  },
+
   // Analytics
   analytics: {
     all: ['analytics'] as const,

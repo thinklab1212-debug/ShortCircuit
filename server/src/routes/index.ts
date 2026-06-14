@@ -26,6 +26,7 @@ import adminVendorRoutes from './adminVendor.routes.js';
 import invoiceSettingsRoutes from './invoiceSettings.routes.js';
 import adminCancellationRoutes from './adminCancellation.routes.js';
 import contactRoutes from './contact.routes.js';
+import projectKitRoutes from './projectKit.routes.js';
 
 const router = Router();
 

@@ -120,6 +120,17 @@ const API_ROUTES = {
     ADMIN_BY_ID: (id: string) => `/banners/admin/${id}`,
   },
 
+  // Project Kits / Smart Project Builder
+  PROJECT_KITS: {
+    BASE: '/project-kits',
+    FEATURED: '/project-kits/featured',
+    BY_SLUG: (slug: string) => `/project-kits/${slug}`,
+    BOM: (slug: string) => `/project-kits/${slug}/bom`,
+    ADD_TO_CART: (id: string) => `/project-kits/${id}/add-to-cart`,
+    ADMIN: '/project-kits/admin',
+    ADMIN_BY_ID: (id: string) => `/project-kits/admin/${id}`,
+  },
+
   // Analytics
   ANALYTICS: {
     DASHBOARD: '/analytics/dashboard',
