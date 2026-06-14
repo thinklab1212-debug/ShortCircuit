@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { FormField } from '@/components/ui/form-field'
 import { staggerContainer, fadeInUp } from '@/config/animations'
+import { contactApi } from '@/services'
 
 interface ContactForm {
   name: string
@@ -38,6 +39,7 @@ const HOURS = [
 export default function ContactPage() {
   const [form, setForm] = useState<ContactForm>(EMPTY)
   const [errors, setErrors] = useState<Partial<Record<keyof ContactForm, string>>>({})
+  const [loading, setLoading] = useState(false)
 
   const update = (key: keyof ContactForm, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -55,12 +57,21 @@ export default function ContactPage() {
     return Object.keys(next).length === 0
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!validate()) return
-    toast.success("Thanks! We'll get back to you within 24 hours.")
-    setForm(EMPTY)
-    setErrors({})
+    setLoading(true)
+    try {
+      const res = await contactApi.sendMessage(form)
+      toast.success(res.data.message || "Thanks! We'll get back to you within 24 hours.")
+      setForm(EMPTY)
+      setErrors({})
+    } catch (err: any) {
+      const errorMsg = err.response?.data?.message || err.message || 'Failed to send message. Please try again later.'
+      toast.error(errorMsg)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -130,7 +141,7 @@ export default function ContactPage() {
             />
           </FormField>
 
-          <Button type="submit" size="lg" className="mt-6 w-full sm:w-auto" rightIcon={<Send className="h-4 w-4" />}>
+          <Button type="submit" size="lg" className="mt-6 w-full sm:w-auto" loading={loading} rightIcon={<Send className="h-4 w-4" />}>
             Send message
           </Button>
         </motion.form>

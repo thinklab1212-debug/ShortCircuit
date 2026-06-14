@@ -142,6 +142,9 @@ const API_ROUTES = {
     SUGGESTIONS: '/search/suggestions',
   },
 
+  // Contact
+  CONTACT: '/contact',
+
   // Vendor Self-Service
   VENDOR: {
     PROFILE: '/vendor/profile',

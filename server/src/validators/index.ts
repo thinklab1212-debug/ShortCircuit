@@ -19,3 +19,4 @@ export * from './coupon.validator.js';
 export * from './payment.validator.js';
 export * from './banner.validator.js';
 export * from './vendor.validator.js';
+export * from './contact.validator.js';
