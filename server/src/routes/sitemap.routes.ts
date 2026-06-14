@@ -7,8 +7,9 @@ const router = Router();
 
 router.get('/sitemap.xml', async (req, res, next) => {
   try {
-    const rawClientUrl = process.env.CLIENT_URL || 'https://www.shortcircuit.co.in';
-    const DOMAIN = rawClientUrl.replace(/\/$/, '');
+    const hostHeader = req.headers['x-forwarded-host'] || req.get('host') || 'www.shortcircuit.co.in';
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+    const DOMAIN = `${protocol}://${hostHeader}`.replace(/\/$/, '');
 
     // Fetch active and approved models with slugs
     const products = await Product.find({ approvalStatus: 'approved', isActive: true }, 'slug updatedAt');
