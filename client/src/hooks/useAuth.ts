@@ -4,7 +4,6 @@ import { useNavigate, useLocation } from 'react-router'
 import toast from 'react-hot-toast'
 import authApi from '@/services/authApi'
 import { useAuthStore } from '@/store'
-import { getAccessToken } from '@/api/apiClient'
 import type { AxiosError } from 'axios'
 import type { ApiResponse } from '@/types'
 
@@ -29,8 +28,8 @@ export function useInitAuth() {
     let active = true
 
     async function bootstrap() {
-      // No persisted session and no token → nothing to restore.
-      if (!isAuthenticated && !getAccessToken()) {
+      // No persisted session -> nothing to restore.
+      if (!isAuthenticated) {
         setLoading(false)
         setInitialized(true)
         return
@@ -68,8 +67,8 @@ export function useLogin(options?: { onSuccess?: () => void }) {
   return useMutation({
     mutationFn: authApi.login,
     onSuccess: (res) => {
-      const { user, accessToken } = res.data.data
-      login(user, accessToken)
+      const { user } = res.data.data
+      login(user)
       toast.success(`Welcome back, ${user.firstName}!`)
 
       if (options?.onSuccess) {

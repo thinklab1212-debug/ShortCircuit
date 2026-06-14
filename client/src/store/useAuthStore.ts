@@ -1,7 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { User } from '@/types'
-import { clearTokens, setAccessToken } from '@/api/apiClient'
 
 // ─── Auth Store ─────────────────────────────────────────────────────────────────
 
@@ -15,7 +14,7 @@ interface AuthState {
   setUser: (user: User) => void
   setLoading: (loading: boolean) => void
   setInitialized: (initialized: boolean) => void
-  login: (user: User, accessToken: string) => void
+  login: (user: User) => void
   logout: () => void
   updateUser: (updates: Partial<User>) => void
 }
@@ -34,13 +33,11 @@ const useAuthStore = create<AuthState>()(
 
       setInitialized: (isInitialized) => set({ isInitialized }),
 
-      login: (user, accessToken) => {
-        setAccessToken(accessToken)
+      login: (user) => {
         set({ user, isAuthenticated: true, isLoading: false, isInitialized: true })
       },
 
       logout: () => {
-        clearTokens()
         set({ user: null, isAuthenticated: false, isLoading: false, isInitialized: true })
       },
 

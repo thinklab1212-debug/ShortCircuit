@@ -19,8 +19,11 @@ import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { env } from '../config/env.js';
 import Token from '../models/Token.model.js';
+import SecurityLog from '../models/SecurityLog.model.js';
+import { ROLE_SESSION_CONFIG } from '../interfaces/auth.interface.js';
 import type { IUser } from '../models/User.model.js';
 import type { Request } from 'express';
+import ApiError from './ApiError.js';
 
 // ---------------------------------------------------------------------------
 // Token payload interface
@@ -63,8 +66,11 @@ export function generateAccessToken(user: IUser): string {
     role: user.role,
   };
 
+  const role = (user.role || 'customer') as 'customer' | 'vendor' | 'admin';
+  const config = ROLE_SESSION_CONFIG[role] || ROLE_SESSION_CONFIG.customer;
+
   const options: SignOptions = {
-    expiresIn: env.JWT_ACCESS_EXPIRY as any,
+    expiresIn: config.accessExpiry as any,
     issuer: 'electrokart',
     subject: user._id.toString(),
   };
@@ -91,8 +97,11 @@ export async function generateRefreshToken(user: IUser, req: Request): Promise<s
   // Hash the token before storing in database
   const hashedToken = await bcrypt.hash(rawToken, 10);
 
-  // Calculate expiry date (parse the env variable like "7d")
-  const expiresAt = calculateExpiry(env.JWT_REFRESH_EXPIRY);
+  const role = (user.role || 'customer') as 'customer' | 'vendor' | 'admin';
+  const config = ROLE_SESSION_CONFIG[role] || ROLE_SESSION_CONFIG.customer;
+
+  // Calculate expiry date (parse the config like "30d" or "14d")
+  const expiresAt = calculateExpiry(config.refreshExpiry);
 
   // Store hashed token in database
   await Token.create({
@@ -101,6 +110,7 @@ export async function generateRefreshToken(user: IUser, req: Request): Promise<s
     userAgent: req.headers['user-agent'] || 'unknown',
     ipAddress: req.ip || req.socket.remoteAddress || 'unknown',
     expiresAt,
+    status: 'active',
   });
 
   return rawToken;
@@ -139,9 +149,10 @@ export async function generateTokenPair(user: IUser, req: Request): Promise<Toke
  */
 export async function verifyRefreshToken(
   userId: string,
-  rawToken: string
+  rawToken: string,
+  ipCtx?: { ip: string; userAgent: string }
 ): Promise<InstanceType<typeof Token> | null> {
-  // Find all non-expired tokens for this user
+  // Find all non-expired tokens for this user (both active and rotated)
   const userTokens = await Token.find({
     userId,
     expiresAt: { $gt: new Date() },
@@ -151,6 +162,37 @@ export async function verifyRefreshToken(
   for (const tokenDoc of userTokens) {
     const isMatch = await bcrypt.compare(rawToken, tokenDoc.token);
     if (isMatch) {
+      if (tokenDoc.status === 'rotated') {
+        const gracePeriodMs = 10000; // 10-second grace period for concurrent requests (multi-tab refreshes)
+        const timeSinceRotation = Date.now() - (tokenDoc.rotatedAt?.getTime() || 0);
+
+        if (timeSinceRotation < gracePeriodMs) {
+          // Find the active token generated in this rotation cycle for this user.
+          const activeToken = await Token.findOne({
+            userId,
+            status: 'active',
+            createdAt: { $gte: tokenDoc.rotatedAt },
+          });
+          if (activeToken) {
+            return activeToken;
+          }
+        }
+
+        // Potential session hijacking detected!
+        // 1. Revoke all active sessions for this user
+        await Token.deleteMany({ userId });
+
+        // 2. Log security event
+        await SecurityLog.create({
+          userId,
+          eventType: 'refresh_token_reuse',
+          ipAddress: ipCtx?.ip || 'unknown',
+          userAgent: ipCtx?.userAgent || 'unknown',
+        });
+
+        // 3. Throw reuse / hijack error
+        throw ApiError.unauthorized('Potential session hijacking detected. All sessions have been revoked. Please login again.');
+      }
       return tokenDoc;
     }
   }
@@ -186,22 +228,36 @@ export async function revokeAllUserTokens(userId: string): Promise<void> {
 // ---------------------------------------------------------------------------
 
 /**
- * Returns cookie options for setting the refresh token as an httpOnly cookie.
+ * Returns cookie options for setting access and refresh tokens as cookies.
  */
-export function getRefreshTokenCookieOptions(): {
+export function getCookieOptions(
+  role: 'customer' | 'vendor' | 'admin',
+  type: 'access' | 'refresh'
+): {
   httpOnly: boolean;
   secure: boolean;
   sameSite: 'strict' | 'lax' | 'none';
   maxAge: number;
   path: string;
+  domain?: string;
 } {
-  return {
-    httpOnly: true,                          // Not accessible via JavaScript
-    secure: env.IS_PRODUCTION,               // HTTPS only in production
-    sameSite: env.IS_PRODUCTION ? 'strict' : 'lax',
-    maxAge: parseDurationToMs(env.JWT_REFRESH_EXPIRY), // Match token expiry
-    path: '/api/v1/auth',                    // Only sent to auth endpoints
+  const config = ROLE_SESSION_CONFIG[role] || ROLE_SESSION_CONFIG.customer;
+  const expiry = type === 'access' ? config.accessExpiry : config.refreshExpiry;
+  const maxAge = parseDurationToMs(expiry);
+
+  const options: any = {
+    httpOnly: true,
+    secure: env.IS_PRODUCTION,
+    sameSite: 'lax',
+    maxAge,
+    path: '/',
   };
+
+  if (env.COOKIE_DOMAIN) {
+    options.domain = env.COOKIE_DOMAIN;
+  }
+
+  return options;
 }
 
 // ---------------------------------------------------------------------------

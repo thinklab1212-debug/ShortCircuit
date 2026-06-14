@@ -111,7 +111,7 @@ export class AuthService {
     }
 
     // 2. Look up and verify refresh token hash in DB
-    const tokenDoc = await verifyRefreshToken(decoded.userId, rawRefreshToken);
+    const tokenDoc = await verifyRefreshToken(decoded.userId, rawRefreshToken, ipCtx);
     if (!tokenDoc) {
       throw ApiError.unauthorized('Invalid or expired session. Please login again.');
     }
@@ -119,11 +119,17 @@ export class AuthService {
     // 3. Find target user
     const user = await User.findById(decoded.userId).select('+isBlocked');
     if (!user || user.isBlocked) {
+      // Clean up sessions if blocked
+      if (user?.isBlocked) {
+        await Token.deleteMany({ userId: user._id });
+      }
       throw ApiError.unauthorized('User session revoked.');
     }
 
     // 4. Invalidate old refresh token (token rotation strategy)
-    await revokeRefreshToken(tokenDoc._id.toString());
+    tokenDoc.status = 'rotated';
+    tokenDoc.rotatedAt = new Date();
+    await tokenDoc.save();
 
     // 5. Generate new pair
     const mockReq = { headers: { 'user-agent': ipCtx.userAgent }, ip: ipCtx.ip } as any;

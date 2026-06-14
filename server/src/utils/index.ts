@@ -17,7 +17,7 @@ export {
   verifyRefreshToken,
   revokeRefreshToken,
   revokeAllUserTokens,
-  getRefreshTokenCookieOptions,
+  getCookieOptions,
   decodeAccessToken,
   type AccessTokenPayload,
   type RefreshTokenPayload,

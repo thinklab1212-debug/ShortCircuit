@@ -2,11 +2,11 @@ import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios'
 import env from '@/config/env'
 import API_ROUTES from '@/constants/apiRoutes'
 import type { ApiResponse } from '@/types'
+import { useAuthStore } from '@/store'
 
 // ─── Axios Instance ─────────────────────────────────────────────────────────────
-// The backend issues a short-lived access token (returned in the JSON body and
-// kept in localStorage) and a long-lived refresh token (httpOnly cookie scoped to
-// /api/v1/auth). `withCredentials` ensures that cookie travels with refresh calls.
+// Both access and refresh tokens live in secure httpOnly cookies.
+// `withCredentials: true` ensures that these cookies travel with requests.
 
 const apiClient = axios.create({
   baseURL: env.API_BASE_URL,
@@ -17,51 +17,24 @@ const apiClient = axios.create({
   withCredentials: true,
 })
 
-// ─── Access Token Storage ───────────────────────────────────────────────────────
-
-const ACCESS_TOKEN_KEY = 'electrokart_access_token'
-
-const getAccessToken = (): string | null => localStorage.getItem(ACCESS_TOKEN_KEY)
-
-const setAccessToken = (token: string): void => {
-  localStorage.setItem(ACCESS_TOKEN_KEY, token)
-}
-
-const clearTokens = (): void => {
-  localStorage.removeItem(ACCESS_TOKEN_KEY)
-}
-
 // ─── Refresh Queue ──────────────────────────────────────────────────────────────
 
 let isRefreshing = false
 let failedQueue: Array<{
-  resolve: (value: string) => void
+  resolve: (value: any) => void
   reject: (error: unknown) => void
 }> = []
 
-const processQueue = (error: unknown, token: string | null = null) => {
+const processQueue = (error: unknown) => {
   failedQueue.forEach((promise) => {
-    if (error || !token) {
+    if (error) {
       promise.reject(error)
     } else {
-      promise.resolve(token)
+      promise.resolve(null)
     }
   })
   failedQueue = []
 }
-
-// ─── Request Interceptor ────────────────────────────────────────────────────────
-
-apiClient.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
-    const token = getAccessToken()
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
-    }
-    return config
-  },
-  (error) => Promise.reject(error)
-)
 
 // ─── Response Interceptor (silent refresh) ──────────────────────────────────────
 
@@ -77,16 +50,17 @@ apiClient.interceptors.response.use(
     const isAuthRoute = url.includes('/auth/')
 
     if (status === 401 && !originalRequest._retry && !isAuthRoute) {
-      // If we have no access token at all, there is nothing to refresh against.
-      if (!getAccessToken()) {
+      const isAuthenticated = useAuthStore.getState().isAuthenticated
+
+      // If we are not authenticated in state, there is nothing to refresh.
+      if (!isAuthenticated) {
         return Promise.reject(error)
       }
 
       if (isRefreshing) {
-        return new Promise<string>((resolve, reject) => {
+        return new Promise<any>((resolve, reject) => {
           failedQueue.push({ resolve, reject })
-        }).then((token) => {
-          originalRequest.headers.Authorization = `Bearer ${token}`
+        }).then(() => {
           return apiClient(originalRequest)
         })
       }
@@ -95,26 +69,18 @@ apiClient.interceptors.response.use(
       isRefreshing = true
 
       try {
-        // The refresh token lives in an httpOnly cookie; the (possibly expired)
-        // access token is sent via the Authorization header by a bare axios call.
-        const { data } = await axios.post<ApiResponse<{ accessToken: string }>>(
+        // Both tokens are automatically sent via cookies.
+        await axios.post<ApiResponse>(
           `${env.API_BASE_URL}${API_ROUTES.AUTH.REFRESH}`,
           {},
-          {
-            withCredentials: true,
-            headers: { Authorization: `Bearer ${getAccessToken()}` },
-          }
+          { withCredentials: true }
         )
 
-        const newAccessToken = data.data.accessToken
-        setAccessToken(newAccessToken)
-        processQueue(null, newAccessToken)
-
-        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`
+        processQueue(null)
         return apiClient(originalRequest)
       } catch (refreshError) {
-        processQueue(refreshError, null)
-        clearTokens()
+        processQueue(refreshError)
+        useAuthStore.getState().logout()
         // Avoid redirect loops if we are already on an auth page.
         if (!window.location.pathname.startsWith('/login')) {
           const redirect = encodeURIComponent(window.location.pathname + window.location.search)
@@ -130,5 +96,5 @@ apiClient.interceptors.response.use(
   }
 )
 
-export { apiClient, getAccessToken, setAccessToken, clearTokens }
+export { apiClient }
 export default apiClient

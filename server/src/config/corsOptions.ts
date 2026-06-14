@@ -14,6 +14,8 @@ import { env } from './env.js';
 
 const ALLOWED_ORIGINS = [
   env.CLIENT_URL,
+  'https://www.shortcircuit.co.in',
+  'https://shortcircuit.co.in',
   'http://localhost:5173', // Vite default development port
   'http://localhost:3000', // Alternative dev port
   'http://127.0.0.1:5173', // Loopback dev port

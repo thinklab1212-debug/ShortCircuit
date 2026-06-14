@@ -5,6 +5,7 @@
 // ============================================================================
 
 import User from '../models/User.model.js';
+import Token from '../models/Token.model.js';
 import { ApiError } from '../utils/index.js';
 import { executePaginatedQuery } from '../utils/pagination.js';
 import { UserRole } from '../interfaces/auth.interface.js';
@@ -89,6 +90,11 @@ export class UserService {
 
     user.isBlocked = !user.isBlocked;
     await user.save();
+
+    if (user.isBlocked) {
+      await Token.deleteMany({ userId: user._id });
+    }
+
     return user;
   }
 

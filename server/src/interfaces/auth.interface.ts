@@ -162,6 +162,7 @@ export type RoleRequirement = UserRole | UserRole[];
  * Token cookie name constants.
  */
 export const AUTH_CONSTANTS = {
+  ACCESS_TOKEN_COOKIE: 'accessToken',
   REFRESH_TOKEN_COOKIE: 'electrokart_refresh_token',
   ACCESS_TOKEN_HEADER: 'Authorization',
   TOKEN_PREFIX: 'Bearer ',
@@ -170,3 +171,19 @@ export const AUTH_CONSTANTS = {
   MAX_LOGIN_ATTEMPTS: 10,
   LOCKOUT_DURATION_MINUTES: 15,
 } as const;
+
+export const ROLE_SESSION_CONFIG = {
+  customer: {
+    accessExpiry: '15m',
+    refreshExpiry: '30d',
+  },
+  vendor: {
+    accessExpiry: '15m',
+    refreshExpiry: '14d',
+  },
+  admin: {
+    accessExpiry: '10m',
+    refreshExpiry: '7d',
+  },
+} as const;
+

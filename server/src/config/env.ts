@@ -103,6 +103,11 @@ const envSchema = z.object({
     .default('7d')
     .describe('Refresh token lifetime (e.g., 7d, 30d)'),
 
+  COOKIE_DOMAIN: z
+    .string()
+    .optional()
+    .describe('Cookie domain mapping (for cross-subdomain sharing)'),
+
   // -----------------------------------------------------------------------
   // Cloudinary
   // -----------------------------------------------------------------------
@@ -197,8 +202,10 @@ const envSchema = z.object({
 });
 
 // ---------------------------------------------------------------------------
-// Parse and validate
-// ---------------------------------------------------------------------------
+// Alias FRONTEND_URL to CLIENT_URL if not directly set
+if (!process.env.CLIENT_URL && process.env.FRONTEND_URL) {
+  process.env.CLIENT_URL = process.env.FRONTEND_URL;
+}
 
 const parsed = envSchema.safeParse(process.env);
 

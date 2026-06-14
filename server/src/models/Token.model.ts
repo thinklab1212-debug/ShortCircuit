@@ -19,6 +19,8 @@ export interface IToken extends Document {
   userAgent?: string;          // Device/browser identifier
   ipAddress?: string;          // IP of the session origin
   expiresAt: Date;
+  status: 'active' | 'rotated'; // Rotation status
+  rotatedAt?: Date;            // When the token was rotated
   createdAt: Date;
 }
 
@@ -62,6 +64,18 @@ const tokenSchema = new Schema<IToken, ITokenModel>(
       type: Date,
       required: [true, 'Expiry date is required'],
     },
+    status: {
+      type: String,
+      enum: {
+        values: ['active', 'rotated'],
+        message: 'Status must be active or rotated',
+      },
+      default: 'active',
+      required: true,
+    },
+    rotatedAt: {
+      type: Date,
+    },
   },
   {
     timestamps: { createdAt: true, updatedAt: false },
@@ -74,6 +88,9 @@ const tokenSchema = new Schema<IToken, ITokenModel>(
 
 // TTL index — MongoDB automatically deletes documents when expiresAt passes
 tokenSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+
+// TTL index — MongoDB automatically deletes rotated documents 30 days after rotatedAt
+tokenSchema.index({ rotatedAt: 1 }, { expireAfterSeconds: 30 * 24 * 60 * 60 });
 
 // Compound index for looking up user tokens
 tokenSchema.index({ userId: 1, token: 1 });

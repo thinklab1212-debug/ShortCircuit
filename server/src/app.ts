@@ -29,6 +29,9 @@ const helmet: any = (helmetImport as any).default ?? helmetImport;
 
 const app = express();
 
+// Enable trust proxy to parse X-Forwarded-For headers behind Render/Load Balancer proxies
+app.set('trust proxy', 1);
+
 // 1. Mount Security Headers
 app.use(helmet());
 

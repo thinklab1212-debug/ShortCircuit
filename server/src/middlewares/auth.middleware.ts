@@ -36,8 +36,8 @@ export const authenticate = asyncHandler(async (
     token = authHeader.split(' ')[1];
   }
   // Fallback: check cookie if available
-  else if (req.cookies && req.cookies.accessToken) {
-    token = req.cookies.accessToken;
+  else if (req.cookies) {
+    token = req.cookies[AUTH_CONSTANTS.ACCESS_TOKEN_COOKIE] || req.cookies.accessToken;
   }
 
   if (!token) {

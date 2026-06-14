@@ -54,32 +54,50 @@ const developmentFormat = winston.format.combine(
 
 const transports: winston.transport[] = [];
 
-if (env.IS_PRODUCTION) {
-  // Production: JSON logs to files
+if (env.IS_PRODUCTION || env.IS_STAGING) {
+  // Production / Staging: JSON logs to Console only
   transports.push(
-    // Error logs → separate file for quick access
-    new winston.transports.File({
-      filename: path.join('logs', 'error.log'),
-      level: 'error',
-      maxsize: 10 * 1024 * 1024, // 10 MB
-      maxFiles: 5,
-      tailable: true,
-    }),
-    // All logs → combined file
-    new winston.transports.File({
-      filename: path.join('logs', 'combined.log'),
-      maxsize: 10 * 1024 * 1024, // 10 MB
-      maxFiles: 10,
-      tailable: true,
+    new winston.transports.Console({
+      format: productionFormat,
     })
   );
 } else {
-  // Development: colorized console output
+  // Local Development: Console logging + optional File logging
   transports.push(
     new winston.transports.Console({
       format: developmentFormat,
     })
   );
+
+  try {
+    const errorFile = new winston.transports.File({
+      filename: path.join('logs', 'error.log'),
+      level: 'error',
+      maxsize: 10 * 1024 * 1024, // 10 MB
+      maxFiles: 5,
+      tailable: true,
+    });
+
+    const combinedFile = new winston.transports.File({
+      filename: path.join('logs', 'combined.log'),
+      maxsize: 10 * 1024 * 1024, // 10 MB
+      maxFiles: 10,
+      tailable: true,
+    });
+
+    // Prevent uncaught transport error events from crashing application
+    errorFile.on('error', (err) => {
+      console.error('Winston error log transport failed:', err);
+    });
+
+    combinedFile.on('error', (err) => {
+      console.error('Winston combined log transport failed:', err);
+    });
+
+    transports.push(errorFile, combinedFile);
+  } catch (err) {
+    console.error('Failed to initialize file logging transports:', err);
+  }
 }
 
 // ---------------------------------------------------------------------------
