@@ -65,15 +65,39 @@ export default function HeroBanner() {
             {slides ? (
               /* API banner with image */
               <div className="relative h-full w-full">
-                <img
-                  src={slides[current].image?.url}
-                  alt={slides[current].title}
-                  className="h-full w-full object-cover"
-                />
+                {/* Mobile image (if provided) */}
+                {slides[current].mobileImage?.url ? (
+                  <>
+                    <img
+                      src={slides[current].mobileImage.url}
+                      alt={slides[current].title}
+                      className="h-full w-full object-cover sm:hidden"
+                    />
+                    <img
+                      src={slides[current].image?.url}
+                      alt={slides[current].title}
+                      className="h-full w-full object-cover hidden sm:block"
+                    />
+                  </>
+                ) : (
+                  <img
+                    src={slides[current].image?.url}
+                    alt={slides[current].title}
+                    className="h-full w-full object-cover"
+                  />
+                )}
                 <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
                 <div className="absolute inset-0 flex items-center">
                   <div className="container">
                     <div className="max-w-xl space-y-3 sm:space-y-6">
+                      <motion.div
+                        initial={{ y: 20, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        transition={{ delay: 0.1, duration: 0.5 }}
+                        className="inline-flex items-center rounded-full bg-white/8 px-4 py-1.5 text-sm font-medium text-white/85 backdrop-blur-sm border border-white/20"
+                      >
+                        ⚡ Short Circuit Exclusive
+                      </motion.div>
                       <motion.h2
                         initial={{ y: 30, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
@@ -96,12 +120,16 @@ export default function HeroBanner() {
                         initial={{ y: 20, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
                         transition={{ delay: 0.5, duration: 0.5 }}
+                        className="flex flex-wrap gap-3"
                       >
-                        <Button asChild size="lg" variant="gradient" className="group">
+                        <Button asChild size="lg" className="group bg-white text-slate-900 hover:bg-white/90">
                           <Link to={slides[current].link || '/shop'}>
-                            Shop Now
+                            {slides[current].linkText || 'Shop Now'}
                             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                           </Link>
+                        </Button>
+                        <Button asChild size="lg" variant="outline" className="border-white/35 bg-black/10 text-white hover:bg-white/10 hover:text-white">
+                          <Link to="/categories">Browse Categories</Link>
                         </Button>
                       </motion.div>
                     </div>
