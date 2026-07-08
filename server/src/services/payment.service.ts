@@ -15,13 +15,13 @@ export class PaymentService {
    * Requests a new order token from Razorpay.
    *
    * @param amount - Order total in Rupees (₹)
-   * @param orderId - ElectroKart Order ID
+   * @param orderId - Short Circuit Order ID
    */
   public static async createRazorpayOrder(
     amount: number,
     orderId: string
   ): Promise<{ id: string; amount: number; currency: string }> {
-    logger.info(`💳 Requesting Razorpay Order for EK ID: ${orderId}, Amount: ₹${amount}`);
+    logger.info(`💳 Requesting Razorpay Order for SC ID: ${orderId}, Amount: ₹${amount}`);
     
     // Amount in Razorpay must be passed in paise (1 INR = 100 paise)
     const options = {

@@ -6,7 +6,7 @@
 // remain accurate even if products/addresses are later modified.
 //
 // Features:
-//   - Custom readable order ID (EK-YYYYMMDD-XXXX)
+//   - Custom readable order ID (SC-YYYYMMDD-XXXX)
 //   - Full status history audit trail
 //   - Razorpay payment details
 //   - GST 18% tax calculation
@@ -134,7 +134,7 @@ export interface ICancellationRequest {
 
 export interface IOrder extends Document {
   _id: mongoose.Types.ObjectId;
-  orderId: string;                     // Human-readable: EK-20260530-0001
+  orderId: string;                     // Human-readable: SC-20260530-0001
   user: mongoose.Types.ObjectId;
   items: IOrderItem[];
   shippingAddress: IShippingAddress;
@@ -493,13 +493,13 @@ orderSchema.index({ 'paymentDetails.razorpayOrderId': 1 }, { sparse: true });
 // ---------------------------------------------------------------------------
 
 /**
- * Generates a human-readable order ID: EK-YYYYMMDD-XXXX
+ * Generates a human-readable order ID: SC-YYYYMMDD-XXXX
  * Where XXXX is a zero-padded daily sequence number.
  */
 orderSchema.statics.generateOrderId = async function (): Promise<string> {
   const today = new Date();
   const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
-  const prefix = `EK-${dateStr}`;
+  const prefix = `SC-${dateStr}`;
 
   // Count orders placed today
   const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());

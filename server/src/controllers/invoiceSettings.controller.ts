@@ -43,7 +43,7 @@ export const getInvoicePreview = asyncHandler(async (req: Request, res: Response
 
   // Create mock order data for preview
   const mockOrder: any = {
-    orderId: 'EK-20260614-9999',
+    orderId: 'SC-20260614-9999',
     createdAt: new Date(),
     deliveredAt: new Date(),
     paymentMethod: 'razorpay',
