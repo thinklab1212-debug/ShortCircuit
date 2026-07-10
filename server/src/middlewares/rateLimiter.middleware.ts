@@ -74,3 +74,16 @@ export const adminLimiter = rateLimit({
   legacyHeaders: false,
   handler: rateLimitErrorHandler,
 });
+
+/**
+ * Limiters for team verification endpoints.
+ * Keyed by request IP, 15 attempts per 15 minutes.
+ */
+export const teamVerifyLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 15,
+  message: 'Too many team verification attempts. Please try again after 15 minutes.',
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: rateLimitErrorHandler,
+});

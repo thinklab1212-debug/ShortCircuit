@@ -114,6 +114,7 @@ export interface IAuthResponse {
     lastName: string;
     email: string;
     role: UserRole;
+    isOrganizer: boolean;
     avatar?: {
       url: string;
       publicId: string;

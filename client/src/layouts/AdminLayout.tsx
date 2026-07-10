@@ -21,6 +21,7 @@ import {
   XCircle,
   Loader2,
   Cpu,
+  Award,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { APP } from '@/constants'
@@ -43,6 +44,9 @@ const sidebarLinks = [
   { label: 'Project Kits', href: '/admin/project-kits', icon: Cpu },
   { label: 'Users', href: '/admin/users', icon: Users },
   { label: 'Vendors', href: '/admin/vendors', icon: Store },
+  { label: 'Organizer Applications', href: '/admin/organizer-applications', icon: Award },
+  { label: 'Event Reviews', href: '/admin/events', icon: ClipboardCheck },
+  { label: 'Event Orders', href: '/admin/events/orders', icon: ShoppingBag },
   { label: 'Review Queue', href: '/admin/review-queue', icon: ClipboardCheck },
   { label: 'Coupons', href: '/admin/coupons', icon: Ticket },
   { label: 'Banners', href: '/admin/banners', icon: Image },

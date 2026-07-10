@@ -65,6 +65,7 @@ export const authenticate = asyncHandler(async (
       _id: userDoc._id.toString(),
       email: userDoc.email,
       role: userDoc.role,
+      isOrganizer: userDoc.isOrganizer,
       firstName: userDoc.firstName,
       lastName: userDoc.lastName,
       isBlocked: userDoc.isBlocked,

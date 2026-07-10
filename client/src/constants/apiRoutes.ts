@@ -174,6 +174,48 @@ const API_ROUTES = {
     REVIEW: (id: string) => `/admin/vendors/products/${id}/review`,
     RESET_PASSWORD: (id: string) => `/admin/vendors/${id}/reset-password`,
   },
+
+  // Organizer Self-Service
+  ORGANIZER: {
+    APPLY: '/organizer/apply',
+    APPLICATION: '/organizer/application',
+    EVENTS: '/organizer/events',
+    EVENT_BY_ID: (id: string) => `/organizer/events/${id}`,
+    EVENT_SUBMIT: (id: string) => `/organizer/events/${id}/submit`,
+    TEAMS_PREVIEW: (id: string) => `/organizer/events/${id}/teams/preview`,
+    TEAMS_IMPORT: (id: string) => `/organizer/events/${id}/teams/import`,
+    TEAMS: (id: string) => `/organizer/events/${id}/teams`,
+    TEAM_BY_ID: (id: string, teamId: string) => `/organizer/events/${id}/teams/${teamId}`,
+    PURCHASES: (id: string) => `/organizer/events/${id}/purchases`,
+  },
+
+  // Admin Organizer Application Management
+  ADMIN_ORGANIZER: {
+    BASE: '/admin/organizer-applications',
+    BY_ID: (id: string) => `/admin/organizer-applications/${id}`,
+    APPROVE: (id: string) => `/admin/organizer-applications/${id}/approve`,
+    REJECT: (id: string) => `/admin/organizer-applications/${id}/reject`,
+  },
+
+  // Admin Event Management
+  ADMIN_EVENTS: {
+    BASE: '/admin/events',
+    BY_ID: (id: string) => `/admin/events/${id}`,
+    APPROVE: (id: string) => `/admin/events/${id}/approve`,
+    REJECT: (id: string) => `/admin/events/${id}/reject`,
+    ORDERS: '/admin/events/orders',
+  },
+
+  // Public & Student Events
+  PUBLIC_EVENTS: {
+    BASE: '/events',
+    BY_SLUG: (slug: string) => `/events/${slug}`,
+    VERIFY_TEAM: (id: string) => `/events/${id}/verify-team`,
+    CHECKOUT: (id: string) => `/events/${id}/checkout`,
+    PURCHASE: (id: string) => `/events/${id}/purchase`,
+    MY_ORDERS: '/events/my-orders',
+    DOWNLOAD_INVOICE: (id: string) => `/events/orders/${id}/invoice`,
+  },
 } as const
 
 export default API_ROUTES

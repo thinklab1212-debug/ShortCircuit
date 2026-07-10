@@ -109,6 +109,70 @@ const queryKeys = {
     dashboard: () => [...queryKeys.analytics.all, 'dashboard'] as const,
     sales: (params: Record<string, unknown>) => [...queryKeys.analytics.all, 'sales', params] as const,
   },
+
+  // Organizer Applications
+  organizerApplications: {
+    all: ['organizerApplications'] as const,
+    mine: () => [...queryKeys.organizerApplications.all, 'mine'] as const,
+    lists: () => [...queryKeys.organizerApplications.all, 'list'] as const,
+    list: (params: Record<string, unknown>) => [...queryKeys.organizerApplications.lists(), params] as const,
+    details: () => [...queryKeys.organizerApplications.all, 'detail'] as const,
+    detail: (id: string) => [...queryKeys.organizerApplications.details(), id] as const,
+  },
+
+  // Organizer Events
+  organizerEvents: {
+    all: ['organizerEvents'] as const,
+    lists: () => [...queryKeys.organizerEvents.all, 'list'] as const,
+    list: (params: Record<string, unknown>) => [...queryKeys.organizerEvents.lists(), params] as const,
+    details: () => [...queryKeys.organizerEvents.all, 'detail'] as const,
+    detail: (id: string) => [...queryKeys.organizerEvents.details(), id] as const,
+  },
+
+  // Organizer Teams
+  organizerTeams: {
+    all: ['organizerTeams'] as const,
+    lists: (eventId: string) => [...queryKeys.organizerTeams.all, eventId, 'list'] as const,
+    list: (eventId: string, params: Record<string, unknown>) => [...queryKeys.organizerTeams.lists(eventId), params] as const,
+  },
+
+  // Admin Events
+  adminEvents: {
+    all: ['adminEvents'] as const,
+    lists: () => [...queryKeys.adminEvents.all, 'list'] as const,
+    list: (params: Record<string, unknown>) => [...queryKeys.adminEvents.lists(), params] as const,
+    details: () => [...queryKeys.adminEvents.all, 'detail'] as const,
+    detail: (id: string) => [...queryKeys.adminEvents.details(), id] as const,
+  },
+
+  // Public Events
+  publicEvents: {
+    all: ['publicEvents'] as const,
+    lists: () => [...queryKeys.publicEvents.all, 'list'] as const,
+    list: (params: Record<string, unknown>) => [...queryKeys.publicEvents.lists(), params] as const,
+    details: () => [...queryKeys.publicEvents.all, 'detail'] as const,
+    detail: (slug: string) => [...queryKeys.publicEvents.details(), slug] as const,
+  },
+
+  // Organizer Purchases
+  organizerPurchases: {
+    all: ['organizerPurchases'] as const,
+    lists: (eventId: string) => [...queryKeys.organizerPurchases.all, eventId, 'list'] as const,
+    list: (eventId: string, params: Record<string, unknown>) => [...queryKeys.organizerPurchases.lists(eventId), params] as const,
+  },
+
+  // Admin Event Orders
+  adminEventOrders: {
+    all: ['adminEventOrders'] as const,
+    lists: () => [...queryKeys.adminEventOrders.all, 'list'] as const,
+    list: (params: Record<string, unknown>) => [...queryKeys.adminEventOrders.lists(), params] as const,
+  },
+
+  // Customer Event Orders
+  customerEventOrders: {
+    all: ['customerEventOrders'] as const,
+    list: () => [...queryKeys.customerEventOrders.all, 'list'] as const,
+  },
 } as const
 
 export default queryKeys

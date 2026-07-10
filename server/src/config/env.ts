@@ -86,6 +86,12 @@ const envSchema = z.object({
     .min(32, 'JWT_ACCESS_SECRET must be at least 32 characters for security')
     .describe('Secret key for signing JWT access tokens'),
 
+  JWT_EVENT_SECRET: z
+    .string()
+    .min(32, 'JWT_EVENT_SECRET must be at least 32 characters for security')
+    .default('default_jwt_event_secret_key_which_is_thirty_two_chars_long')
+    .describe('Secret key for signing JWT team verification tokens'),
+
   JWT_REFRESH_SECRET: z
     .string()
     .min(32, 'JWT_REFRESH_SECRET must be at least 32 characters for security')

@@ -23,3 +23,5 @@ export * as VendorController from './vendor.controller.js';
 export * as InvoiceSettingsController from './invoiceSettings.controller.js';
 export * as ContactController from './contact.controller.js';
 export * as ProjectKitController from './projectKit.controller.js';
+export * as OrganizerController from './organizer.controller.js';
+export * as EventController from './event.controller.js';

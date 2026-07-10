@@ -22,6 +22,7 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
       lastName: user.lastName,
       email: user.email,
       role: user.role,
+      isOrganizer: user.isOrganizer,
       isEmailVerified: user.isEmailVerified,
     }, 'Account registered successfully. Welcome email sent.')
   );

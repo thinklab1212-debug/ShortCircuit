@@ -125,3 +125,35 @@ export const CERTIFICATIONS = [
   'REACH',
   'WEEE',
 ] as const;
+
+// ---------------------------------------------------------------------------
+// Event Commerce Module — Constants
+// ---------------------------------------------------------------------------
+
+export const EVENT_STATUS_LABELS: Record<string, string> = {
+  draft: 'Draft',
+  pending: 'Pending Review',
+  approved: 'Approved',
+  rejected: 'Rejected',
+  completed: 'Completed',
+};
+
+export const ORGANIZER_APPLICATION_STATUS_LABELS: Record<string, string> = {
+  pending: 'Pending Review',
+  approved: 'Approved',
+  rejected: 'Rejected',
+};
+
+export const ORDER_TYPE_LABELS: Record<string, string> = {
+  normal: 'Normal',
+  event: 'Event Kit',
+};
+
+export const EVENT_TEAM_CSV_LIMITS = {
+  maxTeams: 1000,
+  maxFileSizeBytes: 102400,  // 100KB
+  teamIdMinLength: 2,
+  teamIdMaxLength: 50,
+  leaderNameMinLength: 2,
+  leaderNameMaxLength: 100,
+} as const;

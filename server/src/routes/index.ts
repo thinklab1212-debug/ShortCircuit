@@ -27,6 +27,10 @@ import invoiceSettingsRoutes from './invoiceSettings.routes.js';
 import adminCancellationRoutes from './adminCancellation.routes.js';
 import contactRoutes from './contact.routes.js';
 import projectKitRoutes from './projectKit.routes.js';
+import organizerRoutes from './organizer.routes.js';
+import adminOrganizerRoutes from './adminOrganizer.routes.js';
+import adminEventRoutes from './adminEvent.routes.js';
+import eventRoutes from './event.routes.js';
 
 const router = Router();
 
@@ -52,5 +56,11 @@ router.use('/admin/invoice-settings', invoiceSettingsRoutes);
 router.use('/admin/cancellation-requests', adminCancellationRoutes);
 router.use('/contact', contactRoutes);
 router.use('/project-kits', projectKitRoutes);
+
+// Event Commerce Module
+router.use('/organizer', organizerRoutes);
+router.use('/admin/organizer-applications', adminOrganizerRoutes);
+router.use('/admin/events', adminEventRoutes);
+router.use('/events', eventRoutes);
 
 export default router;

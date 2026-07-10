@@ -74,7 +74,34 @@ export const uploadDatasheet = multer({
   },
 });
 
+/**
+ * Filter to only allow CSV uploads.
+ */
+const csvFilter = (req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
+  const allowedMimeTypes = ['text/csv', 'text/plain', 'application/vnd.ms-excel', 'application/csv'];
+  
+  if (allowedMimeTypes.includes(file.mimetype) || file.originalname.endsWith('.csv')) {
+    cb(null, true);
+  } else {
+    cb(new ApiError(400, 'Invalid file type. Only CSV files are allowed.'));
+  }
+};
+
+/**
+ * Upload helper for CSV files.
+ * Enforces a 2MB limit.
+ */
+export const uploadCsv = multer({
+  storage,
+  fileFilter: csvFilter,
+  limits: {
+    fileSize: 2 * 1024 * 1024, // 2MB limit
+    files: 1,
+  },
+});
+
 export default {
   uploadImages,
   uploadDatasheet,
+  uploadCsv,
 };

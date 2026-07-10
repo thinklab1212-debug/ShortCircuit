@@ -21,3 +21,5 @@ export * from './banner.validator.js';
 export * from './vendor.validator.js';
 export * from './contact.validator.js';
 export * from './projectKit.validator.js';
+export * from './organizer.validator.js';
+export * from './event.validator.js';

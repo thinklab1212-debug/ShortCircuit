@@ -25,6 +25,14 @@ export interface IUser extends Document {
     publicId: string;
   };
   role: 'customer' | 'vendor' | 'admin';
+  isOrganizer: boolean;
+  organizerStatus: 'active' | 'suspended' | 'disabled';
+  organizerProfile?: {
+    organizationName: string;
+    collegeName: string;
+    contactNumber: string;
+    approvedAt?: Date;
+  };
   isBlocked: boolean;
   isEmailVerified: boolean;
   passwordResetToken?: string;
@@ -101,6 +109,24 @@ const userSchema = new Schema<IUser, IUserModel>(
         message: 'Role must be customer, vendor, or admin',
       },
       default: 'customer',
+    },
+    isOrganizer: {
+      type: Boolean,
+      default: false,
+    },
+    organizerStatus: {
+      type: String,
+      enum: {
+        values: ['active', 'suspended', 'disabled'],
+        message: 'Organizer status must be active, suspended, or disabled',
+      },
+      default: 'active',
+    },
+    organizerProfile: {
+      organizationName: { type: String, trim: true },
+      collegeName: { type: String, trim: true },
+      contactNumber: { type: String, trim: true },
+      approvedAt: { type: Date },
     },
     isBlocked: {
       type: Boolean,

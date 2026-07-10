@@ -1,7 +1,7 @@
 import { lazy } from 'react'
 import { createBrowserRouter } from 'react-router'
-import { DefaultLayout, AuthLayout, AdminLayout, VendorLayout } from '@/layouts'
-import { ProtectedRoute, AdminRoute, GuestRoute, VendorRoute } from '@/components/guards'
+import { DefaultLayout, AuthLayout, AdminLayout, VendorLayout, OrganizerLayout } from '@/layouts'
+import { ProtectedRoute, AdminRoute, GuestRoute, VendorRoute, OrganizerRoute } from '@/components/guards'
 import { NotFound } from '@/components/ui/error'
 
 // Auth
@@ -47,15 +47,33 @@ const AdminInvoiceSettingsPage = lazy(() => import('@/pages/admin/InvoiceSetting
 const AdminInvoicesPage = lazy(() => import('@/pages/admin/InvoicesPage'))
 const AdminCancellationRequestsPage = lazy(() => import('@/pages/admin/CancellationRequestsAdminPage'))
 const AdminProjectKitsPage = lazy(() => import('@/pages/admin/ProjectKitsAdminPage'))
+const AdminOrganizerApplicationsPage = lazy(() => import('@/pages/admin/OrganizerApplicationsPage'))
+const AdminEventListPage = lazy(() => import('@/pages/admin/events/EventListPage'))
+const AdminEventDetailPage = lazy(() => import('@/pages/admin/events/EventDetailPage'))
 
 const ProjectKitsPage = lazy(() => import('@/pages/projects/ProjectKitsPage'))
 const ProjectKitDetailPage = lazy(() => import('@/pages/projects/ProjectKitDetailPage'))
+const PublicEventsPage = lazy(() => import('@/pages/events/PublicEventsPage'))
+const PublicEventDetailPage = lazy(() => import('@/pages/events/PublicEventDetailPage'))
 
 // Vendor (lazy loaded for SEO performance)
 const VendorDashboardPage = lazy(() => import('@/pages/vendor/DashboardPage'))
 const VendorProductsPage = lazy(() => import('@/pages/vendor/ProductsPage'))
 const VendorProductFormPage = lazy(() => import('@/pages/vendor/ProductFormPage'))
 const VendorProfilePage = lazy(() => import('@/pages/vendor/ProfilePage'))
+
+// Organizer (lazy loaded)
+const OrganizerDashboardPage = lazy(() => import('@/pages/organizer/DashboardPage'))
+const OrganizerMyEventsPage = lazy(() => import('@/pages/organizer/MyEventsPage'))
+const OrganizerEventFormPage = lazy(() => import('@/pages/organizer/EventFormPage'))
+const OrganizerEventDetailPage = lazy(() => import('@/pages/organizer/EventDetailPage'))
+const OrganizerKitBuilderPage = lazy(() => import('@/pages/organizer/KitBuilderPage'))
+const OrganizerTeamsManagementPage = lazy(() => import('@/pages/organizer/TeamsManagementPage'))
+
+const EventCheckoutPage = lazy(() => import('@/pages/events/EventCheckoutPage'))
+const CustomerEventOrdersPage = lazy(() => import('@/pages/events/CustomerEventOrdersPage'))
+const OrganizerPurchasesPage = lazy(() => import('@/pages/organizer/OrganizerPurchasesPage'))
+const AdminEventOrdersPage = lazy(() => import('@/pages/admin/events/EventOrdersPage'))
 
 
 // ─── Router Configuration ───────────────────────────────────────────────────────
@@ -80,6 +98,8 @@ export const router = createBrowserRouter([
       { path: 'terms', element: <TermsPage /> },
       { path: 'shipping', element: <ShippingPage /> },
       { path: 'returns', element: <ReturnsPage /> },
+      { path: 'events', element: <PublicEventsPage /> },
+      { path: 'events/:slug', element: <PublicEventDetailPage /> },
       { path: 'projects', element: <ProjectKitsPage /> },
       { path: 'projects/:slug', element: <ProjectKitDetailPage /> },
 
@@ -87,9 +107,11 @@ export const router = createBrowserRouter([
       { path: 'cart', element: <ProtectedRoute><CartPage /></ProtectedRoute> },
       { path: 'wishlist', element: <ProtectedRoute><WishlistPage /></ProtectedRoute> },
       { path: 'checkout', element: <ProtectedRoute><CheckoutPage /></ProtectedRoute> },
+      { path: 'events/:id/checkout', element: <ProtectedRoute><EventCheckoutPage /></ProtectedRoute> },
       { path: 'orders', element: <ProtectedRoute><OrdersPage /></ProtectedRoute> },
       { path: 'orders/:id', element: <ProtectedRoute><OrderDetailPage /></ProtectedRoute> },
       { path: 'profile', element: <ProtectedRoute><ProfilePage /></ProtectedRoute> },
+      { path: 'profile/event-orders', element: <ProtectedRoute><CustomerEventOrdersPage /></ProtectedRoute> },
       { path: 'addresses', element: <ProtectedRoute><AddressesPage /></ProtectedRoute> },
     ],
   },
@@ -129,6 +151,10 @@ export const router = createBrowserRouter([
       { path: 'invoice-settings', element: <AdminInvoiceSettingsPage /> },
       { path: 'invoices', element: <AdminInvoicesPage /> },
       { path: 'cancellation-requests', element: <AdminCancellationRequestsPage /> },
+      { path: 'organizer-applications', element: <AdminOrganizerApplicationsPage /> },
+      { path: 'events', element: <AdminEventListPage /> },
+      { path: 'events/:id', element: <AdminEventDetailPage /> },
+      { path: 'events/orders', element: <AdminEventOrdersPage /> },
     ],
   },
 
@@ -142,6 +168,22 @@ export const router = createBrowserRouter([
       { path: 'products/new', element: <VendorProductFormPage /> },
       { path: 'products/:id/edit', element: <VendorProductFormPage /> },
       { path: 'profile', element: <VendorProfilePage /> },
+    ],
+  },
+
+  // ── Organizer Routes (Organizer Layout) ──
+  {
+    element: <OrganizerRoute><OrganizerLayout /></OrganizerRoute>,
+    path: 'organizer',
+    children: [
+      { index: true, element: <OrganizerDashboardPage /> },
+      { path: 'events', element: <OrganizerMyEventsPage /> },
+      { path: 'events/new', element: <OrganizerEventFormPage /> },
+      { path: 'events/:id', element: <OrganizerEventDetailPage /> },
+      { path: 'events/:id/edit', element: <OrganizerEventFormPage /> },
+      { path: 'events/:id/kit', element: <OrganizerKitBuilderPage /> },
+      { path: 'events/:id/teams', element: <OrganizerTeamsManagementPage /> },
+      { path: 'events/:id/purchases', element: <OrganizerPurchasesPage /> },
     ],
   },
 

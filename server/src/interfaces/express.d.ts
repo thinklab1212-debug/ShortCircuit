@@ -27,6 +27,8 @@ declare namespace Express {
     email: string;
     /** User's role for RBAC checks */
     role: 'customer' | 'vendor' | 'admin';
+    /** Whether the user is an approved event organizer */
+    isOrganizer: boolean;
     /** User's first name */
     firstName: string;
     /** User's last name */

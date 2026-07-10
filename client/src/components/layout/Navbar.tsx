@@ -178,6 +178,9 @@ export function Navbar() {
                       <DropdownLink href="/orders" icon={<Package className="h-4 w-4" />} onClick={() => setIsProfileOpen(false)}>
                         My Orders
                       </DropdownLink>
+                      <DropdownLink href="/profile/event-orders" icon={<Package className="h-4 w-4 text-primary" />} onClick={() => setIsProfileOpen(false)}>
+                        My Event Orders
+                      </DropdownLink>
                       <DropdownLink href="/addresses" icon={<MapPin className="h-4 w-4" />} onClick={() => setIsProfileOpen(false)}>
                         Addresses
                       </DropdownLink>

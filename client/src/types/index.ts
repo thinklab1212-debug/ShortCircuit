@@ -59,6 +59,10 @@ export type PaymentMethod = 'razorpay' | 'upi' | 'cod'
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded'
 export type AddressType = 'home' | 'office' | 'other'
 export type DiscountType = 'percentage' | 'fixed'
+export type OrderType = 'normal' | 'event'
+export type EventStatus = 'draft' | 'pending' | 'approved' | 'rejected' | 'completed'
+export type OrganizerApplicationStatus = 'pending' | 'approved' | 'rejected'
+export type OrganizerStatus = 'active' | 'suspended' | 'disabled'
 
 // ─── Shared media ───────────────────────────────────────────────────────────────
 
@@ -83,11 +87,21 @@ export interface User {
   phone?: string
   avatar?: CloudinaryAsset
   role: UserRole
+  isOrganizer: boolean
+  organizerStatus?: OrganizerStatus
+  organizerProfile?: OrganizerProfile
   isBlocked?: boolean
   isEmailVerified: boolean
   lastLoginAt?: string
   createdAt: string
   updatedAt?: string
+}
+
+export interface OrganizerProfile {
+  organizationName: string
+  collegeName: string
+  contactNumber: string
+  approvedAt?: string
 }
 
 /** POST /auth/login → data */
@@ -913,4 +927,147 @@ export interface ProjectKitFormData {
   isActive?: boolean
   isFeatured?: boolean
   displayOrder?: number
+}
+
+// ─── Event Commerce Module ──────────────────────────────────────────────────────
+
+export interface OrganizerApplication {
+  _id: string
+  user: string | User
+  organizationName: string
+  collegeName: string
+  contactNumber: string
+  status: OrganizerApplicationStatus
+  adminResponse?: string
+  reviewedBy?: string
+  reviewedAt?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface EventKitProduct {
+  product: string | Product
+  productName: string
+  productSku: string
+  productImage?: string
+  priceAtCreation: number
+  quantity: number
+}
+
+export interface EventTeam {
+  teamId: string
+  leaderName: string
+  purchased: boolean
+  purchasedAt?: string
+  orderId?: string
+}
+
+export interface EventKitPricing {
+  eventKitPrice: number
+  totalKitValue: number
+  discount: number
+  discountPercentage: number
+}
+
+export interface Event {
+  _id: string
+  organizer: string | User
+  eventName: string
+  slug: string
+  organizationName: string
+  collegeName: string
+  description: string
+  banner: CloudinaryAsset
+  startDate: string
+  endDate: string
+  eventKitPrice: number
+  totalKitValue: number
+  kitProducts: EventKitProduct[]
+  teams: EventTeam[]
+  status: EventStatus
+  rejectionReason?: string
+  reviewedBy?: string
+  reviewedAt?: string
+  approvedBy?: string
+  approvedAt?: string
+  latestImport?: {
+    importedBy: string | User
+    importedAt: string
+    totalRows: number
+    successRows: number
+    skippedRows: number
+  }
+  totalTeams?: number
+  purchasedTeams?: number
+  discount?: number
+  discountPercentage?: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface PurchaseEventKitData {
+  teamId: string
+  addressId: string
+  paymentMethod: PaymentMethod
+  customerNote?: string
+}
+
+export interface ApplyOrganizerData {
+  organizationName: string
+  collegeName: string
+  contactNumber: string
+}
+
+export interface EventOrder {
+  _id: string
+  orderId: string
+  event: string | Event
+  organizer: string | User
+  customer: string | User
+  teamId: string
+  leaderName: string
+  kitSnapshot: {
+    product: string
+    productName: string
+    productSku: string
+    productImage: string
+    quantity: number
+    priceAtCreation: number
+  }[]
+  addressSnapshot: {
+    fullName: string
+    phone: string
+    addressLine1: string
+    addressLine2?: string
+    landmark?: string
+    city: string
+    state: string
+    pincode: string
+    country: string
+    email?: string
+  }
+  paymentMethod: 'razorpay' | 'cod'
+  paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded'
+  deliveryStatus: 'placed' | 'packed' | 'shipped' | 'delivered' | 'cancelled'
+  statusHistory: {
+    status: string
+    timestamp: string
+    note?: string
+  }[]
+  priceBreakdown: {
+    itemsPrice: number
+    discountAmount: number
+    shippingPrice: number
+    taxPrice: number
+    totalPrice: number
+  }
+  paymentDetails?: {
+    razorpayOrderId?: string
+    razorpayPaymentId?: string
+    razorpaySignature?: string
+  }
+  invoiceId?: string
+  invoiceUrl?: string
+  createdAt: string
+  updatedAt: string
 }

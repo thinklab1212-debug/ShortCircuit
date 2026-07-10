@@ -202,3 +202,67 @@ export interface ProductFilters {
   page?: number;
   limit?: number;
 }
+
+// ---------------------------------------------------------------------------
+// Event Commerce Module — Enums
+// ---------------------------------------------------------------------------
+
+export enum EventStatus {
+  DRAFT = 'draft',
+  PENDING = 'pending',
+  APPROVED = 'approved',
+  REJECTED = 'rejected',
+  COMPLETED = 'completed',
+}
+
+export enum OrganizerApplicationStatus {
+  PENDING = 'pending',
+  APPROVED = 'approved',
+  REJECTED = 'rejected',
+}
+
+export enum OrganizerStatus {
+  ACTIVE = 'active',
+  SUSPENDED = 'suspended',
+  DISABLED = 'disabled',
+}
+
+export interface OrganizerProfile {
+  organizationName: string;
+  collegeName: string;
+  contactNumber: string;
+  approvedAt?: string;         // ISO date string
+}
+
+export enum OrderType {
+  NORMAL = 'normal',
+  EVENT = 'event',
+}
+
+// ---------------------------------------------------------------------------
+// Event Commerce Module — Types
+// ---------------------------------------------------------------------------
+
+export interface EventKitProduct {
+  product: string;           // ObjectId as string
+  productName: string;       // Snapshot of product name at creation
+  productSku: string;        // Snapshot of product SKU at creation
+  productImage?: string;      // Snapshot of product image URL
+  priceAtCreation: number;   // Snapshot of product price at creation
+  quantity: number;
+}
+
+export interface EventTeam {
+  teamId: string;
+  leaderName: string;
+  purchased: boolean;
+  purchasedAt?: string;      // ISO date string
+  orderId?: string;          // ObjectId as string
+}
+
+export interface EventKitPricing {
+  eventKitPrice: number;     // Organizer-set selling price
+  totalKitValue: number;     // Σ(priceAtCreation × qty) — stored, immutable
+  discount: number;          // totalKitValue − eventKitPrice — computed
+  discountPercentage: number; // (discount / totalKitValue) × 100 — computed
+}

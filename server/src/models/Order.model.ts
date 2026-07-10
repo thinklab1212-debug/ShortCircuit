@@ -178,6 +178,11 @@ export interface IOrder extends Document {
   taxRateSnapshot?: ITaxRateSnapshot;
   invoiceSnapshot?: IInvoiceSnapshot;
 
+  // Event Commerce
+  orderType: 'normal' | 'event';
+  eventId?: mongoose.Types.ObjectId;
+  eventTeamId?: string;
+
   // Notes
   customerNote?: string;
   adminNote?: string;
@@ -468,6 +473,24 @@ const orderSchema = new Schema<IOrder, IOrderModel>(
       paymentStatus: { type: String },
     },
 
+    // Event Commerce
+    orderType: {
+      type: String,
+      enum: {
+        values: ['normal', 'event'],
+        message: 'Order type must be normal or event',
+      },
+      default: 'normal',
+    },
+    eventId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Event',
+    },
+    eventTeamId: {
+      type: String,
+      trim: true,
+    },
+
     // Notes
     customerNote: { type: String, trim: true, maxlength: 500 },
     adminNote: { type: String, trim: true, maxlength: 500, select: false },
@@ -487,6 +510,8 @@ orderSchema.index({ orderStatus: 1, createdAt: -1 });
 orderSchema.index({ paymentStatus: 1 });
 orderSchema.index({ createdAt: -1 });
 orderSchema.index({ 'paymentDetails.razorpayOrderId': 1 }, { sparse: true });
+orderSchema.index({ eventId: 1, eventTeamId: 1 }, { sparse: true });
+orderSchema.index({ orderType: 1 }, { sparse: true });
 
 // ---------------------------------------------------------------------------
 // Static methods

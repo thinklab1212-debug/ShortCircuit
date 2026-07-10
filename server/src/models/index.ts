@@ -21,3 +21,5 @@ export { default as VendorProfile, type IVendorProfile } from './VendorProfile.m
 export { default as InvoiceSettings, type IInvoiceSettings } from './InvoiceSettings.model.js';
 export { default as SecurityLog, type ISecurityLog } from './SecurityLog.model.js';
 export { default as ProjectKit, type IProjectKit } from './ProjectKit.model.js';
+export { default as OrganizerApplication, type IOrganizerApplication } from './OrganizerApplication.model.js';
+export { default as Event, type IEvent, type IEventKitProduct, type IEventTeam } from './Event.model.js';

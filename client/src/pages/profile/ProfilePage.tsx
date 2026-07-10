@@ -15,6 +15,12 @@ import {
   Package,
   MapPin,
   LogOut,
+  Award,
+  Clock,
+  CheckCircle,
+  XCircle,
+  Building2,
+  CalendarDays,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -22,7 +28,7 @@ import { FormField } from '@/components/ui/form-field'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { useAuthStore } from '@/store'
-import { useUpdateProfile, useUpdateAvatar, useChangePassword, useLogout } from '@/hooks'
+import { useUpdateProfile, useUpdateAvatar, useChangePassword, useLogout, useMyOrganizerApplication, useApplyAsOrganizer } from '@/hooks'
 import { getUserName, getInitials } from '@/utils'
 import { fadeInUp, staggerContainer } from '@/config/animations'
 
@@ -50,6 +56,21 @@ const passwordSchema = z
   })
 type PasswordFormValues = z.infer<typeof passwordSchema>
 
+const organizerSchema = z.object({
+  organizationName: z
+    .string()
+    .min(3, 'Organization name must be at least 3 characters')
+    .max(150, 'Organization name cannot exceed 150 characters'),
+  collegeName: z
+    .string()
+    .min(3, 'College name must be at least 3 characters')
+    .max(200, 'College name cannot exceed 200 characters'),
+  contactNumber: z
+    .string()
+    .regex(/^[6-9]\d{9}$/, 'Enter a valid 10-digit Indian mobile number'),
+})
+type OrganizerFormValues = z.infer<typeof organizerSchema>
+
 // ─── Profile Page ─────────────────────────────────────────────────────────────
 
 export default function ProfilePage() {
@@ -61,6 +82,23 @@ export default function ProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [showCurrent, setShowCurrent] = useState(false)
   const [showNew, setShowNew] = useState(false)
+  const [showOrganizerForm, setShowOrganizerForm] = useState(false)
+  const { data: myApplication, isLoading: appLoading } = useMyOrganizerApplication()
+  const applyAsOrganizer = useApplyAsOrganizer()
+
+  const {
+    register: registerOrganizer,
+    handleSubmit: handleOrganizerSubmit,
+    formState: { errors: organizerErrors },
+  } = useForm<OrganizerFormValues>({
+    resolver: zodResolver(organizerSchema),
+  })
+
+  const onOrganizerSubmit = (data: OrganizerFormValues) => {
+    applyAsOrganizer.mutate(data, {
+      onSuccess: () => setShowOrganizerForm(false),
+    })
+  }
 
   const {
     register: registerProfile,
@@ -320,7 +358,7 @@ export default function ProfilePage() {
         </motion.div>
 
         {/* Sidebar */}
-        <motion.div variants={fadeInUp}>
+        <motion.div variants={fadeInUp} className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Quick Links</CardTitle>
@@ -338,6 +376,12 @@ export default function ProfilePage() {
                   Saved Addresses
                 </Link>
               </Button>
+              <Button asChild variant="outline" className="w-full justify-start">
+                <Link to="/events">
+                  <CalendarDays className="h-4 w-4 mr-2" />
+                  Events
+                </Link>
+              </Button>
               <Separator className="my-2" />
               <Button
                 variant="soft-destructive"
@@ -350,6 +394,174 @@ export default function ProfilePage() {
               </Button>
             </CardContent>
           </Card>
+
+          {/* Become an Organizer Card */}
+          {!appLoading && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Award className="h-5 w-5 text-primary" />
+                  Event Organizer
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {/* Already an organizer */}
+                {user?.isOrganizer && (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 rounded-lg bg-success/10 p-3 text-sm text-success">
+                      <CheckCircle className="h-4 w-4 shrink-0" />
+                      <span className="font-medium">Approved Organizer</span>
+                    </div>
+                    {user.organizerProfile && (
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-center gap-2">
+                          <Building2 className="h-4 w-4 text-muted-foreground" />
+                          <span>{user.organizerProfile.organizationName}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <MapPin className="h-4 w-4 text-muted-foreground" />
+                          <span>{user.organizerProfile.collegeName}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Phone className="h-4 w-4 text-muted-foreground" />
+                          <span>{user.organizerProfile.contactNumber}</span>
+                        </div>
+                        {user.organizerProfile.approvedAt && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Approved on {new Date(user.organizerProfile.approvedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    <Button asChild className="w-full">
+                      <Link to="/organizer">
+                        <Award className="h-4 w-4 mr-2" />
+                        Open Organizer Dashboard
+                      </Link>
+                    </Button>
+                  </div>
+                )}
+
+                {/* No application yet */}
+                {!user?.isOrganizer && !myApplication && !showOrganizerForm && (
+                  <div className="space-y-3">
+                    <p className="text-sm text-muted-foreground">
+                      Want to sell event kits on Short Circuit? Apply to become an event organizer.
+                    </p>
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => setShowOrganizerForm(true)}
+                    >
+                      <Building2 className="h-4 w-4 mr-2" />
+                      Become an Organizer
+                    </Button>
+                  </div>
+                )}
+
+                {/* Pending application */}
+                {!user?.isOrganizer && myApplication?.status === 'pending' && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 rounded-lg bg-warning/10 p-3 text-sm text-warning">
+                      <Clock className="h-4 w-4 shrink-0" />
+                      <span>Your application is under review. We'll notify you once it's processed.</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Submitted as <strong>{myApplication.organizationName}</strong>
+                    </p>
+                  </div>
+                )}
+
+                {/* Rejected application */}
+                {!user?.isOrganizer && myApplication?.status === 'rejected' && !showOrganizerForm && (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+                      <XCircle className="h-4 w-4 shrink-0" />
+                      <span>Your application was rejected.</span>
+                    </div>
+                    {myApplication.adminResponse && (
+                      <p className="text-xs text-muted-foreground">
+                        <strong>Reason:</strong> {myApplication.adminResponse}
+                      </p>
+                    )}
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => setShowOrganizerForm(true)}
+                    >
+                      <Building2 className="h-4 w-4 mr-2" />
+                      Reapply
+                    </Button>
+                  </div>
+                )}
+
+                {/* Application Form */}
+                {!user?.isOrganizer && showOrganizerForm && (
+                  <form onSubmit={handleOrganizerSubmit(onOrganizerSubmit)} className="space-y-4">
+                    <FormField
+                      label="Organization / Club Name"
+                      htmlFor="organizationName"
+                      error={organizerErrors.organizationName?.message}
+                      required
+                    >
+                      <Input
+                        id="organizationName"
+                        placeholder="e.g. IEEE Student Branch"
+                        leftIcon={<Building2 className="h-4 w-4" />}
+                        error={!!organizerErrors.organizationName}
+                        {...registerOrganizer('organizationName')}
+                      />
+                    </FormField>
+                    <FormField
+                      label="College / Institute Name"
+                      htmlFor="collegeName"
+                      error={organizerErrors.collegeName?.message}
+                      required
+                    >
+                      <Input
+                        id="collegeName"
+                        placeholder="e.g. MIT Pune"
+                        error={!!organizerErrors.collegeName}
+                        {...registerOrganizer('collegeName')}
+                      />
+                    </FormField>
+                    <FormField
+                      label="Contact Number"
+                      htmlFor="contactNumber"
+                      error={organizerErrors.contactNumber?.message}
+                      required
+                    >
+                      <Input
+                        id="contactNumber"
+                        placeholder="e.g. 9876543210"
+                        leftIcon={<Phone className="h-4 w-4" />}
+                        error={!!organizerErrors.contactNumber}
+                        {...registerOrganizer('contactNumber')}
+                      />
+                    </FormField>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => setShowOrganizerForm(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="submit"
+                        className="flex-1"
+                        loading={applyAsOrganizer.isPending}
+                        loadingText="Submitting..."
+                      >
+                        Submit
+                      </Button>
+                    </div>
+                  </form>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </motion.div>
       </motion.div>
     </div>

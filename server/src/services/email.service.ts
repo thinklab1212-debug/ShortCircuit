@@ -275,6 +275,47 @@ export class EmailService {
       return false;
     }
   }
+
+  /**
+   * Sends an email notification to the organizer regarding event approval or rejection.
+   */
+  public static async sendEventStatusNotification(
+    to: string,
+    organizerName: string,
+    eventName: string,
+    status: 'approved' | 'rejected',
+    rejectionReason?: string
+  ): Promise<boolean> {
+    const subject = `Your Event "${eventName}" status update — Short Circuit ⚡`;
+    const statusText = status === 'approved' ? 'Approved ✅' : 'Rejected ❌';
+    const color = status === 'approved' ? '#16a34a' : '#dc2626';
+
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+        <h2 style="color: ${color}; text-align: center;">Event Status: ${statusText}</h2>
+        <p>Hi ${organizerName},</p>
+        <p>Your event <strong>"${eventName}"</strong> has been reviewed by the administration team.</p>
+        <p><strong>Current Status:</strong> <span style="color: ${color}; font-weight: bold;">${statusText.toUpperCase()}</span></p>
+        
+        ${
+          status === 'rejected' && rejectionReason
+            ? `<div style="background-color: #fef2f2; border-left: 4px solid #dc2626; padding: 15px; margin: 20px 0; border-radius: 4px;">
+                <p style="margin: 0; font-weight: bold; color: #991b1b;">Rejection Reason:</p>
+                <p style="margin: 5px 0 0 0; color: #7f1d1d;">${rejectionReason}</p>
+               </div>
+               <p>Please edit the event kit configurations or metadata according to the feedback, and click <strong>"Edit & Resubmit"</strong> in your Organizer Dashboard to request a re-review.</p>`
+            : `<p>Your event is now active! Students can find the event page to verify their Team IDs and purchase the corresponding Virtual Event Kit.</p>`
+        }
+        
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${env.CLIENT_URL}/organizer/events" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Go to Organizer Dashboard</a>
+        </div>
+        <hr style="border: 0; border-top: 1px solid #eeeeee;" />
+        <p style="font-size: 12px; color: #777777; text-align: center;">This is an automated transactional email from Short Circuit. Please do not reply directly.</p>
+      </div>
+    `;
+    return this.sendEmail(to, subject, html);
+  }
 }
 
 export default EmailService;
