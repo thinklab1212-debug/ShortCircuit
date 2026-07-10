@@ -52,14 +52,14 @@ export default function HeroBanner() {
 
   return (
     <section className="relative w-full overflow-hidden">
-      <div className="relative h-[340px] sm:h-[480px] lg:h-[560px]">
-        <AnimatePresence mode="wait">
+      <div className="relative h-[340px] sm:h-[480px] lg:h-[560px] bg-slate-950">
+        <AnimatePresence mode="popLayout">
           <motion.div
             key={current}
             initial={{ opacity: 0, scale: 1.05 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.98 }}
-            transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
+            transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
             className="absolute inset-0"
           >
             {slides ? (
