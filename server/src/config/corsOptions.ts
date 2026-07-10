@@ -51,6 +51,7 @@ export const corsOptions: CorsOptions = {
     'Accept',
     'Origin',
     'Access-Control-Allow-Headers',
+    'x-verification-token',
   ],
   credentials: true, // Enable cookies/authorization headers
   optionsSuccessStatus: 200, // Some legacy browsers choke on 204
