@@ -8,11 +8,17 @@ import { Router } from 'express';
 import { UploadController } from '../controllers/index.js';
 import { authenticate, authorize, validate, uploadImages, uploadDatasheet } from '../middlewares/index.js';
 import { z } from 'zod';
+import { ApiError } from '../utils/index.js';
 
 const router = Router();
 
-// Upload endpoints are restricted to administrators
-router.use(authenticate, authorize('admin'));
+// Helper middleware to allow admin or approved organizer
+const authorizeAdminOrOrganizer = (req: any, res: any, next: any) => {
+  if (req.user?.role === 'admin' || req.user?.isOrganizer) {
+    return next();
+  }
+  return next(new ApiError(403, 'Forbidden: Only administrators and approved organizers can upload images.'));
+};
 
 /**
  * @openapi
@@ -36,7 +42,7 @@ router.use(authenticate, authorize('admin'));
  *       200:
  *         description: Image uploaded successfully
  */
-router.post('/image', uploadImages.single('image'), UploadController.uploadSingleImage);
+router.post('/image', authenticate, authorizeAdminOrOrganizer, uploadImages.single('image'), UploadController.uploadSingleImage);
 
 /**
  * @openapi
@@ -60,7 +66,7 @@ router.post('/image', uploadImages.single('image'), UploadController.uploadSingl
  *       200:
  *         description: PDF uploaded successfully
  */
-router.post('/pdf', uploadDatasheet.single('pdf'), UploadController.uploadSinglePdf);
+router.post('/pdf', authenticate, authorize('admin'), uploadDatasheet.single('pdf'), UploadController.uploadSinglePdf);
 
 /**
  * @openapi
@@ -86,7 +92,7 @@ router.post('/pdf', uploadDatasheet.single('pdf'), UploadController.uploadSingle
  *       200:
  *         description: Images uploaded successfully
  */
-router.post('/images', uploadImages.array('images', 15), UploadController.uploadMultipleImages);
+router.post('/images', authenticate, authorize('admin'), uploadImages.array('images', 15), UploadController.uploadMultipleImages);
 
 /**
  * @openapi
@@ -106,6 +112,6 @@ router.post('/images', uploadImages.array('images', 15), UploadController.upload
  *       200:
  *         description: Image deleted successfully
  */
-router.delete('/:publicId', validate({ params: z.object({ publicId: z.string({ required_error: 'Public ID is required' }).trim().min(1) }) }), UploadController.deleteImage);
+router.delete('/:publicId', authenticate, authorize('admin'), validate({ params: z.object({ publicId: z.string({ required_error: 'Public ID is required' }).trim().min(1) }) }), UploadController.deleteImage);
 
 export default router;
