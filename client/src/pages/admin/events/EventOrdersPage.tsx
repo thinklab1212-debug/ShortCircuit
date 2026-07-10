@@ -32,6 +32,25 @@ export default function EventOrdersPage() {
   const orders = data?.orders || []
   const pagination = data?.pagination
 
+  const handleUpdateStatus = async (
+    orderId: string,
+    field: 'paymentStatus' | 'deliveryStatus',
+    newValue: string
+  ) => {
+    try {
+      toast.loading('Updating order status...', { id: 'status-update' })
+      await apiClient.patch(`/admin/events/orders/${orderId}/status`, {
+        [field]: newValue,
+      })
+      toast.success('Order status updated successfully', { id: 'status-update' })
+      setTimeout(() => {
+        window.location.reload()
+      }, 500)
+    } catch {
+      toast.error('Failed to update status.', { id: 'status-update' })
+    }
+  }
+
   // Filter orders client side for search to give an exceptionally smooth response
   const filteredOrders = orders.filter((order) => {
     if (!search.trim()) return true
@@ -177,22 +196,35 @@ export default function EventOrdersPage() {
                       {order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-IN') : 'N/A'}
                     </td>
                     <td className="p-3">
-                      <span
-                        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                      <select
+                        value={order.paymentStatus}
+                        onChange={(e) => handleUpdateStatus(order._id, 'paymentStatus', e.target.value)}
+                        className={`bg-card border border-border rounded text-[10px] p-1 font-semibold focus:ring-1 focus:ring-primary outline-none ${
                           order.paymentStatus === 'paid'
-                            ? 'bg-success/10 text-success'
+                            ? 'text-success border-success/30 bg-success/5'
                             : order.paymentStatus === 'pending'
-                            ? 'bg-warning/10 text-warning'
-                            : 'bg-destructive/10 text-destructive'
+                            ? 'text-warning border-warning/30 bg-warning/5'
+                            : 'text-destructive border-destructive/30 bg-destructive/5'
                         }`}
                       >
-                        {order.paymentStatus}
-                      </span>
+                        <option value="pending">Pending</option>
+                        <option value="paid">Paid</option>
+                        <option value="failed">Failed</option>
+                        <option value="refunded">Refunded</option>
+                      </select>
                     </td>
                     <td className="p-3">
-                      <span className="capitalize bg-muted px-2 py-0.5 rounded text-[10px] font-medium text-muted-foreground">
-                        {order.deliveryStatus}
-                      </span>
+                      <select
+                        value={order.deliveryStatus}
+                        onChange={(e) => handleUpdateStatus(order._id, 'deliveryStatus', e.target.value)}
+                        className="bg-card text-foreground border border-border rounded text-[10px] p-1 font-medium focus:ring-1 focus:ring-primary outline-none"
+                      >
+                        <option value="placed">Placed</option>
+                        <option value="packed">Packed</option>
+                        <option value="shipped">Shipped</option>
+                        <option value="delivered">Delivered</option>
+                        <option value="cancelled">Cancelled</option>
+                      </select>
                     </td>
                     <td className="p-3 text-right">
                       {order.invoiceId ? (

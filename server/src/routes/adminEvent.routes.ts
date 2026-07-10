@@ -10,7 +10,7 @@
 import { Router } from 'express';
 import * as EventController from '../controllers/event.controller.js';
 import { authenticate, authorize, validate } from '../middlewares/index.js';
-import { rejectEventSchema } from '../validators/index.js';
+import { rejectEventSchema, updateEventOrderStatusSchema } from '../validators/index.js';
 
 const router = Router();
 
@@ -20,6 +20,11 @@ router.use(authenticate, authorize('admin'));
 // ─── List & Detail ───────────────────────────────────────────────────────────
 
 router.get('/orders', EventController.getAdminEventOrders);
+router.patch(
+  '/orders/:id/status',
+  validate({ body: updateEventOrderStatusSchema }),
+  EventController.updateAdminEventOrderStatus
+);
 router.get('/', EventController.getAllEvents);
 router.get('/:id', EventController.getEventByIdAdmin);
 

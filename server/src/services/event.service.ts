@@ -1381,6 +1381,40 @@ export class EventService {
 
     return InvoiceService.generateInvoicePdfBuffer(fakeOrder, customerEmail, settings as any);
   }
+
+  /**
+   * Updates an EventOrder's delivery or payment status (Admin only).
+   */
+  public static async updateAdminEventOrderStatus(
+    orderId: string,
+    updateData: { paymentStatus?: string; deliveryStatus?: string }
+  ) {
+    const order = await EventOrder.findById(orderId);
+    if (!order) {
+      throw ApiError.notFound('Event Order not found.');
+    }
+
+    if (updateData.paymentStatus) {
+      order.paymentStatus = updateData.paymentStatus as any;
+      order.statusHistory.push({
+        status: updateData.paymentStatus,
+        timestamp: new Date(),
+        note: `Payment status updated to ${updateData.paymentStatus} by Admin`,
+      });
+    }
+
+    if (updateData.deliveryStatus) {
+      order.deliveryStatus = updateData.deliveryStatus as any;
+      order.statusHistory.push({
+        status: updateData.deliveryStatus,
+        timestamp: new Date(),
+        note: `Delivery status updated to ${updateData.deliveryStatus} by Admin`,
+      });
+    }
+
+    await order.save();
+    return order;
+  }
 }
 
 export default EventService;

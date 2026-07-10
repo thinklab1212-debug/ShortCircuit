@@ -137,3 +137,8 @@ export const rejectEventSchema = z.object({
     .min(5, 'Rejection reason must be at least 5 characters')
     .max(500, 'Rejection reason cannot exceed 500 characters'),
 });
+
+export const updateEventOrderStatusSchema = z.object({
+  paymentStatus: z.enum(['pending', 'paid', 'failed', 'refunded']).optional(),
+  deliveryStatus: z.enum(['placed', 'packed', 'shipped', 'delivered', 'cancelled']).optional(),
+});
