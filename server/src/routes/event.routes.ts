@@ -17,6 +17,20 @@ import { verifyTeamSchema, purchaseEventKitSchema } from '../validators/index.js
 
 const router = Router();
 
+// ─── Customer: Event Order Dashboard & Invoice (Authenticated) ──────────────
+
+router.get(
+  '/my-orders',
+  authenticate,
+  EventController.getCustomerEventOrders
+);
+
+router.get(
+  '/orders/:id/invoice',
+  authenticate,
+  EventController.downloadEventInvoice
+);
+
 // ─── Public: Event Listing ───────────────────────────────────────────────────
 
 router.get('/', EventController.getPublicEvents);
@@ -45,20 +59,6 @@ router.post(
   authenticate,
   validate({ body: purchaseEventKitSchema }),
   EventController.purchaseEventKit
-);
-
-// ─── Customer: Event Order Dashboard & Invoice (Authenticated) ──────────────
-
-router.get(
-  '/my-orders',
-  authenticate,
-  EventController.getCustomerEventOrders
-);
-
-router.get(
-  '/orders/:id/invoice',
-  authenticate,
-  EventController.downloadEventInvoice
 );
 
 export default router;
