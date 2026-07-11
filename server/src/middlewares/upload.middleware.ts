@@ -25,8 +25,12 @@ const storage = multer.memoryStorage();
  */
 const imageFilter = (req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
   const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp'];
+  const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp'];
   
-  if (allowedMimeTypes.includes(file.mimetype)) {
+  const lastDotIndex = file.originalname.lastIndexOf('.');
+  const fileExtension = lastDotIndex !== -1 ? file.originalname.slice(lastDotIndex).toLowerCase() : '';
+  
+  if (allowedMimeTypes.includes(file.mimetype) || allowedExtensions.includes(fileExtension)) {
     cb(null, true);
   } else {
     cb(new ApiError(400, 'Invalid file type. Only JPEG, PNG, and WEBP images are allowed.'));

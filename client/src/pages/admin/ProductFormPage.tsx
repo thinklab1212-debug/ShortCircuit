@@ -76,6 +76,8 @@ export default function ProductFormPage() {
   const [specs, setSpecs] = useState<SpecRow[]>([])
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [uploading, setUploading] = useState(false)
+  const [showBulkPaste, setShowBulkPaste] = useState(false)
+  const [bulkText, setBulkText] = useState('')
 
   // Reference data
   const { data: categories } = useQuery({
@@ -407,9 +409,77 @@ export default function ProductFormPage() {
                   </Button>
                 </div>
               ))}
-              <Button type="button" variant="outline" size="sm" leftIcon={<Plus />} onClick={addSpec}>
-                Add Specification
-              </Button>
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" size="sm" leftIcon={<Plus />} onClick={addSpec}>
+                  Add Specification
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowBulkPaste(!showBulkPaste)}
+                >
+                  {showBulkPaste ? 'Hide Bulk Paste' : 'Bulk Paste'}
+                </Button>
+              </div>
+
+              {showBulkPaste && (
+                <div className="space-y-2 rounded-xl border border-dashed border-border p-4 bg-muted/20">
+                  <p className="text-xs text-muted-foreground">
+                    Paste specifications below. Format: <strong>Key: Value</strong> or <strong>Key [tab] Value</strong> (one per line).
+                  </p>
+                  <Textarea
+                    placeholder="Weight: 250g&#10;Dimensions: 10 x 5 x 2 cm&#10;Voltage: 5V"
+                    rows={4}
+                    value={bulkText}
+                    onChange={(e) => setBulkText(e.target.value)}
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="default"
+                      size="sm"
+                      onClick={() => {
+                        if (!bulkText.trim()) return
+                        const lines = bulkText.split('\n')
+                        const newSpecs: SpecRow[] = []
+                        for (const line of lines) {
+                          if (!line.trim()) continue
+                          let sepIndex = line.indexOf('\t')
+                          if (sepIndex === -1) {
+                            sepIndex = line.indexOf(':')
+                          }
+                          if (sepIndex !== -1) {
+                            const key = line.substring(0, sepIndex).trim()
+                            const value = line.substring(sepIndex + 1).trim()
+                            if (key || value) {
+                              newSpecs.push({ key, value, group: 'General' })
+                            }
+                          } else {
+                            newSpecs.push({ key: line.trim(), value: '', group: 'General' })
+                          }
+                        }
+                        setSpecs((prev) => [...prev, ...newSpecs])
+                        setBulkText('')
+                        setShowBulkPaste(false)
+                      }}
+                    >
+                      Import Specs
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setBulkText('')
+                        setShowBulkPaste(false)
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </AdminSection>
         </div>

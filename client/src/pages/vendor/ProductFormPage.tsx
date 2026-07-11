@@ -40,6 +40,8 @@ export default function ProductFormPage() {
 
   const [form, setForm] = useState<VendorProductFormData>(initialFormState)
   const [tagInput, setTagInput] = useState('')
+  const [showBulkPaste, setShowBulkPaste] = useState(false)
+  const [bulkText, setBulkText] = useState('')
 
   // Fetch existing product for edit
   const { data: product, isLoading: productLoading } = useQuery({
@@ -455,14 +457,83 @@ export default function ProductFormPage() {
         <fieldset disabled={isReadOnly} className="space-y-4 rounded-xl border border-border bg-card p-6">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-foreground">Specifications</h2>
-            <button
-              type="button"
-              onClick={addSpec}
-              className="rounded-lg border border-border px-3 py-1.5 text-sm text-muted-foreground hover:bg-accent"
-            >
-              + Add Spec
-            </button>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={addSpec}
+                className="rounded-lg border border-border px-3 py-1.5 text-sm text-muted-foreground hover:bg-accent"
+              >
+                + Add Spec
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowBulkPaste(!showBulkPaste)}
+                className="rounded-lg border border-border px-3 py-1.5 text-sm text-muted-foreground hover:bg-accent"
+              >
+                {showBulkPaste ? 'Hide Bulk Paste' : 'Bulk Paste'}
+              </button>
+            </div>
           </div>
+
+          {showBulkPaste && (
+            <div className="space-y-2 rounded-xl border border-dashed border-border p-4 bg-muted/20">
+              <p className="text-xs text-muted-foreground">
+                Paste specifications below. Format: <strong>Key: Value</strong> or <strong>Key [tab] Value</strong> (one per line).
+              </p>
+              <textarea
+                placeholder="Weight: 250g&#10;Dimensions: 10 x 5 x 2 cm&#10;Voltage: 5V"
+                rows={4}
+                value={bulkText}
+                onChange={(e) => setBulkText(e.target.value)}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary resize-y"
+              />
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!bulkText.trim()) return
+                    const lines = bulkText.split('\n')
+                    const newSpecs: { key: string; value: string; group: string }[] = []
+                    for (const line of lines) {
+                      if (!line.trim()) continue
+                      let sepIndex = line.indexOf('\t')
+                      if (sepIndex === -1) {
+                        sepIndex = line.indexOf(':')
+                      }
+                      if (sepIndex !== -1) {
+                        const key = line.substring(0, sepIndex).trim()
+                        const value = line.substring(sepIndex + 1).trim()
+                        if (key || value) {
+                          newSpecs.push({ key, value, group: 'General' })
+                        }
+                      } else {
+                        newSpecs.push({ key: line.trim(), value: '', group: 'General' })
+                      }
+                    }
+                    setForm((prev) => ({
+                      ...prev,
+                      specifications: [...(prev.specifications || []), ...newSpecs],
+                    }))
+                    setBulkText('')
+                    setShowBulkPaste(false)
+                  }}
+                  className="rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                >
+                  Import Specs
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBulkText('')
+                    setShowBulkPaste(false)
+                  }}
+                  className="rounded-lg border border-border px-3 py-1.5 text-sm text-muted-foreground hover:bg-accent"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
 
           {(form.specifications || []).map((spec, i) => (
             <div key={i} className="flex gap-2 items-start">
