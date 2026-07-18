@@ -19,4 +19,4 @@ Disallow: /admin/
 Disallow: /vendor/
 
 # Sitemap Location
-Sitemap: https://shortcircuit.com/sitemap.xml
+Sitemap: https://www.shortcircuit.co.in/sitemap.xml

@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Link } from 'react-router'
 import { AlertTriangle, Home, RefreshCw, ServerCrash } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -46,6 +47,14 @@ export function ErrorFallback({ error, resetErrorBoundary }: ErrorFallbackProps)
 // ─── Not Found Page ─────────────────────────────────────────────────────────────
 
 export function NotFound() {
+  useEffect(() => {
+    const meta = document.createElement('meta')
+    meta.name = 'robots'
+    meta.content = 'noindex, nofollow'
+    document.head.appendChild(meta)
+    return () => { document.head.removeChild(meta) }
+  }, [])
+
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-6 px-4 text-center">
       <div className="relative">

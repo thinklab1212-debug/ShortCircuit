@@ -21,6 +21,10 @@ router.get('/sitemap.xml', async (req, res, next) => {
       '',
       '/shop',
       '/deals',
+      '/categories',
+      '/brands',
+      '/events',
+      '/projects',
       '/about',
       '/contact',
       '/faq',
@@ -30,6 +34,8 @@ router.get('/sitemap.xml', async (req, res, next) => {
       '/terms'
     ];
 
+    const today = new Date().toISOString().split('T')[0];
+
     let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
     xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
 
@@ -37,6 +43,7 @@ router.get('/sitemap.xml', async (req, res, next) => {
     staticRoutes.forEach(route => {
       xml += `  <url>\n`;
       xml += `    <loc>${DOMAIN}${route}</loc>\n`;
+      xml += `    <lastmod>${today}</lastmod>\n`;
       xml += `    <changefreq>daily</changefreq>\n`;
       xml += `    <priority>${route === '' ? '1.0' : '0.7'}</priority>\n`;
       xml += `  </url>\n`;
