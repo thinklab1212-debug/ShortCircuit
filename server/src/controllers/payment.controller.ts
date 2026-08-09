@@ -6,9 +6,10 @@
 
 import { Request, Response } from 'express';
 import crypto from 'crypto';
-import { PaymentService } from '../services/index.js';
+import { PaymentService, CartService, EmailService } from '../services/index.js';
 import { ApiResponse, asyncHandler, ApiError } from '../utils/index.js';
 import Order from '../models/Order.model.js';
+import User from '../models/User.model.js';
 import { env } from '../config/env.js';
 
 export const createRazorpayOrder = asyncHandler(async (req: Request, res: Response) => {
@@ -61,6 +62,21 @@ export const verifyPayment = asyncHandler(async (req: Request, res: Response) =>
   });
 
   await order.save();
+
+  // Clear the user's cart (deferred from order creation for online payments)
+  const userId = order.user.toString();
+  await CartService.clearCart(userId);
+
+  // Send Order Confirmation Email (non-blocking)
+  const user = await User.findById(userId).select('email firstName');
+  if (user) {
+    EmailService.sendOrderConfirmationEmail(
+      order.shippingAddress.email || user.email,
+      user.firstName,
+      order.orderId,
+      order.totalPrice
+    );
+  }
 
   res.status(200).json(new ApiResponse(200, order, 'Payment verified and order confirmed.'));
 });

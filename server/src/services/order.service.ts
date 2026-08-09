@@ -120,13 +120,18 @@ export class OrderService {
       };
 
       // 8. Create Order document (ID auto-generation happens in pre-save hook)
+      // For online payments (razorpay/upi), order starts as 'pending_payment'
+      // and only transitions to 'placed'/'confirmed' after payment verification.
+      const isOnlinePayment = paymentMethod === 'razorpay' || paymentMethod === 'upi';
+      const initialOrderStatus = isOnlinePayment ? 'pending_payment' : 'placed';
+
       const order = new Order({
         user: userId,
         items: orderItems,
         shippingAddress: shippingAddressSnapshot,
         paymentMethod,
         paymentStatus: 'pending', // Pending until captured online or delivered COD
-        orderStatus: 'placed',
+        orderStatus: initialOrderStatus,
         itemsPrice: totals.itemsPrice,
         shippingPrice: totals.shippingPrice,
         taxPrice: totals.taxPrice,
@@ -147,15 +152,22 @@ export class OrderService {
         ).session(session);
       }
 
-      // 10. Clear shopping cart
-      await CartService.clearCart(userId);
+      // 10. Clear shopping cart only for COD orders.
+      // For online payments, cart is cleared after payment verification
+      // to allow the user to retry if payment fails.
+      if (!isOnlinePayment) {
+        await CartService.clearCart(userId);
+      }
 
       // Commit transaction
       await session.commitTransaction();
       session.endSession();
 
-      // Send Order Confirmation Email (non-blocking)
-      EmailService.sendOrderConfirmationEmail(order.shippingAddress.email || user.email, user.firstName, order.orderId, order.totalPrice);
+      // Send Order Confirmation Email only for COD (non-blocking).
+      // For online payments, email is sent after payment verification.
+      if (!isOnlinePayment) {
+        EmailService.sendOrderConfirmationEmail(order.shippingAddress.email || user.email, user.firstName, order.orderId, order.totalPrice);
+      }
 
       return order;
     } catch (error) {

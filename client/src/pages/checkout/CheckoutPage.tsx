@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from 'react-router'
 import { motion } from 'framer-motion'
 import {
@@ -19,6 +20,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
 import { useCart, useCartTotals, useAddresses, usePlaceOrder } from '@/hooks'
+import queryKeys from '@/api/queryKeys'
 import { useAuthStore } from '@/store'
 import { couponApi, paymentApi } from '@/services'
 import { formatPrice, primaryImage, getUserName } from '@/utils'
@@ -155,6 +157,7 @@ function PaymentOption({
 
 export default function CheckoutPage() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const user = useAuthStore((s) => s.user)
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
 
@@ -352,6 +355,9 @@ export default function CheckoutPage() {
               razorpaySignature: resp.razorpay_signature,
               orderId: order._id,
             })
+            // Cart is now cleared server-side; refresh queries
+            queryClient.invalidateQueries({ queryKey: queryKeys.cart.all })
+            queryClient.invalidateQueries({ queryKey: queryKeys.orders.all })
             toast.success('Payment successful!')
             navigate(`/orders/${order._id}`)
           } catch {

@@ -32,9 +32,13 @@ export function usePlaceOrder() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (data: CreateOrderData) => orderApi.place(data).then((res) => res.data.data),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.all })
-      queryClient.invalidateQueries({ queryKey: queryKeys.cart.all })
+      // Only clear cart for COD orders. For online payments (razorpay/upi),
+      // the cart is preserved until payment is verified.
+      if (variables.paymentMethod === 'cod') {
+        queryClient.invalidateQueries({ queryKey: queryKeys.cart.all })
+      }
     },
     onError: (error: AxiosErrorLike) => toast.error(errMsg(error, 'Could not place order')),
   })

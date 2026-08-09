@@ -269,7 +269,7 @@ const statusHistorySchema = new Schema<IStatusHistoryEntry>(
       type: String,
       required: true,
       enum: [
-        'placed', 'confirmed', 'processing', 'shipped',
+        'pending_payment', 'placed', 'confirmed', 'processing', 'shipped',
         'out_for_delivery', 'delivered', 'cancelled', 'returned',
       ],
     },
@@ -338,7 +338,7 @@ const orderSchema = new Schema<IOrder, IOrderModel>(
     orderStatus: {
       type: String,
       enum: [
-        'placed', 'confirmed', 'processing', 'shipped',
+        'pending_payment', 'placed', 'confirmed', 'processing', 'shipped',
         'out_for_delivery', 'delivered', 'cancelled', 'returned',
       ],
       default: 'placed',
