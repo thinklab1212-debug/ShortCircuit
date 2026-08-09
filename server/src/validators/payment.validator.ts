@@ -14,20 +14,25 @@ import { z } from 'zod';
  * Schema for verifying Razorpay transaction signatures.
  */
 export const razorpayVerificationSchema = z.object({
-  razorpay_order_id: z
+  razorpayOrderId: z
     .string({ required_error: 'Razorpay order ID is required' })
     .trim()
     .min(1, 'Razorpay order ID cannot be empty'),
     
-  razorpay_payment_id: z
+  razorpayPaymentId: z
     .string({ required_error: 'Razorpay payment ID is required' })
     .trim()
     .min(1, 'Razorpay payment ID cannot be empty'),
     
-  razorpay_signature: z
+  razorpaySignature: z
     .string({ required_error: 'Razorpay signature is required' })
     .trim()
     .min(1, 'Razorpay signature cannot be empty'),
+
+  orderId: z
+    .string({ required_error: 'Order ID is required' })
+    .trim()
+    .min(1, 'Order ID cannot be empty'),
 });
 
 export default {
