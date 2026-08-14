@@ -17,6 +17,15 @@ export function useDocumentMetadata(title: string, description?: string) {
       metaDesc.setAttribute('content', description)
     }
 
+    // Dynamic canonical link
+    let canonicalLink = document.querySelector('link[rel="canonical"]')
+    if (!canonicalLink) {
+      canonicalLink = document.createElement('link')
+      canonicalLink.setAttribute('rel', 'canonical')
+      document.head.appendChild(canonicalLink)
+    }
+    canonicalLink.setAttribute('href', window.location.href.split('?')[0])
+
     return () => {
       document.title = prevTitle
       if (prevDesc && metaDesc) {
