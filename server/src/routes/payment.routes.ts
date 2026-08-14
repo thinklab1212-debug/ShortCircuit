@@ -41,8 +41,8 @@ router.post(
   authenticate,
   validate({
     body: z.object({
-      amount: z.number({ required_error: 'Amount is required' }).min(1),
       orderId: z.string({ required_error: 'Order ID is required' }),
+      amount: z.number().optional(),
     }),
   }),
   PaymentController.createRazorpayOrder

@@ -74,6 +74,20 @@ export class PaymentService {
   }
 
   /**
+   * Fetches payment details directly from Razorpay API by Payment ID.
+   */
+  public static async fetchRazorpayPayment(paymentId: string): Promise<any> {
+    logger.info(`🔍 Fetching Razorpay payment details for Payment ID: ${paymentId}`);
+    try {
+      const payment = await razorpay.payments.fetch(paymentId);
+      return payment;
+    } catch (error: any) {
+      logger.error(`❌ Razorpay payment lookup failed for ${paymentId}:`, error);
+      throw ApiError.badRequest('Payment verification failed. Could not retrieve payment details.');
+    }
+  }
+
+  /**
    * Initiates a refund for an order through the Razorpay SDK.
    */
   public static async refundPayment(

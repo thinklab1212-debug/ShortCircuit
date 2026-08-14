@@ -40,7 +40,14 @@ app.use(helmet());
 app.use(cors(corsOptions));
 
 // 3. Request Parsers (10kb body size limits to prevent DOS)
-app.use(express.json({ limit: '10kb' }));
+app.use(
+  express.json({
+    limit: '10kb',
+    verify: (req: express.Request, _res, buf) => {
+      req.rawBody = buf;
+    },
+  })
+);
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use(cookieParser());
 
@@ -99,6 +106,25 @@ app.use(notFoundHandler);
 
 // 11. Centralized global error handler
 app.use(globalErrorHandler);
+
+// 12. Lightweight periodic background cleanup for abandoned online payment inventory recovery (every 5 minutes)
+let isCleanupRunning = false;
+const CLEANUP_INTERVAL_MS = 5 * 60 * 1000;
+
+setInterval(async () => {
+  if (isCleanupRunning) return;
+  isCleanupRunning = true;
+  try {
+    if (mongoose.connection.readyState === 1) {
+      const { OrderService } = await import('./services/order.service.js');
+      await OrderService.expireAbandonedOrders();
+    }
+  } catch (error) {
+    // Non-blocking catch to prevent server runtime crash
+  } finally {
+    isCleanupRunning = false;
+  }
+}, CLEANUP_INTERVAL_MS);
 
 export { app };
 export default app;

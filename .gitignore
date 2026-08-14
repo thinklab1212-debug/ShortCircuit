@@ -67,3 +67,9 @@ firebase-debug.log
 .netlify
 debug_plan.md
 *.md
+server/src/scripts/test_security_audit.ts
+server/src/scripts/test_expiration.ts
+server/src/scripts/test_idempotency.ts
+server/src/scripts/test_order_state_machine.ts
+server/src/scripts/test_webhook_signature.ts
+server/src/scripts/test_reconciliation.ts

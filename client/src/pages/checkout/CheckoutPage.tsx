@@ -366,7 +366,6 @@ export default function CheckoutPage() {
 
       const rzRes = await paymentApi.createOrder({
         orderId: order._id,
-        amount: order.totalPrice,
       })
       const rz = rzRes.data.data
 

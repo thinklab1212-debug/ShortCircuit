@@ -15,7 +15,7 @@ import { ProductService } from './product.service.js';
 import { EmailService } from './email.service.js';
 import { InvoiceService } from './invoice.service.js';
 import { DeliveryPincodeService } from './deliveryPincode.service.js';
-import { ApiError } from '../utils/index.js';
+import { ApiError, logger } from '../utils/index.js';
 import { executePaginatedQuery } from '../utils/pagination.js';
 import { buildOrderFilters } from '../utils/filterBuilder.js';
 
@@ -84,6 +84,15 @@ export class OrderService {
           session
         );
 
+        let liveUnitPrice = product.salePrice || product.price;
+        if (variantName && variantValue) {
+          const variantObj = product.variants?.find((v: any) => v.name === variantName);
+          const optionObj = variantObj?.options?.find((o: any) => o.value === variantValue);
+          if (optionObj && optionObj.priceModifier) {
+            liveUnitPrice += optionObj.priceModifier;
+          }
+        }
+
         orderItems.push({
           product: product._id,
           name: product.name,
@@ -92,7 +101,7 @@ export class OrderService {
           sku: product.sku,
           variant: item.variant ? { name: item.variant.name, value: item.variant.value } : undefined,
           quantity: item.quantity,
-          price: item.price,
+          price: liveUnitPrice,
         });
       }
 
@@ -248,13 +257,16 @@ export class OrderService {
         throw ApiError.notFound('Order not found.');
       }
 
-      // Check role
-      if (userRole !== 'admin') {
-        throw ApiError.forbidden('Only administrators can cancel orders directly.');
+      // Check authorization: Admin can cancel any eligible order; Customer can cancel their own eligible order
+      const isOwner = order.user.toString() === userId.toString();
+      const isAdmin = userRole === 'admin';
+
+      if (!isAdmin && !isOwner) {
+        throw ApiError.forbidden('You do not have permission to cancel this order.');
       }
 
-      // Cancel restrictions: only allow before shipping
-      const cancelableStatuses = ['placed', 'confirmed', 'processing'];
+      // Cancel restrictions: allow pending_payment, placed, confirmed, processing
+      const cancelableStatuses = ['pending_payment', 'placed', 'confirmed', 'processing'];
       if (!cancelableStatuses.includes(order.orderStatus)) {
         throw new ApiError(400, `Cannot cancel order at this stage. Current status: ${order.orderStatus}`);
       }
@@ -405,8 +417,8 @@ export class OrderService {
       const customerName = user?.firstName || 'Customer';
 
       if (action === 'approve') {
-        // Stock restoration rule: ONLY IF orderStatus !== 'delivered'
-        if (order.orderStatus !== 'delivered') {
+        // Stock restoration rule: ONLY IF orderStatus was NOT already cancelled AND NOT delivered
+        if (order.orderStatus !== 'cancelled' && order.orderStatus !== 'delivered') {
           for (const item of order.items) {
             const variantName = item.variant?.name;
             const variantValue = item.variant?.value;
@@ -540,8 +552,33 @@ export class OrderService {
       throw ApiError.notFound('Order not found.');
     }
 
-    if (order.orderStatus === 'cancelled' || order.orderStatus === 'delivered') {
+    if (order.orderStatus === 'cancelled' || order.orderStatus === 'delivered' || order.orderStatus === 'returned') {
       throw new ApiError(400, `Cannot modify status of a finished order. Current status: ${order.orderStatus}`);
+    }
+
+    // Direct cancellation must use cancelOrder to ensure transactional stock restoration
+    if (status === 'cancelled') {
+      throw new ApiError(400, 'Please use the dedicated cancel order endpoint to cancel an order and restore stock.');
+    }
+
+    // Enforce valid order status transitions
+    const validTransitions: Record<string, string[]> = {
+      pending_payment: ['confirmed'],
+      placed: ['confirmed', 'processing', 'shipped'],
+      confirmed: ['processing', 'shipped'],
+      processing: ['shipped'],
+      shipped: ['out_for_delivery', 'delivered'],
+      out_for_delivery: ['delivered'],
+    };
+
+    const allowed = validTransitions[order.orderStatus];
+    if (!allowed || !allowed.includes(status)) {
+      throw new ApiError(400, `Invalid order status transition from '${order.orderStatus}' to '${status}'.`);
+    }
+
+    // Block marking online payment orders as delivered before payment verification
+    if (status === 'delivered' && order.paymentMethod !== 'cod' && order.paymentStatus !== 'paid') {
+      throw new ApiError(400, 'Cannot mark online payment order as delivered before payment is verified.');
     }
 
     order.orderStatus = status;
@@ -649,6 +686,92 @@ export class OrderService {
     const userEmail = user?.email || '';
 
     return InvoiceService.generateInvoicePdfBuffer(order, userEmail, settings as any);
+  }
+
+  /**
+   * Scans for unpaid online orders in 'pending_payment' status older than 15 minutes,
+   * atomically cancels them, and restores their reserved inventory stock.
+   */
+  public static async expireAbandonedOrders(
+    batchSize: number = 50,
+    expirationMinutes: number = 15
+  ): Promise<{ processed: number; expiredCount: number }> {
+    const expirationThreshold = new Date(Date.now() - expirationMinutes * 60 * 1000);
+
+    // Find candidate orders older than expirationThreshold
+    const candidateOrders = await Order.find({
+      orderStatus: 'pending_payment',
+      paymentStatus: { $ne: 'paid' },
+      createdAt: { $lte: expirationThreshold },
+    })
+      .select('_id')
+      .limit(batchSize)
+      .lean();
+
+    if (candidateOrders.length === 0) {
+      return { processed: 0, expiredCount: 0 };
+    }
+
+    let expiredCount = 0;
+
+    for (const candidate of candidateOrders) {
+      const session = await mongoose.startSession();
+      session.startTransaction();
+
+      try {
+        // Atomic single-winner state transition from pending_payment -> cancelled
+        const cancelledOrder = await Order.findOneAndUpdate(
+          {
+            _id: candidate._id,
+            orderStatus: 'pending_payment',
+            paymentStatus: { $ne: 'paid' },
+          },
+          {
+            $set: {
+              orderStatus: 'cancelled',
+              cancelledAt: new Date(),
+              cancellationReason: `Payment window expired (${expirationMinutes} min timeout)`,
+            },
+            $push: {
+              statusHistory: {
+                status: 'cancelled',
+                timestamp: new Date(),
+                note: `Order automatically cancelled due to uncompleted online payment (${expirationMinutes} min timeout).`,
+              },
+            },
+          },
+          { new: true, session }
+        );
+
+        // Restore inventory stock ONLY if this execution won the atomic transition
+        if (cancelledOrder) {
+          for (const item of cancelledOrder.items) {
+            await ProductService.increaseStock(
+              item.product.toString(),
+              item.variant?.name,
+              item.variant?.value,
+              item.quantity,
+              session
+            );
+          }
+          await session.commitTransaction();
+          expiredCount += 1;
+        } else {
+          await session.abortTransaction();
+        }
+      } catch (error) {
+        await session.abortTransaction();
+        logger.error(`❌ Error expiring abandoned order ${candidate._id}:`, error);
+      } finally {
+        session.endSession();
+      }
+    }
+
+    if (expiredCount > 0) {
+      logger.info(`⏰ Successfully expired ${expiredCount} abandoned order(s) and restored inventory stock.`);
+    }
+
+    return { processed: candidateOrders.length, expiredCount };
   }
 }
 

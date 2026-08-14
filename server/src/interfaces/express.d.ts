@@ -81,5 +81,11 @@ declare namespace Express {
      * Available on routes like `POST /products/:id/images`.
      */
     files?: MulterFile[] | { [fieldname: string]: MulterFile[] };
+
+    /**
+     * Raw unparsed request body Buffer captured during JSON body parsing.
+     * Used for HMAC webhook signature verification.
+     */
+    rawBody?: Buffer;
   }
 }

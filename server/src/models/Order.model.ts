@@ -54,6 +54,7 @@ interface IPaymentDetails {
   razorpayOrderId?: string;
   razorpayPaymentId?: string;
   razorpaySignature?: string;
+  processedEvents?: string[];
 }
 
 interface IStatusHistoryEntry {
@@ -259,6 +260,7 @@ const paymentDetailsSchema = new Schema<IPaymentDetails>(
     razorpayOrderId: { type: String },
     razorpayPaymentId: { type: String },
     razorpaySignature: { type: String },
+    processedEvents: { type: [String], default: [] },
   },
   { _id: false }
 );
