@@ -12,7 +12,7 @@ export interface ShopFilters extends ProductFilters {
 const DEFAULTS: ShopFilters = {
   page: 1,
   limit: 12,
-  sort: '-createdAt',
+  sort: '-price',
   view: 'grid',
 }
 

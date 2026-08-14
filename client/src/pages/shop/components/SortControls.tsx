@@ -6,9 +6,9 @@ import type { ShopFilters } from '@/hooks/useShopFilters'
 // ─── Sort Options ───────────────────────────────────────────────────────────────
 
 const sortOptions = [
-  { value: '-createdAt', label: 'Newest First' },
-  { value: 'price', label: 'Price: Low → High' },
   { value: '-price', label: 'Price: High → Low' },
+  { value: 'price', label: 'Price: Low → High' },
+  { value: '-createdAt', label: 'Newest First' },
   { value: '-ratingsAverage', label: 'Highest Rated' },
   { value: '-sold', label: 'Best Selling' },
   { value: 'name', label: 'Name: A → Z' },
@@ -42,7 +42,7 @@ export default function SortControls({ filters, onFilterChange, total, className
         <div className="flex items-center gap-2">
           <ArrowDownUp className="h-4 w-4 text-muted-foreground hidden sm:block" />
           <Select
-            value={filters.sort || '-createdAt'}
+            value={filters.sort || '-price'}
             onChange={(e) => onFilterChange({ sort: e.target.value })}
             className="h-9 text-sm w-auto min-w-[160px]"
           >

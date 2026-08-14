@@ -32,7 +32,7 @@ function ProductSkeleton() {
 
 export default function BrandProductsPage() {
   const { slug } = useParams<{ slug: string }>()
-  const [sort, setSort] = useState('-createdAt')
+  const [sort, setSort] = useState('-price')
   const [page, setPage] = useState(1)
 
   const { data: brands } = useBrands()

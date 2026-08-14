@@ -328,9 +328,9 @@ function parseSortString(sortString?: string): Record<string, 1 | -1> {
     }
   }
 
-  // Fallback if no valid sort fields
+  // Fallback if no valid sort fields: default to High Price First (price: desc)
   if (Object.keys(sort).length === 0) {
-    sort.createdAt = -1;
+    sort.price = -1;
   }
 
   return sort;
