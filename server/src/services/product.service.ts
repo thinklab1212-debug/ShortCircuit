@@ -230,14 +230,22 @@ export class ProductService {
   /**
    * Generates search/autocomplete queries suggestions.
    */
-  public static async getSearchSuggestions(query: string, limit: number = 5): Promise<string[]> {
+  public static async getSearchSuggestions(query: string, limit: number = 8): Promise<string[]> {
     if (!query || !query.trim()) return [];
 
-    const products = await Product.find(
-      { $text: { $search: query }, isActive: true, approvalStatus: 'approved' },
-      { score: { $meta: 'textScore' } }
-    )
-      .sort({ score: { $meta: 'textScore' } })
+    const searchStr = query.trim();
+    const escaped = searchStr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const searchRegex = new RegExp(escaped, 'i');
+
+    const products = await Product.find({
+      $or: [
+        { name: searchRegex },
+        { tags: searchRegex },
+        { sku: searchRegex },
+      ],
+      isActive: true,
+      approvalStatus: 'approved',
+    })
       .limit(limit)
       .select('name')
       .lean();

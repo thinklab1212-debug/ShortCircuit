@@ -161,14 +161,14 @@ export default function ProjectKitsAdminPage() {
     const delay = setTimeout(async () => {
       setSearchingProducts(true)
       try {
-        const res = await productApi.getAll({ search: productQuery, limit: 5 })
+        const res = await productApi.getAll({ search: productQuery, limit: 15 })
         setFoundProducts(res.data.data)
       } catch (err) {
         console.error(err)
       } finally {
         setSearchingProducts(false)
       }
-    }, 400)
+    }, 250)
 
     return () => clearTimeout(delay)
   }, [productQuery])
@@ -807,20 +807,33 @@ export default function ProjectKitsAdminPage() {
                       </div>
 
                       {/* Dropdown suggestions */}
-                      {searchingProducts && <div className="text-xs text-muted-foreground mt-2">Searching...</div>}
+                      {searchingProducts && <div className="text-xs text-muted-foreground mt-2 px-2">Searching store inventory...</div>}
                       {foundProducts.length > 0 && (
-                        <div className="absolute left-4 right-4 z-20 mt-1 max-h-52 overflow-y-auto rounded-2xl border border-border bg-card shadow-lg p-2 space-y-1">
+                        <div className="absolute left-4 right-4 z-20 mt-1 max-h-64 overflow-y-auto rounded-2xl border border-border bg-card shadow-xl p-2 space-y-1">
                           {foundProducts.map((p) => (
                             <button
                               key={p._id}
                               type="button"
                               onClick={() => addProductToBOM(p)}
-                              className="w-full text-left px-3 py-2 rounded-xl text-xs hover:bg-muted font-medium flex items-center justify-between"
+                              className="w-full text-left px-3 py-2.5 rounded-xl text-xs hover:bg-muted font-medium flex items-center justify-between gap-3 transition-colors border border-transparent hover:border-border"
                             >
-                              <span>{p.name}</span>
-                              <span className="text-[10px] text-muted-foreground font-mono bg-muted px-1.5 py-0.5 rounded">
-                                SKU: {p.sku}
-                              </span>
+                              <div className="flex items-center gap-3 min-w-0">
+                                {p.images?.[0]?.url ? (
+                                  <img src={p.images[0].url} alt={p.name} className="h-9 w-9 rounded-lg object-cover border border-border flex-shrink-0" />
+                                ) : (
+                                  <div className="h-9 w-9 rounded-lg bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground flex-shrink-0">📦</div>
+                                )}
+                                <div className="min-w-0">
+                                  <p className="font-bold text-foreground truncate text-xs">{p.name}</p>
+                                  <p className="text-[10px] text-muted-foreground font-mono">SKU: {p.sku}</p>
+                                </div>
+                              </div>
+                              <div className="text-right flex-shrink-0">
+                                <span className="font-bold text-primary block">₹{p.salePrice || p.price}</span>
+                                <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${p.stock > 0 ? 'bg-emerald-500/10 text-emerald-600' : 'bg-red-500/10 text-red-500'}`}>
+                                  {p.stock > 0 ? `In Stock (${p.stock})` : 'Out of Stock'}
+                                </span>
+                              </div>
                             </button>
                           ))}
                         </div>

@@ -81,10 +81,39 @@ export function buildProductFilters(query: ProductQueryParams): BuiltFilters {
   filter.approvalStatus = 'approved';
 
   // -------------------------------------------------------------------------
-  // Text search
+  // Text & Keyword Search (Flexible Hybrid Regex + Fuzzy Substring Matching)
   // -------------------------------------------------------------------------
   if (query.search && query.search.trim()) {
-    filter.$text = { $search: query.search.trim() };
+    const searchStr = query.search.trim();
+    const escaped = searchStr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const searchRegex = new RegExp(escaped, 'i');
+
+    const searchConditions: Record<string, any>[] = [
+      { name: searchRegex },
+      { sku: searchRegex },
+      { tags: searchRegex },
+      { shortDescription: searchRegex },
+      { manufacturer: searchRegex },
+    ];
+
+    const words = searchStr.split(/\s+/).filter((w) => w.length > 1);
+    if (words.length > 1) {
+      const wordConditions = words.map((word) => {
+        const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const wordRegex = new RegExp(escapedWord, 'i');
+        return {
+          $or: [
+            { name: wordRegex },
+            { sku: wordRegex },
+            { tags: wordRegex },
+            { shortDescription: wordRegex },
+          ],
+        };
+      });
+      filter.$and = filter.$and ? [...filter.$and, { $and: wordConditions }] : [{ $and: wordConditions }];
+    } else {
+      filter.$or = filter.$or ? [...filter.$or, ...searchConditions] : searchConditions;
+    }
   }
 
   // -------------------------------------------------------------------------
