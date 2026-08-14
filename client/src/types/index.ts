@@ -838,7 +838,7 @@ export interface DriveDocument {
   _id?: string
   title: string
   url: string                   // Google Drive URL
-  type?: 'schematic' | 'datasheet' | 'report' | 'presentation' | 'other'
+  type?: 'guide' | 'code' | 'schematic' | 'datasheet' | 'report' | 'presentation' | 'other'
 }
 
 export interface ProjectKit {

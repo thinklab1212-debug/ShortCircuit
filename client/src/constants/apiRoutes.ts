@@ -127,6 +127,7 @@ const API_ROUTES = {
     BY_SLUG: (slug: string) => `/project-kits/${slug}`,
     BOM: (slug: string) => `/project-kits/${slug}/bom`,
     ADD_TO_CART: (id: string) => `/project-kits/${id}/add-to-cart`,
+    DOCUMENTS: (id: string) => `/project-kits/${id}/documents`,
     ADMIN: '/project-kits/admin',
     ADMIN_BY_ID: (id: string) => `/project-kits/admin/${id}`,
   },

@@ -59,7 +59,7 @@ const driveDocumentSchema = z.object({
     .max(150, 'Document title cannot exceed 150 characters'),
   url: driveUrlSchema,
   type: z
-    .enum(['schematic', 'datasheet', 'report', 'presentation', 'other'])
+    .enum(['guide', 'code', 'schematic', 'datasheet', 'report', 'presentation', 'other'])
     .optional(),
 });
 

@@ -5,7 +5,7 @@
 // the application routes and server initialization layers.
 // ============================================================================
 
-export { authenticate } from './auth.middleware.js';
+export { authenticate, optionalAuthenticate } from './auth.middleware.js';
 export { authorize } from './role.middleware.js';
 export { requireOrganizer } from './organizer.middleware.js';
 export { validate } from './validate.middleware.js';

@@ -59,7 +59,8 @@ interface FormState {
   applicationArea: string
   tags: string
   estimatedTime: string
-  pdfUrl: string
+  guideUrl: string
+  codeUrl: string
   components: {
     product: Product
     quantity: number
@@ -79,7 +80,8 @@ const emptyForm: FormState = {
   applicationArea: 'Robotics',
   tags: '',
   estimatedTime: '',
-  pdfUrl: '',
+  guideUrl: '',
+  codeUrl: '',
   components: [],
   isActive: true,
   isFeatured: false,
@@ -180,6 +182,8 @@ export default function ProjectKitsAdminPage() {
 
   const openEdit = (kit: ProjectKit) => {
     setEditing(kit)
+    const guideDoc = kit.documents?.find((d) => d.type === 'guide' || d.title?.toLowerCase().includes('guide')) || kit.documents?.[0]
+    const codeDoc = kit.documents?.find((d) => d.type === 'code' || d.title?.toLowerCase().includes('code') || d.title?.toLowerCase().includes('program'))
     setForm({
       name: kit.name,
       description: kit.description,
@@ -189,7 +193,8 @@ export default function ProjectKitsAdminPage() {
       applicationArea: kit.applicationArea,
       tags: kit.tags ? kit.tags.join(', ') : '',
       estimatedTime: kit.estimatedTime || '',
-      pdfUrl: kit.documents?.[0]?.url || '',
+      guideUrl: guideDoc?.url || '',
+      codeUrl: codeDoc?.url || '',
       components: kit.components.map((c) => ({
         product: c.product,
         quantity: c.quantity,
@@ -225,7 +230,7 @@ export default function ProjectKitsAdminPage() {
     }
   }
 
-  const handlePdfUpload = async (file: File) => {
+  const handlePdfUpload = async (file: File, targetField: 'guide' | 'code' = 'guide') => {
     const token = sessionStorage.getItem('google_access_token')
     if (!token) {
       const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
@@ -292,12 +297,12 @@ export default function ProjectKitsAdminPage() {
       
       setForm((f) => ({
         ...f,
-        pdfUrl: shareUrl,
+        [targetField === 'guide' ? 'guideUrl' : 'codeUrl']: shareUrl,
       }))
-      toast.success('PDF uploaded to Google Drive successfully!')
+      toast.success(`${targetField === 'guide' ? 'Guide PDF' : 'Code file'} uploaded to Google Drive successfully!`)
     } catch (err) {
       console.error(err)
-      toast.error('Failed to upload PDF to Google Drive')
+      toast.error('Failed to upload file to Google Drive')
     } finally {
       setUploadingPdf(false)
     }
@@ -394,15 +399,26 @@ export default function ProjectKitsAdminPage() {
       })),
       instructions: [],
       wiringDiagrams: [],
-      documents: form.pdfUrl.trim()
-        ? [
-            {
-              title: `${form.name.trim()} Guide PDF`,
-              url: cleanDriveUrl(form.pdfUrl.trim()),
-              type: 'schematic',
-            },
-          ]
-        : [],
+      documents: [
+        ...(form.guideUrl.trim()
+          ? [
+              {
+                title: `${form.name.trim()} Guide PDF`,
+                url: cleanDriveUrl(form.guideUrl.trim()),
+                type: 'guide',
+              },
+            ]
+          : []),
+        ...(form.codeUrl.trim()
+          ? [
+              {
+                title: `${form.name.trim()} Source Code & Programs`,
+                url: form.codeUrl.trim(),
+                type: 'code',
+              },
+            ]
+          : []),
+      ],
       isActive: form.isActive,
       isFeatured: form.isFeatured,
       displayOrder: Number(form.displayOrder),
@@ -658,19 +674,19 @@ export default function ProjectKitsAdminPage() {
                       />
                     </FormField>
 
-                    <FormField label="Project Guide PDF (Upload to Google Drive or paste URL)" required>
+                    <FormField label="1. Project Guide PDF Link (Google Drive)" required>
                       <div className="space-y-3">
                         <Input
-                          value={form.pdfUrl}
-                          onChange={(e) => setForm({ ...form, pdfUrl: e.target.value })}
-                          placeholder="https://drive.google.com/file/d/FILE_ID/view?usp=sharing or uploaded PDF URL"
+                          value={form.guideUrl}
+                          onChange={(e) => setForm({ ...form, guideUrl: e.target.value })}
+                          placeholder="https://drive.google.com/file/d/FILE_ID/view?usp=sharing"
                           required
                         />
                         <div className="flex flex-col gap-1.5">
                           <div className="flex items-center gap-4">
                             <label className="inline-flex cursor-pointer items-center gap-2 rounded-2xl border border-input bg-background px-4 py-2 text-xs hover:bg-muted font-bold transition-all shadow-sm">
                               <Upload className="h-4 w-4" />
-                              {uploadingPdf ? 'Uploading to Drive...' : 'Upload PDF to Google Drive'}
+                              {uploadingPdf ? 'Uploading Guide to Drive...' : 'Upload Guide PDF to Google Drive'}
                               <input
                                 type="file"
                                 accept="application/pdf"
@@ -678,14 +694,39 @@ export default function ProjectKitsAdminPage() {
                                 disabled={uploadingPdf}
                                 onChange={(e) => {
                                   const file = e.target.files?.[0]
-                                  if (file) handlePdfUpload(file)
+                                  if (file) handlePdfUpload(file, 'guide')
                                 }}
                               />
                             </label>
                           </div>
-                          <span className="text-[10px] text-muted-foreground">
-                            💡 Clicking this will ask you to authorize access to Google Drive (if not already authorized).
-                          </span>
+                        </div>
+                      </div>
+                    </FormField>
+
+                    <FormField label="2. Codes & Programs Link (Google Drive / GitHub)">
+                      <div className="space-y-3">
+                        <Input
+                          value={form.codeUrl}
+                          onChange={(e) => setForm({ ...form, codeUrl: e.target.value })}
+                          placeholder="https://drive.google.com/file/d/FILE_ID/view or GitHub repo link"
+                        />
+                        <div className="flex flex-col gap-1.5">
+                          <div className="flex items-center gap-4">
+                            <label className="inline-flex cursor-pointer items-center gap-2 rounded-2xl border border-input bg-background px-4 py-2 text-xs hover:bg-muted font-bold transition-all shadow-sm">
+                              <Upload className="h-4 w-4" />
+                              {uploadingPdf ? 'Uploading Code to Drive...' : 'Upload Code File to Google Drive'}
+                              <input
+                                type="file"
+                                accept=".zip,.rar,.ino,.cpp,.py,.txt,.pdf"
+                                className="hidden"
+                                disabled={uploadingPdf}
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0]
+                                  if (file) handlePdfUpload(file, 'code')
+                                }}
+                              />
+                            </label>
+                          </div>
                         </div>
                       </div>
                     </FormField>

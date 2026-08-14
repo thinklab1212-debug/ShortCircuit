@@ -21,7 +21,7 @@ import slugify from 'slugify';
 // Sub-document interfaces
 // ---------------------------------------------------------------------------
 
-interface IBomItem {
+export interface IBomItem {
   _id?: mongoose.Types.ObjectId;
   product: mongoose.Types.ObjectId;
   quantity: number;
@@ -29,14 +29,14 @@ interface IBomItem {
   isOptional: boolean;
 }
 
-interface IWiringDiagram {
+export interface IWiringDiagram {
   _id?: mongoose.Types.ObjectId;
   imageUrl: string;               // Google Drive sharing URL
   title?: string;
   description?: string;
 }
 
-interface IInstructionStep {
+export interface IInstructionStep {
   _id?: mongoose.Types.ObjectId;
   stepNumber: number;
   title: string;
@@ -45,11 +45,11 @@ interface IInstructionStep {
   tip?: string;
 }
 
-interface IDriveDocument {
+export interface IDriveDocument {
   _id?: mongoose.Types.ObjectId;
   title: string;
   url: string;                    // Google Drive / Docs / Sheets URL
-  type?: 'schematic' | 'datasheet' | 'report' | 'presentation' | 'other';
+  type?: 'guide' | 'code' | 'schematic' | 'datasheet' | 'report' | 'presentation' | 'other';
 }
 
 // ---------------------------------------------------------------------------
@@ -205,7 +205,7 @@ const driveDocumentSchema = new Schema<IDriveDocument>(
     type: {
       type: String,
       enum: {
-        values: ['schematic', 'datasheet', 'report', 'presentation', 'other'],
+        values: ['guide', 'code', 'schematic', 'datasheet', 'report', 'presentation', 'other'],
         message: '{VALUE} is not a valid document type',
       },
     },

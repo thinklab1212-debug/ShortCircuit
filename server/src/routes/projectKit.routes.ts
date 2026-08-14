@@ -8,7 +8,7 @@
 
 import { Router } from 'express';
 import { ProjectKitController } from '../controllers/index.js';
-import { authenticate, authorize, validate } from '../middlewares/index.js';
+import { authenticate, optionalAuthenticate, authorize, validate } from '../middlewares/index.js';
 import {
   createProjectKitSchema,
   updateProjectKitSchema,
@@ -214,13 +214,63 @@ router.post(
   ProjectKitController.addToCart
 );
 
+/**
+ * @openapi
+ * /project-kits/{id}/access-status:
+ *   get:
+ *     summary: Check if user has unlocked document access via delivery (Authenticated)
+ *     tags: [ProjectKits]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Access status checked successfully
+ */
+router.get(
+  '/:id/access-status',
+  authenticate,
+  validate({ params: z.object({ id: objectIdSchema }) }),
+  ProjectKitController.getProjectAccessStatus
+);
+
+/**
+ * @openapi
+ * /project-kits/{id}/documents:
+ *   get:
+ *     summary: Fetch unlocked Google Drive document URLs (Authenticated)
+ *     tags: [ProjectKits]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Unlocked documents retrieved successfully
+ */
+router.get(
+  '/:id/documents',
+  authenticate,
+  validate({ params: z.object({ id: objectIdSchema }) }),
+  ProjectKitController.getProjectDocuments
+);
+
 // ─── Generic Parametric Routes (MUST come LAST) ───────────────────────────────
 
 /**
  * @openapi
  * /project-kits/{slug}:
  *   get:
- *     summary: Get full project detail by slug (Public)
+ *     summary: Get full project detail by slug (Public / Optional Auth)
  *     tags: [ProjectKits]
  *     parameters:
  *       - in: path
@@ -232,7 +282,7 @@ router.post(
  *       200:
  *         description: Project details retrieved successfully
  */
-router.get('/:slug', ProjectKitController.getProjectBySlug);
+router.get('/:slug', optionalAuthenticate, ProjectKitController.getProjectBySlug);
 
 /**
  * @openapi

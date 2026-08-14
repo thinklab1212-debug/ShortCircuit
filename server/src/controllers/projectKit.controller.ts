@@ -26,8 +26,26 @@ export const getFeaturedProjects = asyncHandler(async (req: Request, res: Respon
 
 export const getProjectBySlug = asyncHandler(async (req: Request, res: Response) => {
   const slug = req.params.slug;
-  const project = await ProjectKitService.getProjectBySlug(slug);
+  const userId = req.user?._id?.toString();
+  const userRole = req.user?.role;
+  const project = await ProjectKitService.getProjectBySlug(slug, userId, userRole);
   res.status(200).json(new ApiResponse(200, project, 'Project details retrieved successfully.'));
+});
+
+export const getProjectAccessStatus = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.user!._id.toString();
+  const userRole = req.user!.role;
+  const projectId = req.params.id;
+  const access = await ProjectKitService.checkProjectAccess(userId, userRole, projectId);
+  res.status(200).json(new ApiResponse(200, access, 'Project access status checked successfully.'));
+});
+
+export const getProjectDocuments = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.user!._id.toString();
+  const userRole = req.user!.role;
+  const projectId = req.params.id;
+  const result = await ProjectKitService.getProjectDocuments(userId, userRole, projectId);
+  res.status(200).json(new ApiResponse(200, result, 'Unlocked project documents retrieved successfully.'));
 });
 
 export const getProjectBom = asyncHandler(async (req: Request, res: Response) => {

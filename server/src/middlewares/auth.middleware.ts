@@ -84,4 +84,45 @@ export const authenticate = asyncHandler(async (
   }
 });
 
+export const optionalAuthenticate = asyncHandler(async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  let token: string | undefined;
+  const authHeader = req.headers.authorization || req.headers.Authorization;
+
+  if (typeof authHeader === 'string' && authHeader.startsWith(AUTH_CONSTANTS.TOKEN_PREFIX)) {
+    token = authHeader.split(' ')[1];
+  } else if (req.cookies) {
+    token = req.cookies[AUTH_CONSTANTS.ACCESS_TOKEN_COOKIE] || req.cookies.accessToken;
+  }
+
+  if (!token) {
+    return next();
+  }
+
+  try {
+    const decoded = jwt.verify(token, env.JWT_ACCESS_SECRET) as IAccessTokenPayload;
+    const userDoc = await User.findById(decoded.userId).select('+isBlocked');
+
+    if (userDoc && !userDoc.isBlocked) {
+      req.user = {
+        _id: userDoc._id.toString(),
+        email: userDoc.email,
+        role: userDoc.role,
+        isOrganizer: userDoc.isOrganizer,
+        firstName: userDoc.firstName,
+        lastName: userDoc.lastName,
+        isBlocked: userDoc.isBlocked,
+        isEmailVerified: userDoc.isEmailVerified,
+      };
+    }
+  } catch {
+    // Soft fail for optional auth
+  }
+
+  next();
+});
+
 export default authenticate;

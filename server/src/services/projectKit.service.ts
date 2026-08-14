@@ -5,7 +5,9 @@
 // BOM pricing with live product data, add-kit-to-cart flow, and admin CRUD.
 // ============================================================================
 
+import mongoose from 'mongoose';
 import ProjectKit from '../models/ProjectKit.model.js';
+import Order from '../models/Order.model.js';
 import type { IProduct } from '../models/Product.model.js';
 import { CartService } from './cart.service.js';
 import { ApiError } from '../utils/index.js';
@@ -82,12 +84,78 @@ export class ProjectKitService {
       .lean();
   }
 
+  // ─── Delivery Gate: Access Status Check ────────────────────────────────────
+
+  /**
+   * Checks whether a user (or admin) has unlocked access to project build guides & code.
+   * Admin role automatically grants access.
+   * Customers must have at least one 'delivered' order containing a component from this kit.
+   */
+  public static async checkProjectAccess(
+    userId?: string,
+    userRole?: string,
+    projectIdOrSlug?: string
+  ): Promise<{
+    isUnlocked: boolean;
+    reason: 'admin' | 'delivered' | 'not_purchased' | 'not_delivered' | 'unauthenticated';
+    deliveredOrderDate?: Date;
+  }> {
+    if (userRole === 'admin') {
+      return { isUnlocked: true, reason: 'admin' };
+    }
+
+    if (!userId) {
+      return { isUnlocked: false, reason: 'unauthenticated' };
+    }
+
+    // 1. Resolve project kit to get BOM component product IDs
+    const isObjectId = mongoose.isValidObjectId(projectIdOrSlug);
+    const query = isObjectId ? { _id: projectIdOrSlug } : { slug: projectIdOrSlug };
+
+    const project = await ProjectKit.findOne(query).select('components.product');
+
+    if (!project) {
+      return { isUnlocked: false, reason: 'not_purchased' };
+    }
+
+    const componentProductIds = project.components.map((c) => c.product.toString());
+
+    // 2. Check if user has a delivered order containing any of these products
+    const deliveredOrder = await Order.findOne({
+      user: userId,
+      'items.product': { $in: componentProductIds },
+      orderStatus: 'delivered',
+    }).select('deliveredAt createdAt');
+
+    if (deliveredOrder) {
+      return {
+        isUnlocked: true,
+        reason: 'delivered',
+        deliveredOrderDate: deliveredOrder.deliveredAt || deliveredOrder.createdAt,
+      };
+    }
+
+    // 3. Check if user has an active order in progress that is not delivered yet
+    const activeOrder = await Order.findOne({
+      user: userId,
+      'items.product': { $in: componentProductIds },
+      orderStatus: { $in: ['placed', 'confirmed', 'processing', 'shipped', 'out_for_delivery'] },
+    }).select('orderStatus');
+
+    if (activeOrder) {
+      return { isUnlocked: false, reason: 'not_delivered' };
+    }
+
+    return { isUnlocked: false, reason: 'not_purchased' };
+  }
+
   // ─── Public: Project detail by slug ───────────────────────────────────────
 
   /**
    * Returns full project detail and atomically increments view count.
+   * Strips raw Google Drive document URLs if document access is locked.
    */
-  public static async getProjectBySlug(slug: string) {
+  public static async getProjectBySlug(slug: string, userId?: string, userRole?: string) {
     const project = await ProjectKit.findOneAndUpdate(
       { slug, isActive: true },
       { $inc: { viewCount: 1 } },
@@ -98,7 +166,49 @@ export class ProjectKitService {
       throw ApiError.notFound('Project not found.');
     }
 
-    return project;
+    const access = await this.checkProjectAccess(userId, userRole, project._id.toString());
+    const projectObj = project.toObject();
+
+    if (!access.isUnlocked && projectObj.documents) {
+      // Strip actual URLs for public visitors / non-delivered buyers
+      projectObj.documents = projectObj.documents.map((doc: any) => ({
+        _id: doc._id,
+        title: doc.title,
+        type: doc.type,
+        url: '', // Stripped until delivery
+        isLocked: true,
+      }));
+    }
+
+    return {
+      ...projectObj,
+      access,
+    };
+  }
+
+  /**
+   * Retrieves unlocked document URLs for a specific project. Requires delivery or admin.
+   */
+  public static async getProjectDocuments(userId: string, userRole: string, projectId: string) {
+    const access = await this.checkProjectAccess(userId, userRole, projectId);
+
+    if (!access.isUnlocked) {
+      throw new ApiError(
+        403,
+        'Project guide and source code access is locked until your kit order is delivered.'
+      );
+    }
+
+    const project = await ProjectKit.findById(projectId).select('name documents');
+    if (!project) {
+      throw ApiError.notFound('Project not found.');
+    }
+
+    return {
+      projectName: project.name,
+      documents: project.documents,
+      access,
+    };
   }
 
   // ─── Public: BOM with live pricing ────────────────────────────────────────

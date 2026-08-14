@@ -13,7 +13,8 @@ import {
   ChevronRight,
   BookOpen,
   Zap,
-  Info
+  Info,
+  Lock
 } from 'lucide-react'
 import { useProjectKit, useProjectBom, useAddKitToCart } from '@/hooks/useProjectKits'
 import { useDocumentMetadata } from '@/hooks/useDocumentMetadata'
@@ -487,62 +488,114 @@ export default function ProjectKitDetailPage() {
                     </p>
                   </div>
 
-                  {project.documents && project.documents.length > 0 ? (
+                  {(project as any).access?.isUnlocked === false ? (
+                    <div className="p-8 rounded-3xl border border-amber-500/30 bg-amber-500/5 text-center space-y-4 shadow-sm my-4">
+                      <div className="h-14 w-14 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500 mx-auto">
+                        <Lock className="h-7 w-7" />
+                      </div>
+                      <div className="max-w-md mx-auto space-y-2">
+                        <h4 className="font-bold text-base text-foreground">Project Guide & Source Code Locked</h4>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          {(project as any).access?.reason === 'not_delivered'
+                            ? 'Your kit order is currently being processed or shipped! Complete PDF guide and source code access will unlock automatically upon delivery.'
+                            : 'Access to the complete step-by-step PDF guide, schematics, and source code automatically unlocks when your order for this kit is delivered.'}
+                        </p>
+                      </div>
+                      <div className="pt-2 flex justify-center gap-3">
+                        <Button onClick={handleAddFullKit} disabled={addToCartMutation.isPending} className="rounded-xl font-bold gap-2 text-xs">
+                          <ShoppingBag className="h-4 w-4" /> Add Kit to Cart to Order
+                        </Button>
+                      </div>
+                    </div>
+                  ) : project.documents && project.documents.length > 0 ? (
                     <div className="space-y-6">
-                      {/* If exactly 1 document, embed it directly as a PDF viewer for premium experience! */}
-                      {project.documents.length === 1 ? (
-                        <div className="space-y-4">
-                          <div className="flex justify-between items-center bg-muted/30 px-4 py-3 rounded-2xl border border-border">
-                            <span className="text-xs font-semibold text-foreground flex items-center gap-2">
-                              <FileText className="h-4 w-4 text-primary" />
-                              {project.documents[0].title}
-                            </span>
-                            <Button asChild size="sm" variant="outline" className="rounded-xl h-8 text-[11px] font-bold">
-                              <a
-                                href={project.documents[0].url}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="flex items-center gap-1"
-                              >
-                                Open in New Tab <ExternalLink className="h-3 w-3" />
-                              </a>
-                            </Button>
-                          </div>
-                          <div className="w-full h-[600px] border border-border rounded-3xl overflow-hidden bg-slate-900/5 shadow-inner relative">
-                            <iframe
-                              src={getDrivePreviewUrl(project.documents[0].url)}
-                              className="w-full h-full border-none"
-                              allow="autoplay"
-                              title={project.documents[0].title}
-                            />
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          {project.documents.map((doc, idx) => (
-                            <a
-                              key={idx}
-                              href={doc.url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="flex items-center gap-4 p-4 rounded-2xl border border-border hover:border-primary/40 bg-card hover:bg-muted/40 transition-all group shadow-sm hover:shadow"
-                            >
-                              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-105 transition-transform">
-                                <FileText className="h-5 w-5" />
+                      {(() => {
+                        const guideDoc = project.documents.find((d) => d.type === 'guide') || project.documents[0];
+                        const codeDoc = project.documents.find((d) => d.type === 'code');
+                        const otherDocs = project.documents.filter((d) => d !== guideDoc && d !== codeDoc);
+
+                        return (
+                          <div className="space-y-6">
+                            {/* Embedded PDF Guide Viewer */}
+                            {guideDoc && guideDoc.url && (
+                              <div className="space-y-4">
+                                <div className="flex justify-between items-center bg-muted/30 px-4 py-3 rounded-2xl border border-border">
+                                  <span className="text-xs font-semibold text-foreground flex items-center gap-2">
+                                    <FileText className="h-4 w-4 text-primary" />
+                                    {guideDoc.title}
+                                  </span>
+                                  <Button asChild size="sm" variant="outline" className="rounded-xl h-8 text-[11px] font-bold">
+                                    <a
+                                      href={guideDoc.url}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="flex items-center gap-1"
+                                    >
+                                      Open in New Tab <ExternalLink className="h-3 w-3" />
+                                    </a>
+                                  </Button>
+                                </div>
+                                <div className="w-full h-[600px] border border-border rounded-3xl overflow-hidden bg-slate-900/5 shadow-inner relative">
+                                  <iframe
+                                    src={getDrivePreviewUrl(guideDoc.url)}
+                                    className="w-full h-full border-none"
+                                    allow="autoplay"
+                                    title={guideDoc.title}
+                                  />
+                                </div>
                               </div>
-                              <div className="min-w-0 flex-1">
-                                <h4 className="font-bold text-sm text-foreground truncate group-hover:text-primary transition-colors">
-                                  {doc.title}
-                                </h4>
-                                <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mt-0.5">
-                                  {doc.type || 'Datasheet'}
-                                </p>
+                            )}
+
+                            {/* Dedicated Source Code & Programs Card */}
+                            {codeDoc && codeDoc.url && (
+                              <div className="p-5 rounded-3xl border border-primary/20 bg-primary/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
+                                <div className="flex items-center gap-3">
+                                  <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-bold">
+                                    💻
+                                  </div>
+                                  <div>
+                                    <h4 className="font-bold text-base text-foreground">{codeDoc.title}</h4>
+                                    <p className="text-xs text-muted-foreground">Source code sketches, firmware, and program bundles</p>
+                                  </div>
+                                </div>
+                                <Button asChild size="sm" className="rounded-xl font-bold gap-2">
+                                  <a href={codeDoc.url} target="_blank" rel="noreferrer">
+                                    Download Source Code <ExternalLink className="h-3.5 w-3.5" />
+                                  </a>
+                                </Button>
                               </div>
-                              <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                            </a>
-                          ))}
-                        </div>
-                      )}
+                            )}
+
+                            {/* Additional Documents Grid */}
+                            {otherDocs.length > 0 && (
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                                {otherDocs.map((doc, idx) => (
+                                  <a
+                                    key={idx}
+                                    href={doc.url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="flex items-center gap-4 p-4 rounded-2xl border border-border hover:border-primary/40 bg-card hover:bg-muted/40 transition-all group shadow-sm hover:shadow"
+                                  >
+                                    <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-105 transition-transform">
+                                      <FileText className="h-5 w-5" />
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                      <h4 className="font-bold text-sm text-foreground truncate group-hover:text-primary transition-colors">
+                                        {doc.title}
+                                      </h4>
+                                      <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mt-0.5">
+                                        {doc.type || 'Document'}
+                                      </p>
+                                    </div>
+                                    <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                                  </a>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })()}
                     </div>
                   ) : (
                     <div className="text-center py-10">

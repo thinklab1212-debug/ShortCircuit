@@ -37,6 +37,12 @@ const projectKitApi = {
   addToCart: (id: string) =>
     apiClient.post<ApiResponse<AddKitToCartResult>>(API_ROUTES.PROJECT_KITS.ADD_TO_CART(id)),
 
+  /** Fetch unlocked Google Drive document URLs (auth) */
+  getDocuments: (id: string) =>
+    apiClient.get<ApiResponse<{ projectName: string; documents: any[]; access: any }>>(
+      API_ROUTES.PROJECT_KITS.DOCUMENTS(id)
+    ),
+
   // ── Admin ──
   adminList: (params?: { page?: number; limit?: number }) =>
     apiClient.get<PaginatedResponse<ProjectKit>>(API_ROUTES.PROJECT_KITS.ADMIN, { params }),
