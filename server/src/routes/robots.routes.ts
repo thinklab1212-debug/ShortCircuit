@@ -17,11 +17,19 @@ Allow: /brand/
 Allow: /deals
 Allow: /events
 
+Allow: /api/v1/products
+Allow: /api/v1/categories
+Allow: /api/v1/brands
+Allow: /api/v1/project-kits
+
 Disallow: /admin
 Disallow: /checkout
 Disallow: /my-library
 Disallow: /cart
-Disallow: /api/v1/
+Disallow: /api/v1/auth
+Disallow: /api/v1/orders
+Disallow: /api/v1/payments
+Disallow: /api/v1/admin
 
 Sitemap: ${DOMAIN}/sitemap.xml
 `;
