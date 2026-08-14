@@ -16,6 +16,10 @@
       "destination": "https://shortcircuit-gwwd.onrender.com/robots.txt"
     },
     {
+      "source": "/api/v1/:path*",
+      "destination": "https://shortcircuit-gwwd.onrender.com/api/v1/:path*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
