@@ -9,15 +9,15 @@
   "rewrites": [
     {
       "source": "/sitemap.xml",
-      "destination": "https://shortcircuit-gwwd.onrender.com/sitemap.xml"
+      "destination": "https://api.shortcircuit.co.in/sitemap.xml"
     },
     {
       "source": "/robots.txt",
-      "destination": "https://shortcircuit-gwwd.onrender.com/robots.txt"
+      "destination": "https://api.shortcircuit.co.in/robots.txt"
     },
     {
       "source": "/api/v1/:path*",
-      "destination": "https://shortcircuit-gwwd.onrender.com/api/v1/:path*"
+      "destination": "https://api.shortcircuit.co.in/api/v1/:path*"
     },
     {
       "source": "/(.*)",

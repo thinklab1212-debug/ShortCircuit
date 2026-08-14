@@ -64,7 +64,7 @@ app.use(xssSanitizer);
 app.use(publicLimiter);
 
 // 7. Health Check Endpoints
-app.get('/health', (req, res) => {
+app.get(['/health', '/api/v1/health'], (req, res) => {
   res.status(200).json(
     new ApiResponse(200, {
       uptime: process.uptime(),
