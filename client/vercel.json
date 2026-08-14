@@ -12,6 +12,10 @@
       "destination": "https://shortcircuit-gwwd.onrender.com/sitemap.xml"
     },
     {
+      "source": "/robots.txt",
+      "destination": "https://shortcircuit-gwwd.onrender.com/robots.txt"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
