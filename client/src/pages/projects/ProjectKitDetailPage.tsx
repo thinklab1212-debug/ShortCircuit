@@ -19,6 +19,7 @@ import {
 import { useProjectKit, useProjectBom, useAddKitToCart } from '@/hooks/useProjectKits'
 import { useDocumentMetadata } from '@/hooks/useDocumentMetadata'
 import { useAuthStore } from '@/store'
+import { ProjectKitJsonLd } from '@/components/seo/GoogleRichSchema'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
@@ -234,6 +235,7 @@ export default function ProjectKitDetailPage() {
 
   return (
     <div className="min-h-screen bg-gradient-mesh py-8 px-4 sm:px-6 lg:px-8">
+      <ProjectKitJsonLd kit={project} />
       <div className="max-w-7xl mx-auto">
         {/* Navigation Breadcrumbs */}
         <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground mb-6">

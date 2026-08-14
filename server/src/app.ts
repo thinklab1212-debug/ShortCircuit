@@ -23,6 +23,7 @@ import {
 } from './middlewares/index.js';
 import apiRoutes from './routes/index.js';
 import sitemapRoutes from './routes/sitemap.routes.js';
+import robotsRoutes from './routes/robots.routes.js';
 import { ApiResponse } from './utils/index.js';
 
 // helmet ships as CommonJS; resolve its callable export across interop/version differences
@@ -98,8 +99,9 @@ setupSwagger(app);
 // 9. Mount modular API endpoints
 app.use('/api/v1', apiRoutes);
 
-// Mount sitemap route at root for SEO crawlers (/sitemap.xml)
+// Mount sitemap & robots.txt routes at root for SEO crawlers (/sitemap.xml, /robots.txt)
 app.use('/', sitemapRoutes);
+app.use('/', robotsRoutes);
 
 // 10. Route not found fallback (404)
 app.use(notFoundHandler);
