@@ -14,6 +14,7 @@ import { CartService } from './cart.service.js';
 import { ProductService } from './product.service.js';
 import { EmailService } from './email.service.js';
 import { InvoiceService } from './invoice.service.js';
+import { DeliveryPincodeService } from './deliveryPincode.service.js';
 import { ApiError } from '../utils/index.js';
 import { executePaginatedQuery } from '../utils/pagination.js';
 import { buildOrderFilters } from '../utils/filterBuilder.js';
@@ -50,6 +51,12 @@ export class OrderService {
       const address = await Address.findOne({ _id: shippingAddressId, user: userId }).session(session);
       if (!address) {
         throw ApiError.notFound('Shipping address not found or unauthorized.');
+      }
+
+      // 3.5 Verify delivery serviceability at the shipping address pincode
+      const isServiceable = await DeliveryPincodeService.isPincodeServiceable(address.pincode);
+      if (!isServiceable) {
+        throw new ApiError(400, 'Delivery is not available at the selected pincode. Please choose a different address.');
       }
 
       // 4. Calculate final totals (validation of coupon happens here)

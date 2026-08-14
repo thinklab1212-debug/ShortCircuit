@@ -9,24 +9,23 @@ import { env } from '../config/env.js';
 
 export async function seedAdminUser(): Promise<void> {
   console.log('👤 Seeding default administrative account...');
-  const email = env.ADMIN_EMAIL || 'admin@electrokart.com';
-  const password = env.ADMIN_PASSWORD || 'AdminPass@12345';
+  const email = env.ADMIN_EMAIL || 'sales.shortcircuit@gmail.com';
+  const password = env.ADMIN_PASSWORD || 'ShortCircuit@Ram1212';
 
-  const existingAdmin = await User.findOne({ email });
-  if (existingAdmin) {
-    console.log('ℹ️ Admin user already exists. Skipping...');
-    return;
-  }
+  // Clear existing admin accounts to ensure clean credential update
+  await User.deleteMany({ role: 'admin' });
 
-  await User.create({
+  const admin = new User({
     firstName: 'System',
     lastName: 'Administrator',
     email,
     password, // Auto-hashed by pre-save hook in User model
-    phone: '9876543210',
+    phone: '9219998403',
     role: 'admin',
     isEmailVerified: true,
   });
+
+  await admin.save();
 
   console.log(`✅ Admin account created: ${email}`);
 }

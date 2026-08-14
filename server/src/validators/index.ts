@@ -23,3 +23,4 @@ export * from './contact.validator.js';
 export * from './projectKit.validator.js';
 export * from './organizer.validator.js';
 export * from './event.validator.js';
+export * from './deliveryPincode.validator.js';

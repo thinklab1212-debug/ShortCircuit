@@ -22,6 +22,7 @@ import {
   Loader2,
   Cpu,
   Award,
+  MapPin,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { APP } from '@/constants'
@@ -41,6 +42,7 @@ const sidebarLinks = [
   { label: 'Orders', href: '/admin/orders', icon: ShoppingBag },
   { label: 'Cancellation Requests', href: '/admin/cancellation-requests', icon: XCircle },
   { label: 'Invoices', href: '/admin/invoices', icon: Receipt },
+  { label: 'Delivery Pincodes', href: '/admin/delivery-pincodes', icon: MapPin },
   { label: 'Project Kits', href: '/admin/project-kits', icon: Cpu },
   { label: 'Users', href: '/admin/users', icon: Users },
   { label: 'Vendors', href: '/admin/vendors', icon: Store },

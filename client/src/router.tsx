@@ -50,6 +50,7 @@ const AdminProjectKitsPage = lazy(() => import('@/pages/admin/ProjectKitsAdminPa
 const AdminOrganizerApplicationsPage = lazy(() => import('@/pages/admin/OrganizerApplicationsPage'))
 const AdminEventListPage = lazy(() => import('@/pages/admin/events/EventListPage'))
 const AdminEventDetailPage = lazy(() => import('@/pages/admin/events/EventDetailPage'))
+const AdminDeliveryPincodesPage = lazy(() => import('@/pages/admin/DeliveryPincodesAdminPage'))
 
 const ProjectKitsPage = lazy(() => import('@/pages/projects/ProjectKitsPage'))
 const ProjectKitDetailPage = lazy(() => import('@/pages/projects/ProjectKitDetailPage'))
@@ -155,6 +156,7 @@ export const router = createBrowserRouter([
       { path: 'events', element: <AdminEventListPage /> },
       { path: 'events/:id', element: <AdminEventDetailPage /> },
       { path: 'events/orders', element: <AdminEventOrdersPage /> },
+      { path: 'delivery-pincodes', element: <AdminDeliveryPincodesPage /> },
     ],
   },
 

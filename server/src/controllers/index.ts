@@ -25,3 +25,4 @@ export * as ContactController from './contact.controller.js';
 export * as ProjectKitController from './projectKit.controller.js';
 export * as OrganizerController from './organizer.controller.js';
 export * as EventController from './event.controller.js';
+export * as DeliveryPincodeController from './deliveryPincode.controller.js';

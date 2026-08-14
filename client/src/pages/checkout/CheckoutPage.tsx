@@ -1,7 +1,7 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from 'react-router'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   MapPin,
   CreditCard,
@@ -12,6 +12,8 @@ import {
   LogIn,
   ShoppingBag,
   Loader2,
+  CheckCircle2,
+  AlertTriangle,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { Button } from '@/components/ui/button'
@@ -19,14 +21,14 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
-import { useCart, useCartTotals, useAddresses, usePlaceOrder } from '@/hooks'
+import { useCart, useCartTotals, useAddresses, usePlaceOrder, useCheckPincode } from '@/hooks'
 import queryKeys from '@/api/queryKeys'
 import { useAuthStore } from '@/store'
 import { couponApi, paymentApi } from '@/services'
 import { formatPrice, primaryImage, getUserName } from '@/utils'
 import env from '@/config/env'
 import { fadeInUp, staggerContainer } from '@/config/animations'
-import type { Address, PaymentMethod, Order } from '@/types'
+import type { Address, PaymentMethod, Order, PincodeCheckResult } from '@/types'
 
 // ─── Razorpay global ──────────────────────────────────────────────────────────
 
@@ -186,6 +188,11 @@ export default function CheckoutPage() {
   const [applyingCoupon, setApplyingCoupon] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
+  // Delivery serviceability state
+  const [deliveryResult, setDeliveryResult] = useState<PincodeCheckResult | null>(null)
+  const [deliveryChecking, setDeliveryChecking] = useState(false)
+  const checkPincodeMutation = useCheckPincode()
+
   const { data: totals } = useCartTotals(appliedCoupon)
 
   // Preselect the default address (or the first one) once addresses load.
@@ -195,6 +202,38 @@ export default function CheckoutPage() {
     const def = addresses.find((a) => a.isDefault)
     return def?._id ?? addresses[0]._id
   }, [selectedAddressId, addresses])
+
+  // Resolve the selected address object
+  const selectedAddress = useMemo(() => {
+    if (!resolvedAddressId || !addresses) return null
+    return addresses.find((a) => a._id === resolvedAddressId) || null
+  }, [resolvedAddressId, addresses])
+
+  // Auto-check delivery serviceability when selected address changes
+  const checkDeliveryForAddress = useCallback((pincode: string) => {
+    setDeliveryChecking(true)
+    setDeliveryResult(null)
+    checkPincodeMutation.mutate(pincode, {
+      onSuccess: (data) => {
+        setDeliveryResult(data)
+        setDeliveryChecking(false)
+      },
+      onError: () => {
+        setDeliveryResult({ deliverable: false, pincode, message: 'Unable to verify delivery availability' })
+        setDeliveryChecking(false)
+      },
+    })
+  }, [checkPincodeMutation])
+
+  useEffect(() => {
+    // Clear previous result immediately
+    setDeliveryResult(null)
+    if (selectedAddress?.pincode) {
+      checkDeliveryForAddress(selectedAddress.pincode)
+    }
+  }, [resolvedAddressId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const isDeliverable = deliveryResult?.deliverable === true
 
   // ── Auth guard ──
   if (!isAuthenticated) {
@@ -440,6 +479,60 @@ export default function CheckoutPage() {
               </div>
             )}
 
+            {/* Delivery serviceability indicator */}
+            {!addressesLoading && resolvedAddressId && (
+              <AnimatePresence mode="wait">
+                {deliveryChecking ? (
+                  <motion.div
+                    key="checking"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.15 }}
+                    className="mt-4 flex items-center gap-2.5 rounded-lg border border-border px-3.5 py-2.5 bg-muted/20"
+                  >
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">Checking delivery availability...</span>
+                  </motion.div>
+                ) : deliveryResult ? (
+                  deliveryResult.deliverable ? (
+                    <motion.div
+                      key="deliverable"
+                      initial={{ opacity: 0, y: -4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="mt-4 flex items-center gap-2.5 rounded-lg border border-success-200 bg-success-50/60 dark:border-success-800/40 dark:bg-success-950/20 px-3.5 py-2.5"
+                    >
+                      <CheckCircle2 className="h-4 w-4 shrink-0 text-success-600 dark:text-success-400" />
+                      <span className="text-xs font-medium text-success-700 dark:text-success-300">
+                        Delivery available at this address
+                      </span>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="not-deliverable"
+                      initial={{ opacity: 0, y: -4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="mt-4 space-y-1.5"
+                    >
+                      <div className="flex items-center gap-2.5 rounded-lg border border-warning-200 bg-warning-50/60 dark:border-warning-800/40 dark:bg-warning-950/20 px-3.5 py-2.5">
+                        <AlertTriangle className="h-4 w-4 shrink-0 text-warning-600 dark:text-warning-400" />
+                        <span className="text-xs font-medium text-warning-700 dark:text-warning-300">
+                          Delivery is not available at pincode {deliveryResult.pincode}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground pl-0.5">
+                        Please select a different address to place your order.
+                      </p>
+                    </motion.div>
+                  )
+                ) : null}
+              </AnimatePresence>
+            )}
+
             {!addressesLoading && (
               <div className="mt-6 border-t border-border pt-5">
                 <label htmlFor="orderEmail" className="block text-sm font-semibold text-foreground mb-1.5">
@@ -630,7 +723,7 @@ export default function CheckoutPage() {
               className="w-full"
               size="lg"
               onClick={handlePlaceOrder}
-              disabled={placing || !resolvedAddressId}
+              disabled={placing || !resolvedAddressId || !isDeliverable || deliveryChecking}
             >
               {placing ? (
                 <>

@@ -216,6 +216,14 @@ const API_ROUTES = {
     MY_ORDERS: '/events/my-orders',
     DOWNLOAD_INVOICE: (id: string) => `/events/orders/${id}/invoice`,
   },
+
+  // Delivery Pincodes
+  DELIVERY_PINCODES: {
+    CHECK: '/delivery-pincodes/check',
+    ADMIN: '/delivery-pincodes/admin',
+    ADMIN_BY_ID: (id: string) => `/delivery-pincodes/admin/${id}`,
+    ADMIN_STATUS: (id: string) => `/delivery-pincodes/admin/${id}/status`,
+  },
 } as const
 
 export default API_ROUTES

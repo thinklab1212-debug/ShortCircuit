@@ -15,6 +15,7 @@ import {
   ReviewsSection,
   RelatedProducts,
   RecentlyViewedProducts,
+  DeliveryChecker,
 } from './sections'
 import { fadeInUp, staggerContainer } from '@/config/animations'
 import toast from 'react-hot-toast'
@@ -227,6 +228,10 @@ export default function ProductDetailPage() {
             />
           </div>
 
+          {/* Delivery Checker */}
+          <div className="border-t border-border pt-6">
+            <DeliveryChecker />
+          </div>
 
         </motion.div>
       </motion.div>

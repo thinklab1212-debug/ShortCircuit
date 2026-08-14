@@ -173,6 +173,14 @@ const queryKeys = {
     all: ['customerEventOrders'] as const,
     list: () => [...queryKeys.customerEventOrders.all, 'list'] as const,
   },
+
+  // Delivery Pincodes
+  deliveryPincodes: {
+    all: ['deliveryPincodes'] as const,
+    check: (pincode: string) => [...queryKeys.deliveryPincodes.all, 'check', pincode] as const,
+    lists: () => [...queryKeys.deliveryPincodes.all, 'list'] as const,
+    list: (params: Record<string, unknown>) => [...queryKeys.deliveryPincodes.lists(), params] as const,
+  },
 } as const
 
 export default queryKeys

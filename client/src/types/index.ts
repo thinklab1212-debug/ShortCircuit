@@ -1071,3 +1071,28 @@ export interface EventOrder {
   createdAt: string
   updatedAt: string
 }
+
+// ─── Delivery Pincodes ────────────────────────────────────────────────────────
+
+export interface DeliveryPincode {
+  _id: string
+  pincode: string
+  city?: string
+  state?: string
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface DeliveryPincodeFormData {
+  pincode: string
+  city?: string
+  state?: string
+  isActive?: boolean
+}
+
+export interface PincodeCheckResult {
+  deliverable: boolean
+  pincode: string
+  message: string
+}

@@ -31,6 +31,7 @@ import organizerRoutes from './organizer.routes.js';
 import adminOrganizerRoutes from './adminOrganizer.routes.js';
 import adminEventRoutes from './adminEvent.routes.js';
 import eventRoutes from './event.routes.js';
+import deliveryPincodeRoutes from './deliveryPincode.routes.js';
 
 const router = Router();
 
@@ -62,5 +63,8 @@ router.use('/organizer', organizerRoutes);
 router.use('/admin/organizer-applications', adminOrganizerRoutes);
 router.use('/admin/events', adminEventRoutes);
 router.use('/events', eventRoutes);
+
+// Delivery Serviceability
+router.use('/delivery-pincodes', deliveryPincodeRoutes);
 
 export default router;
