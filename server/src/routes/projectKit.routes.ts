@@ -19,7 +19,7 @@ import { z } from 'zod';
 
 const router = Router();
 
-// ─── Public Routes ──────────────────────────────────────────────────────────
+// ─── Public Listing & Featured Routes ────────────────────────────────────────
 
 /**
  * @openapi
@@ -68,6 +68,154 @@ router.get(
  */
 router.get('/featured', ProjectKitController.getFeaturedProjects);
 
+// ─── Admin-Only Management (MUST come BEFORE generic :slug wildcard) ────────
+
+/**
+ * @openapi
+ * /project-kits/admin:
+ *   get:
+ *     summary: List all project kits including drafts (Admin only)
+ *     tags: [ProjectKits]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: All projects listed successfully
+ */
+router.get(
+  '/admin',
+  authenticate,
+  authorize('admin'),
+  ProjectKitController.getAllProjects
+);
+
+/**
+ * @openapi
+ * /project-kits/admin/{id}:
+ *   get:
+ *     summary: Get project by ID for editing (Admin only)
+ *     tags: [ProjectKits]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Project retrieved successfully
+ */
+router.get(
+  '/admin/:id',
+  authenticate,
+  authorize('admin'),
+  validate({ params: z.object({ id: objectIdSchema }) }),
+  ProjectKitController.getProjectById
+);
+
+/**
+ * @openapi
+ * /project-kits/admin:
+ *   post:
+ *     summary: Create a new project kit (Admin only)
+ *     tags: [ProjectKits]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       201:
+ *         description: Project created successfully
+ */
+router.post(
+  '/admin',
+  authenticate,
+  authorize('admin'),
+  validate({ body: createProjectKitSchema }),
+  ProjectKitController.createProject
+);
+
+/**
+ * @openapi
+ * /project-kits/admin/{id}:
+ *   patch:
+ *     summary: Update an existing project kit (Admin only)
+ *     tags: [ProjectKits]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Project updated successfully
+ */
+router.patch(
+  '/admin/:id',
+  authenticate,
+  authorize('admin'),
+  validate({ params: z.object({ id: objectIdSchema }), body: updateProjectKitSchema }),
+  ProjectKitController.updateProject
+);
+
+/**
+ * @openapi
+ * /project-kits/admin/{id}:
+ *   delete:
+ *     summary: Delete a project kit (Admin only)
+ *     tags: [ProjectKits]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Project deleted successfully
+ */
+router.delete(
+  '/admin/:id',
+  authenticate,
+  authorize('admin'),
+  validate({ params: z.object({ id: objectIdSchema }) }),
+  ProjectKitController.deleteProject
+);
+
+// ─── Authenticated: Add Kit to Cart ─────────────────────────────────────────
+
+/**
+ * @openapi
+ * /project-kits/{id}/add-to-cart:
+ *   post:
+ *     summary: Add all required BOM components to user's cart
+ *     tags: [ProjectKits]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Components processed for cart
+ */
+router.post(
+  '/:id/add-to-cart',
+  authenticate,
+  validate({ params: z.object({ id: objectIdSchema }) }),
+  ProjectKitController.addToCart
+);
+
+// ─── Generic Parametric Routes (MUST come LAST) ───────────────────────────────
+
 /**
  * @openapi
  * /project-kits/{slug}:
@@ -103,140 +251,5 @@ router.get('/:slug', ProjectKitController.getProjectBySlug);
  *         description: BOM with pricing retrieved successfully
  */
 router.get('/:slug/bom', ProjectKitController.getProjectBom);
-
-// ─── Authenticated: Add Kit to Cart ─────────────────────────────────────────
-
-/**
- * @openapi
- * /project-kits/{id}/add-to-cart:
- *   post:
- *     summary: Add all required BOM components to user's cart
- *     tags: [ProjectKits]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Components processed for cart
- */
-router.post(
-  '/:id/add-to-cart',
-  authenticate,
-  validate({ params: z.object({ id: objectIdSchema }) }),
-  ProjectKitController.addToCart
-);
-
-// ─── Admin-Only Management ──────────────────────────────────────────────────
-
-router.use('/admin', authenticate, authorize('admin'));
-
-/**
- * @openapi
- * /project-kits/admin:
- *   get:
- *     summary: List all project kits including drafts (Admin only)
- *     tags: [ProjectKits]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: All projects listed successfully
- */
-router.get('/admin', ProjectKitController.getAllProjects);
-
-/**
- * @openapi
- * /project-kits/admin/{id}:
- *   get:
- *     summary: Get project by ID for editing (Admin only)
- *     tags: [ProjectKits]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Project retrieved successfully
- */
-router.get(
-  '/admin/:id',
-  validate({ params: z.object({ id: objectIdSchema }) }),
-  ProjectKitController.getProjectById
-);
-
-/**
- * @openapi
- * /project-kits/admin:
- *   post:
- *     summary: Create a new project kit (Admin only)
- *     tags: [ProjectKits]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       201:
- *         description: Project created successfully
- */
-router.post(
-  '/admin',
-  validate({ body: createProjectKitSchema }),
-  ProjectKitController.createProject
-);
-
-/**
- * @openapi
- * /project-kits/admin/{id}:
- *   patch:
- *     summary: Update an existing project kit (Admin only)
- *     tags: [ProjectKits]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Project updated successfully
- */
-router.patch(
-  '/admin/:id',
-  validate({ params: z.object({ id: objectIdSchema }), body: updateProjectKitSchema }),
-  ProjectKitController.updateProject
-);
-
-/**
- * @openapi
- * /project-kits/admin/{id}:
- *   delete:
- *     summary: Delete a project kit (Admin only)
- *     tags: [ProjectKits]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Project deleted successfully
- */
-router.delete(
-  '/admin/:id',
-  validate({ params: z.object({ id: objectIdSchema }) }),
-  ProjectKitController.deleteProject
-);
 
 export default router;
