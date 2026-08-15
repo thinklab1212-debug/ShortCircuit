@@ -1,6 +1,6 @@
-import { useState, Suspense } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { Outlet, Link, useLocation } from 'react-router'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard,
   Package,
@@ -14,6 +14,7 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Menu,
   Store,
   ClipboardCheck,
@@ -32,34 +33,106 @@ import { ScrollToTop } from '@/components/layout/ScrollToTop'
 import { useQuery } from '@tanstack/react-query'
 import { orderApi } from '@/services'
 
-// ─── Admin Layout ───────────────────────────────────────────────────────────────
+// ─── Types & Navigation Config ──────────────────────────────────────────────────
 
-const sidebarLinks = [
+type NavItem = {
+  label: string
+  href: string
+  icon: React.ElementType
+  badge?: number
+}
+
+type NavGroup = {
+  id: string
+  label: string
+  icon: React.ElementType
+  badge?: number
+  items: NavItem[]
+}
+
+type SidebarEntry = NavItem | NavGroup
+
+function isNavGroup(entry: SidebarEntry): entry is NavGroup {
+  return 'items' in entry
+}
+
+const getSidebarNav = (pendingCancellationCount: number): SidebarEntry[] => [
   { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
-  { label: 'Products', href: '/admin/products', icon: Package },
-  { label: 'Categories', href: '/admin/categories', icon: Tags },
-  { label: 'Brands', href: '/admin/brands', icon: Building2 },
-  { label: 'Orders', href: '/admin/orders', icon: ShoppingBag },
-  { label: 'Cancellation Requests', href: '/admin/cancellation-requests', icon: XCircle },
-  { label: 'Invoices', href: '/admin/invoices', icon: Receipt },
-  { label: 'Delivery Pincodes', href: '/admin/delivery-pincodes', icon: MapPin },
-  { label: 'Project Kits', href: '/admin/project-kits', icon: Cpu },
-  { label: 'Users', href: '/admin/users', icon: Users },
-  { label: 'Vendors', href: '/admin/vendors', icon: Store },
-  { label: 'Organizer Applications', href: '/admin/organizer-applications', icon: Award },
-  { label: 'Event Reviews', href: '/admin/events', icon: ClipboardCheck },
-  { label: 'Event Orders', href: '/admin/events/orders', icon: ShoppingBag },
-  { label: 'Review Queue', href: '/admin/review-queue', icon: ClipboardCheck },
-  { label: 'Coupons', href: '/admin/coupons', icon: Ticket },
-  { label: 'Banners', href: '/admin/banners', icon: Image },
   { label: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
-  { label: 'Invoice Settings', href: '/admin/invoice-settings', icon: Settings },
-  { label: 'Settings', href: '/admin/settings', icon: Settings },
+  {
+    id: 'catalog',
+    label: 'Catalog',
+    icon: Package,
+    items: [
+      { label: 'Products', href: '/admin/products', icon: Package },
+      { label: 'Categories', href: '/admin/categories', icon: Tags },
+      { label: 'Brands', href: '/admin/brands', icon: Building2 },
+      { label: 'Project Kits', href: '/admin/project-kits', icon: Cpu },
+    ],
+  },
+  {
+    id: 'sales',
+    label: 'Sales & Orders',
+    icon: ShoppingBag,
+    badge: pendingCancellationCount,
+    items: [
+      { label: 'Orders', href: '/admin/orders', icon: ShoppingBag },
+      {
+        label: 'Cancellation Requests',
+        href: '/admin/cancellation-requests',
+        icon: XCircle,
+        badge: pendingCancellationCount,
+      },
+      { label: 'Invoices', href: '/admin/invoices', icon: Receipt },
+      { label: 'Delivery Pincodes', href: '/admin/delivery-pincodes', icon: MapPin },
+    ],
+  },
+  {
+    id: 'events',
+    label: 'Events',
+    icon: Award,
+    items: [
+      { label: 'Event Reviews', href: '/admin/events', icon: ClipboardCheck },
+      { label: 'Event Orders', href: '/admin/events/orders', icon: ShoppingBag },
+      { label: 'Organizer Applications', href: '/admin/organizer-applications', icon: Award },
+    ],
+  },
+  {
+    id: 'users-vendors',
+    label: 'Users & Review',
+    icon: Users,
+    items: [
+      { label: 'Users', href: '/admin/users', icon: Users },
+      { label: 'Vendors', href: '/admin/vendors', icon: Store },
+      { label: 'Review Queue', href: '/admin/review-queue', icon: ClipboardCheck },
+    ],
+  },
+  {
+    id: 'marketing',
+    label: 'Marketing & Content',
+    icon: Ticket,
+    items: [
+      { label: 'Coupons', href: '/admin/coupons', icon: Ticket },
+      { label: 'Banners', href: '/admin/banners', icon: Image },
+    ],
+  },
+  {
+    id: 'settings',
+    label: 'Settings',
+    icon: Settings,
+    items: [
+      { label: 'General Settings', href: '/admin/settings', icon: Settings },
+      { label: 'Invoice Settings', href: '/admin/invoice-settings', icon: Receipt },
+    ],
+  },
 ]
+
+// ─── Admin Layout ───────────────────────────────────────────────────────────────
 
 export function AdminLayout() {
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [openGroups, setOpenGroups] = useState<string[]>([])
   const location = useLocation()
   const isMobile = useIsMobile()
 
@@ -69,10 +142,33 @@ export function AdminLayout() {
     refetchInterval: 30000,
   })
   const pendingCount = countData?.count || 0
+  const navEntries = getSidebarNav(pendingCount)
 
   const isActive = (href: string) => {
-    if (href === '/admin') return location.pathname === '/admin'
-    return location.pathname.startsWith(href)
+    if (href === '/admin' || href === '/admin/events') return location.pathname === href
+    return location.pathname === href || location.pathname.startsWith(href + '/')
+  }
+
+  const isGroupActive = (group: NavGroup) => {
+    return group.items.some((item) => isActive(item.href))
+  }
+
+  // Auto-expand group containing current route
+  useEffect(() => {
+    navEntries.forEach((entry) => {
+      if (isNavGroup(entry) && isGroupActive(entry)) {
+        setOpenGroups((prev) => (prev.includes(entry.id) ? prev : [...prev, entry.id]))
+      }
+    })
+  }, [location.pathname])
+
+  const toggleGroup = (groupId: string) => {
+    if (collapsed) {
+      setCollapsed(false)
+    }
+    setOpenGroups((prev) =>
+      prev.includes(groupId) ? prev.filter((id) => id !== groupId) : [...prev, groupId]
+    )
   }
 
   return (
@@ -103,7 +199,7 @@ export function AdminLayout() {
             </Link>
           )}
           <button
-            onClick={() => isMobile ? setMobileOpen(false) : setCollapsed(!collapsed)}
+            onClick={() => (isMobile ? setMobileOpen(false) : setCollapsed(!collapsed))}
             className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
           >
             {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
@@ -111,33 +207,129 @@ export function AdminLayout() {
         </div>
 
         {/* Sidebar Links */}
-        <nav className="flex-1 overflow-y-auto p-2 space-y-0.5">
-          {sidebarLinks.map((link) => {
-            const Icon = link.icon
-            const active = isActive(link.href)
+        <nav className="flex-1 overflow-y-auto p-2 space-y-1.5">
+          {navEntries.map((entry) => {
+            if (!isNavGroup(entry)) {
+              // Direct Link
+              const Icon = entry.icon
+              const active = isActive(entry.href)
+              return (
+                <Link
+                  key={entry.href}
+                  to={entry.href}
+                  onClick={() => isMobile && setMobileOpen(false)}
+                  className={cn(
+                    'flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-all',
+                    active
+                      ? 'bg-primary/10 text-primary border border-primary/20 font-semibold'
+                      : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+                  )}
+                  title={collapsed ? entry.label : undefined}
+                >
+                  <div className="flex items-center gap-3">
+                    <Icon className="h-4 w-4 shrink-0" />
+                    {!collapsed && <span>{entry.label}</span>}
+                  </div>
+                  {!collapsed && entry.badge && entry.badge > 0 ? (
+                    <span className="flex h-5 items-center justify-center rounded-full bg-error-500 px-2 text-[10px] font-bold text-white leading-none">
+                      {entry.badge}
+                    </span>
+                  ) : null}
+                </Link>
+              )
+            }
+
+            // Accordion Group
+            const GroupIcon = entry.icon
+            const isOpen = openGroups.includes(entry.id)
+            const groupActive = isGroupActive(entry)
 
             return (
-              <Link
-                key={link.href}
-                to={link.href}
-                onClick={() => isMobile && setMobileOpen(false)}
-                className={cn(
-                  'flex items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium transition-all',
-                  active
-                    ? 'bg-primary/10 text-primary border border-primary/20'
-                    : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+              <div key={entry.id} className="space-y-0.5">
+                {/* Group Header */}
+                <button
+                  onClick={() => toggleGroup(entry.id)}
+                  title={collapsed ? entry.label : undefined}
+                  className={cn(
+                    'flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-all',
+                    groupActive
+                      ? 'text-foreground font-semibold bg-accent/40'
+                      : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+                  )}
+                >
+                  <div className="flex items-center gap-3">
+                    <GroupIcon
+                      className={cn(
+                        'h-4 w-4 shrink-0',
+                        groupActive ? 'text-primary' : 'text-muted-foreground'
+                      )}
+                    />
+                    {!collapsed && <span>{entry.label}</span>}
+                  </div>
+                  {!collapsed && (
+                    <div className="flex items-center gap-1.5">
+                      {entry.badge && entry.badge > 0 ? (
+                        <span className="flex h-4 items-center justify-center rounded-full bg-error-500 px-1.5 text-[9px] font-bold text-white leading-none">
+                          {entry.badge}
+                        </span>
+                      ) : null}
+                      <ChevronDown
+                        className={cn(
+                          'h-3.5 w-3.5 text-muted-foreground transition-transform duration-200',
+                          isOpen ? 'rotate-180' : ''
+                        )}
+                      />
+                    </div>
+                  )}
+                  {collapsed && entry.badge && entry.badge > 0 ? (
+                    <span className="h-2 w-2 rounded-full bg-error-500" />
+                  ) : null}
+                </button>
+
+                {/* Sub Items */}
+                {!collapsed && (
+                  <AnimatePresence initial={false}>
+                    {isOpen && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.18, ease: 'easeInOut' }}
+                        className="overflow-hidden pl-3 space-y-0.5 border-l border-border/50 ml-4 my-1"
+                      >
+                        {entry.items.map((subItem) => {
+                          const SubIcon = subItem.icon
+                          const active = isActive(subItem.href)
+
+                          return (
+                            <Link
+                              key={subItem.href}
+                              to={subItem.href}
+                              onClick={() => isMobile && setMobileOpen(false)}
+                              className={cn(
+                                'flex items-center justify-between rounded-md px-2.5 py-1.5 text-xs font-medium transition-all',
+                                active
+                                  ? 'bg-primary/10 text-primary border border-primary/20 font-semibold'
+                                  : 'text-muted-foreground hover:bg-accent/70 hover:text-foreground'
+                              )}
+                            >
+                              <div className="flex items-center gap-2.5">
+                                <SubIcon className="h-3.5 w-3.5 shrink-0" />
+                                <span>{subItem.label}</span>
+                              </div>
+                              {subItem.badge && subItem.badge > 0 ? (
+                                <span className="flex h-4 items-center justify-center rounded-full bg-error-500 px-1.5 text-[9px] font-bold text-white leading-none">
+                                  {subItem.badge}
+                                </span>
+                              ) : null}
+                            </Link>
+                          )
+                        })}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 )}
-              >
-                <div className="flex items-center gap-3">
-                  <Icon className="h-4 w-4 shrink-0" />
-                  {!collapsed && <span>{link.label}</span>}
-                </div>
-                {!collapsed && link.label === 'Cancellation Requests' && pendingCount > 0 && (
-                  <span className="flex h-5 items-center justify-center rounded-full bg-error-500 px-2 text-[10px] font-bold text-white leading-none">
-                    {pendingCount}
-                  </span>
-                )}
-              </Link>
+              </div>
             )
           })}
         </nav>
@@ -178,11 +370,13 @@ export function AdminLayout() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.2 }}
           >
-            <Suspense fallback={
-              <div className="flex items-center justify-center min-h-[400px]">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            }>
+            <Suspense
+              fallback={
+                <div className="flex items-center justify-center min-h-[400px]">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              }
+            >
               <Outlet />
             </Suspense>
           </motion.div>
@@ -191,3 +385,4 @@ export function AdminLayout() {
     </div>
   )
 }
+
