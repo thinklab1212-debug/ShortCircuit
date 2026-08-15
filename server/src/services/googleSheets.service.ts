@@ -72,9 +72,19 @@ export class GoogleSheetsService {
     }
 
     try {
+      // Parse private key — handle different hosting platform formats:
+      // Render/Heroku may store literal \n, or wrap in extra quotes
+      let privateKey = env.GOOGLE_PRIVATE_KEY!;
+      // Strip surrounding quotes if present (some platforms add them)
+      if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
+        privateKey = privateKey.slice(1, -1);
+      }
+      // Convert literal \n to actual newlines
+      privateKey = privateKey.replace(/\\n/g, '\n');
+
       const auth = new JWT({
         email: env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-        key: env.GOOGLE_PRIVATE_KEY!.replace(/\\n/g, '\n'),
+        key: privateKey,
         scopes: ['https://www.googleapis.com/auth/spreadsheets'],
       });
 
