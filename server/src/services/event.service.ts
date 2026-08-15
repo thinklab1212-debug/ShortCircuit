@@ -34,6 +34,7 @@ import EventOrder from '../models/EventOrder.model.js';
 import Address from '../models/Address.model.js';
 import PaymentService from './payment.service.js';
 import InvoiceService from './invoice.service.js';
+import { GoogleSheetsService } from './googleSheets.service.js';
 
 // ---------------------------------------------------------------------------
 // Interfaces
@@ -1049,6 +1050,9 @@ export class EventService {
         logger.info(`🛒 Event Kit Purchase completed via COD: Order ID ${eventOrder.orderId}, Team: ${team.teamId}, Event ID: ${eventId}`);
         logger.info(`📄 Invoice generated: Invoice ID ${invoiceId} for Order ID ${eventOrder.orderId}`);
 
+        // Google Sheets sync (fire-and-forget)
+        GoogleSheetsService.appendEventOrderRow(eventOrder, event).catch(() => {});
+
         return {
           order: eventOrder,
           paymentRequired: false,
@@ -1166,6 +1170,10 @@ export class EventService {
 
       logger.info(`🛒 Event Kit Purchase completed via online payment: Order ID ${order.orderId}, Team: ${order.teamId}, Event ID: ${order.event}`);
       logger.info(`📄 Invoice generated: Invoice ID ${invoiceId} for Order ID ${order.orderId}`);
+
+      // Google Sheets sync (fire-and-forget)
+      const eventForSheet = await Event.findById(order.event).select('title organizerName');
+      GoogleSheetsService.appendEventOrderRow(order, eventForSheet).catch(() => {});
 
       return order;
     } catch (error) {

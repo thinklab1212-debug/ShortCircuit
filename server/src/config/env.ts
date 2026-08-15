@@ -205,6 +205,25 @@ const envSchema = z.object({
     .default('true')
     .transform((val) => val === 'true')
     .describe('Enable/disable Swagger documentation UI'),
+
+  // -----------------------------------------------------------------------
+  // Google Sheets Sync (Optional — gracefully skipped if not configured)
+  // -----------------------------------------------------------------------
+  GOOGLE_SHEETS_ID: z
+    .string()
+    .optional()
+    .describe('Google Spreadsheet ID for live data sync'),
+
+  GOOGLE_SERVICE_ACCOUNT_EMAIL: z
+    .string()
+    .email()
+    .optional()
+    .describe('Google Service Account email for Sheets API authentication'),
+
+  GOOGLE_PRIVATE_KEY: z
+    .string()
+    .optional()
+    .describe('Google Service Account private key (from JSON key file)'),
 });
 
 // ---------------------------------------------------------------------------

@@ -26,3 +26,4 @@ export { ProjectKitService } from './projectKit.service.js';
 export { OrganizerService } from './organizer.service.js';
 export { EventService } from './event.service.js';
 export { DeliveryPincodeService } from './deliveryPincode.service.js';
+export { GoogleSheetsService } from './googleSheets.service.js';

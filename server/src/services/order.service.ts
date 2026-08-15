@@ -15,6 +15,7 @@ import { ProductService } from './product.service.js';
 import { EmailService } from './email.service.js';
 import { InvoiceService } from './invoice.service.js';
 import { DeliveryPincodeService } from './deliveryPincode.service.js';
+import { GoogleSheetsService } from './googleSheets.service.js';
 import { ApiError, logger } from '../utils/index.js';
 import { executePaginatedQuery } from '../utils/pagination.js';
 import { buildOrderFilters } from '../utils/filterBuilder.js';
@@ -184,6 +185,9 @@ export class OrderService {
       if (!isOnlinePayment) {
         EmailService.sendOrderConfirmationEmail(order.shippingAddress.email || user.email, user.firstName, order.orderId, order.totalPrice);
       }
+
+      // Google Sheets sync (fire-and-forget)
+      GoogleSheetsService.appendOrderRow(order).catch(() => {});
 
       return order;
     } catch (error) {
@@ -381,6 +385,9 @@ export class OrderService {
         reason
       );
     }
+
+    // Google Sheets sync (fire-and-forget)
+    GoogleSheetsService.appendCancellationRow(order).catch(() => {});
 
     return order;
   }

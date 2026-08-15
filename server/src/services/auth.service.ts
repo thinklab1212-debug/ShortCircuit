@@ -11,6 +11,7 @@ import Token from '../models/Token.model.js';
 import { env } from '../config/env.js';
 import { ApiError } from '../utils/index.js';
 import { EmailService } from './email.service.js';
+import { GoogleSheetsService } from './googleSheets.service.js';
 import {
   generateTokenPair,
   verifyRefreshToken,
@@ -48,6 +49,9 @@ export class AuthService {
 
     // Send Welcome Email (disabled)
     // EmailService.sendWelcomeEmail(user.email, user.firstName);
+
+    // Google Sheets sync (fire-and-forget)
+    GoogleSheetsService.appendNewUserRow(user).catch(() => {});
 
     return user;
   }

@@ -10,6 +10,7 @@ import app from './app.js';
 import { env } from './config/env.js';
 import { connectDatabase, disconnectDatabase } from './config/db.js';
 import { logger } from './utils/index.js';
+import { GoogleSheetsService } from './services/index.js';
 
 let server: http.Server;
 
@@ -18,6 +19,9 @@ async function startServer() {
 
   // 1. Establish Database Connection (fails application if connection fails)
   await connectDatabase();
+
+  // 1.5 Initialize Google Sheets sync (non-blocking — skips if not configured)
+  await GoogleSheetsService.initialize();
 
   // 2. Instantiate and Start HTTP Server
   server = http.createServer(app);
