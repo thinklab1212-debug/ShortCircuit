@@ -73,12 +73,32 @@ function renderInlineStyles(text: string) {
   })
 }
 
+// Helper to extract clean Google Drive File ID regardless of sharing format
+function extractDriveFileId(url: string): string | null {
+  if (!url) return null
+  const decoded = url.replace(/&amp;/g, '&').trim()
+  const match = decoded.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) ||
+                decoded.match(/[?&]id=([a-zA-Z0-9_-]+)/) ||
+                decoded.match(/\/d\/([a-zA-Z0-9_-]+)/)
+  return match ? match[1] : null
+}
+
 // Helper to parse GDrive file sharing URL to Google's direct file preview/embed stream
 function getDrivePreviewUrl(url: string): string {
   if (!url) return ''
-  const match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || url.match(/[?&]id=([a-zA-Z0-9_-]+)/)
-  if (match && match[1]) {
-    return `https://drive.google.com/file/d/${match[1]}/preview`
+  const fileId = extractDriveFileId(url)
+  if (fileId) {
+    return `https://drive.google.com/file/d/${fileId}/preview`
+  }
+  return url
+}
+
+// Helper to get standard web viewer URL for "Open in New Tab" (prevents 400 Bad Request)
+function getDriveViewUrl(url: string): string {
+  if (!url) return ''
+  const fileId = extractDriveFileId(url)
+  if (fileId) {
+    return `https://drive.google.com/file/d/${fileId}/view?usp=sharing`
   }
   return url
 }
@@ -86,9 +106,9 @@ function getDrivePreviewUrl(url: string): string {
 // Helper to parse GDrive file sharing URL to Google's direct file download stream
 function getDriveDownloadUrl(url: string): string {
   if (!url) return ''
-  const match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || url.match(/[?&]id=([a-zA-Z0-9_-]+)/)
-  if (match && match[1]) {
-    return `https://drive.google.com/uc?export=download&id=${match[1]}`
+  const fileId = extractDriveFileId(url)
+  if (fileId) {
+    return `https://drive.google.com/uc?export=download&id=${fileId}`
   }
   return url
 }
@@ -193,6 +213,9 @@ export default function ProjectKitDetailPage() {
 
   // Selected wiring diagram index
   const [activeWiringIndex, setActiveWiringIndex] = useState(0)
+
+  // Selected document index for preview
+  const [activeDocIndex, setActiveDocIndex] = useState(0)
 
   // Fetch data
   const { data: project, isLoading, isError } = useProjectKit(slug || '')
@@ -531,35 +554,64 @@ export default function ProjectKitDetailPage() {
                   ) : project.documents && project.documents.length > 0 ? (
                     <div className="space-y-6">
                       {(() => {
-                        const guideDoc = project.documents.find((d) => d.type === 'guide') || project.documents[0];
-                        const codeDoc = project.documents.find((d) => d.type === 'code');
-                        const otherDocs = project.documents.filter((d) => d !== guideDoc && d !== codeDoc);
+                        const validDocs = project.documents;
+                        const safeDocIndex = Math.min(activeDocIndex, validDocs.length - 1);
+                        const currentDoc = validDocs[safeDocIndex] || validDocs[0];
+                        const isCurrentDocCode = currentDoc?.type === 'code' || currentDoc?.title?.toLowerCase().includes('code');
 
                         return (
                           <div className="space-y-6">
-                            {/* Embedded PDF Guide Viewer */}
-                            {guideDoc && guideDoc.url && (
+                            {/* Document Selector Pills (when multiple documents exist) */}
+                            {validDocs.length > 1 && (
+                              <div className="flex gap-2 border-b border-border/80 pb-3 overflow-x-auto no-scrollbar">
+                                {validDocs.map((doc, idx) => {
+                                  const isSelected = safeDocIndex === idx;
+                                  const isCode = doc.type === 'code' || doc.title?.toLowerCase().includes('code');
+                                  return (
+                                    <button
+                                      key={doc._id || idx}
+                                      onClick={() => setActiveDocIndex(idx)}
+                                      className={`flex items-center gap-2 px-3.5 py-2 rounded-2xl text-xs font-bold transition-all shrink-0 ${
+                                        isSelected
+                                          ? 'bg-primary text-primary-foreground shadow-sm'
+                                          : 'bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground border border-border/60'
+                                      }`}
+                                    >
+                                      {isCode ? <span>💻</span> : <FileText className="h-3.5 w-3.5" />}
+                                      <span className="truncate max-w-[220px]">{doc.title}</span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
+
+                            {/* Active Document Viewer & Action Bar */}
+                            {currentDoc && currentDoc.url && (
                               <div className="space-y-4">
                                 <div className="flex flex-wrap justify-between items-center bg-muted/30 px-4 py-3 rounded-2xl border border-border gap-2">
                                   <span className="text-xs font-semibold text-foreground flex items-center gap-2">
-                                    <FileText className="h-4 w-4 text-primary" />
-                                    {guideDoc.title}
+                                    {isCurrentDocCode ? (
+                                      <span className="text-base">💻</span>
+                                    ) : (
+                                      <FileText className="h-4 w-4 text-primary" />
+                                    )}
+                                    {currentDoc.title}
                                   </span>
                                   <div className="flex items-center gap-2">
                                     <Button asChild size="sm" variant="default" className="rounded-xl h-8 text-[11px] font-bold gap-1.5 shadow-sm">
                                       <a
-                                        href={getDriveDownloadUrl(guideDoc.url)}
+                                        href={getDriveDownloadUrl(currentDoc.url)}
                                         target="_blank"
                                         rel="noreferrer"
                                         download
                                         className="flex items-center gap-1.5"
                                       >
-                                        <Download className="h-3.5 w-3.5" /> Download PDF
+                                        <Download className="h-3.5 w-3.5" /> Download File
                                       </a>
                                     </Button>
                                     <Button asChild size="sm" variant="outline" className="rounded-xl h-8 text-[11px] font-bold gap-1">
                                       <a
-                                        href={guideDoc.url}
+                                        href={getDriveViewUrl(currentDoc.url)}
                                         target="_blank"
                                         rel="noreferrer"
                                         className="flex items-center gap-1"
@@ -569,78 +621,72 @@ export default function ProjectKitDetailPage() {
                                     </Button>
                                   </div>
                                 </div>
+
+                                {/* Embedded Iframe Preview */}
                                 <div className="w-full h-[650px] border border-border rounded-3xl overflow-hidden bg-slate-900/5 shadow-inner relative">
                                   <iframe
-                                    src={getDrivePreviewUrl(guideDoc.url)}
+                                    src={getDrivePreviewUrl(currentDoc.url)}
                                     className="w-full h-full border-none"
                                     allow="autoplay"
-                                    title={guideDoc.title}
+                                    title={currentDoc.title}
                                   />
                                 </div>
                               </div>
                             )}
 
-                            {/* Dedicated Source Code & Programs Card */}
-                            {codeDoc && codeDoc.url && (
-                              <div className="p-5 rounded-3xl border border-primary/20 bg-primary/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
-                                <div className="flex items-center gap-3">
-                                  <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-bold text-xl">
-                                    💻
-                                  </div>
-                                  <div>
-                                    <h4 className="font-bold text-base text-foreground">{codeDoc.title}</h4>
-                                    <p className="text-xs text-muted-foreground">Source code sketches, firmware, and program bundles</p>
-                                  </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <Button asChild size="sm" className="rounded-xl font-bold gap-2 shadow-sm">
-                                    <a href={getDriveDownloadUrl(codeDoc.url)} target="_blank" rel="noreferrer" download>
-                                      <Download className="h-3.5 w-3.5" /> Download Source Code
-                                    </a>
-                                  </Button>
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Additional Documents Grid */}
-                            {otherDocs.length > 0 && (
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                                {otherDocs.map((doc, idx) => (
-                                  <div
-                                    key={idx}
-                                    className="flex items-center justify-between gap-3 p-4 rounded-2xl border border-border bg-card hover:bg-muted/40 transition-all group shadow-sm hover:shadow"
-                                  >
-                                    <div className="flex items-center gap-3 min-w-0">
-                                      <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-105 transition-transform shrink-0">
-                                        <FileText className="h-5 w-5" />
+                            {/* Quick Cards Grid for all Documents */}
+                            {validDocs.length > 1 && (
+                              <div className="space-y-2 pt-2">
+                                <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                                  All Attached Files ({validDocs.length})
+                                </h4>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                  {validDocs.map((doc, idx) => {
+                                    const isCode = doc.type === 'code' || doc.title?.toLowerCase().includes('code');
+                                    const isSelected = safeDocIndex === idx;
+                                    return (
+                                      <div
+                                        key={idx}
+                                        onClick={() => setActiveDocIndex(idx)}
+                                        className={`flex items-center justify-between gap-3 p-3.5 rounded-2xl border transition-all cursor-pointer shadow-sm hover:shadow ${
+                                          isSelected
+                                            ? 'border-primary bg-primary/5 ring-1 ring-primary/20'
+                                            : 'border-border bg-card hover:bg-muted/40'
+                                        }`}
+                                      >
+                                        <div className="flex items-center gap-3 min-w-0">
+                                          <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0 text-sm">
+                                            {isCode ? '💻' : <FileText className="h-4 w-4" />}
+                                          </div>
+                                          <div className="min-w-0 flex-1">
+                                            <h4 className="font-bold text-xs text-foreground truncate">
+                                              {doc.title}
+                                            </h4>
+                                            <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mt-0.5">
+                                              {doc.type || 'Document'} {isSelected && '• Currently Previewing'}
+                                            </p>
+                                          </div>
+                                        </div>
+                                        <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                                          <Button asChild size="icon-sm" variant="ghost" className="h-7 w-7 rounded-lg text-muted-foreground hover:text-primary" title="Download">
+                                            <a href={getDriveDownloadUrl(doc.url)} target="_blank" rel="noreferrer" download>
+                                              <Download className="h-3.5 w-3.5" />
+                                            </a>
+                                          </Button>
+                                          <Button asChild size="icon-sm" variant="ghost" className="h-7 w-7 rounded-lg text-muted-foreground hover:text-primary" title="Open in New Tab">
+                                            <a href={getDriveViewUrl(doc.url)} target="_blank" rel="noreferrer">
+                                              <ExternalLink className="h-3.5 w-3.5" />
+                                            </a>
+                                          </Button>
+                                        </div>
                                       </div>
-                                      <div className="min-w-0 flex-1">
-                                        <h4 className="font-bold text-sm text-foreground truncate group-hover:text-primary transition-colors">
-                                          {doc.title}
-                                        </h4>
-                                        <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mt-0.5">
-                                          {doc.type || 'Document'}
-                                        </p>
-                                      </div>
-                                    </div>
-                                    <div className="flex items-center gap-1.5 shrink-0">
-                                      <Button asChild size="icon-sm" variant="ghost" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-primary" title="Download">
-                                        <a href={getDriveDownloadUrl(doc.url)} target="_blank" rel="noreferrer" download>
-                                          <Download className="h-4 w-4" />
-                                        </a>
-                                      </Button>
-                                      <Button asChild size="icon-sm" variant="ghost" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-primary" title="Open in New Tab">
-                                        <a href={doc.url} target="_blank" rel="noreferrer">
-                                          <ExternalLink className="h-4 w-4" />
-                                        </a>
-                                      </Button>
-                                    </div>
-                                  </div>
-                                ))}
+                                    );
+                                  })}
+                                </div>
                               </div>
                             )}
                           </div>
-                        )
+                        );
                       })()}
                     </div>
                   ) : (

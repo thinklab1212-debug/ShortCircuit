@@ -88,14 +88,17 @@ const emptyForm: FormState = {
   displayOrder: 0,
 }
 
-// Helper to convert GDrive sharing URL to Direct Image stream URL
+// Helper to convert GDrive sharing/download URL to standard view sharing URL
 function cleanDriveUrl(url: string): string {
   if (!url) return ''
-  const match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || url.match(/[?&]id=([a-zA-Z0-9_-]+)/)
+  const decoded = url.replace(/&amp;/g, '&').trim()
+  const match = decoded.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) ||
+                decoded.match(/[?&]id=([a-zA-Z0-9_-]+)/) ||
+                decoded.match(/\/d\/([a-zA-Z0-9_-]+)/)
   if (match && match[1]) {
-    return `https://drive.google.com/uc?export=view&id=${match[1]}`
+    return `https://drive.google.com/file/d/${match[1]}/view?usp=sharing`
   }
-  return url
+  return decoded
 }
 
 export default function ProjectKitsAdminPage() {
@@ -413,7 +416,7 @@ export default function ProjectKitsAdminPage() {
           ? [
               {
                 title: `${form.name.trim()} Source Code & Programs`,
-                url: form.codeUrl.trim(),
+                url: cleanDriveUrl(form.codeUrl.trim()),
                 type: 'code',
               },
             ]
