@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useParams, Link } from 'react-router'
+import { useParams, Link, useNavigate } from 'react-router'
 import {
   Clock,
   Layers,
@@ -14,7 +14,8 @@ import {
   BookOpen,
   Zap,
   Info,
-  Lock
+  Lock,
+  Download
 } from 'lucide-react'
 import { useProjectKit, useProjectBom, useAddKitToCart } from '@/hooks/useProjectKits'
 import { useDocumentMetadata } from '@/hooks/useDocumentMetadata'
@@ -78,6 +79,16 @@ function getDrivePreviewUrl(url: string): string {
   const match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || url.match(/[?&]id=([a-zA-Z0-9_-]+)/)
   if (match && match[1]) {
     return `https://drive.google.com/file/d/${match[1]}/preview`
+  }
+  return url
+}
+
+// Helper to parse GDrive file sharing URL to Google's direct file download stream
+function getDriveDownloadUrl(url: string): string {
+  if (!url) return ''
+  const match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || url.match(/[?&]id=([a-zA-Z0-9_-]+)/)
+  if (match && match[1]) {
+    return `https://drive.google.com/uc?export=download&id=${match[1]}`
   }
   return url
 }
@@ -174,6 +185,7 @@ function ZoomableWiring({ imageUrl, title, description }: ZoomableWiringProps) {
 // ─── Main Detail Page ────────────────────────────────────────────────────────
 export default function ProjectKitDetailPage() {
   const { slug } = useParams<{ slug: string }>()
+  const navigate = useNavigate()
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
 
   // Tab navigation state
@@ -195,11 +207,18 @@ export default function ProjectKitDetailPage() {
 
   const handleAddFullKit = () => {
     if (!isAuthenticated) {
-      toast.error('Please login to add components to cart.')
+      toast.error('Please login to order this project kit.')
+      navigate('/login?redirect=' + encodeURIComponent(window.location.pathname))
       return
     }
     if (project) {
-      addToCartMutation.mutate(project._id)
+      addToCartMutation.mutate(project._id, {
+        onSuccess: (result) => {
+          if (result && result.added && result.added.length > 0) {
+            navigate('/checkout')
+          }
+        },
+      })
     }
   }
 
@@ -499,13 +518,13 @@ export default function ProjectKitDetailPage() {
                         <h4 className="font-bold text-base text-foreground">Project Guide & Source Code Locked</h4>
                         <p className="text-xs text-muted-foreground leading-relaxed">
                           {(project as any).access?.reason === 'not_delivered'
-                            ? 'Your kit order is currently being processed or shipped! Complete PDF guide and source code access will unlock automatically upon delivery.'
+                            ? 'Your kit order is currently being processed or shipped! Complete PDF guide, schematics, and source code will unlock automatically upon delivery.'
                             : 'Access to the complete step-by-step PDF guide, schematics, and source code automatically unlocks when your order for this kit is delivered.'}
                         </p>
                       </div>
                       <div className="pt-2 flex justify-center gap-3">
-                        <Button onClick={handleAddFullKit} disabled={addToCartMutation.isPending} className="rounded-xl font-bold gap-2 text-xs">
-                          <ShoppingBag className="h-4 w-4" /> Add Kit to Cart to Order
+                        <Button onClick={handleAddFullKit} disabled={addToCartMutation.isPending} className="rounded-xl font-bold gap-2 text-xs shadow">
+                          <ShoppingBag className="h-4 w-4" /> Buy Full Kit & Checkout to Unlock
                         </Button>
                       </div>
                     </div>
@@ -521,23 +540,36 @@ export default function ProjectKitDetailPage() {
                             {/* Embedded PDF Guide Viewer */}
                             {guideDoc && guideDoc.url && (
                               <div className="space-y-4">
-                                <div className="flex justify-between items-center bg-muted/30 px-4 py-3 rounded-2xl border border-border">
+                                <div className="flex flex-wrap justify-between items-center bg-muted/30 px-4 py-3 rounded-2xl border border-border gap-2">
                                   <span className="text-xs font-semibold text-foreground flex items-center gap-2">
                                     <FileText className="h-4 w-4 text-primary" />
                                     {guideDoc.title}
                                   </span>
-                                  <Button asChild size="sm" variant="outline" className="rounded-xl h-8 text-[11px] font-bold">
-                                    <a
-                                      href={guideDoc.url}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                      className="flex items-center gap-1"
-                                    >
-                                      Open in New Tab <ExternalLink className="h-3 w-3" />
-                                    </a>
-                                  </Button>
+                                  <div className="flex items-center gap-2">
+                                    <Button asChild size="sm" variant="default" className="rounded-xl h-8 text-[11px] font-bold gap-1.5 shadow-sm">
+                                      <a
+                                        href={getDriveDownloadUrl(guideDoc.url)}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        download
+                                        className="flex items-center gap-1.5"
+                                      >
+                                        <Download className="h-3.5 w-3.5" /> Download PDF
+                                      </a>
+                                    </Button>
+                                    <Button asChild size="sm" variant="outline" className="rounded-xl h-8 text-[11px] font-bold gap-1">
+                                      <a
+                                        href={guideDoc.url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="flex items-center gap-1"
+                                      >
+                                        Open in New Tab <ExternalLink className="h-3 w-3" />
+                                      </a>
+                                    </Button>
+                                  </div>
                                 </div>
-                                <div className="w-full h-[600px] border border-border rounded-3xl overflow-hidden bg-slate-900/5 shadow-inner relative">
+                                <div className="w-full h-[650px] border border-border rounded-3xl overflow-hidden bg-slate-900/5 shadow-inner relative">
                                   <iframe
                                     src={getDrivePreviewUrl(guideDoc.url)}
                                     className="w-full h-full border-none"
@@ -552,7 +584,7 @@ export default function ProjectKitDetailPage() {
                             {codeDoc && codeDoc.url && (
                               <div className="p-5 rounded-3xl border border-primary/20 bg-primary/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
                                 <div className="flex items-center gap-3">
-                                  <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-bold">
+                                  <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-bold text-xl">
                                     💻
                                   </div>
                                   <div>
@@ -560,11 +592,13 @@ export default function ProjectKitDetailPage() {
                                     <p className="text-xs text-muted-foreground">Source code sketches, firmware, and program bundles</p>
                                   </div>
                                 </div>
-                                <Button asChild size="sm" className="rounded-xl font-bold gap-2">
-                                  <a href={codeDoc.url} target="_blank" rel="noreferrer">
-                                    Download Source Code <ExternalLink className="h-3.5 w-3.5" />
-                                  </a>
-                                </Button>
+                                <div className="flex items-center gap-2">
+                                  <Button asChild size="sm" className="rounded-xl font-bold gap-2 shadow-sm">
+                                    <a href={getDriveDownloadUrl(codeDoc.url)} target="_blank" rel="noreferrer" download>
+                                      <Download className="h-3.5 w-3.5" /> Download Source Code
+                                    </a>
+                                  </Button>
+                                </div>
                               </div>
                             )}
 
@@ -572,26 +606,36 @@ export default function ProjectKitDetailPage() {
                             {otherDocs.length > 0 && (
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                                 {otherDocs.map((doc, idx) => (
-                                  <a
+                                  <div
                                     key={idx}
-                                    href={doc.url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="flex items-center gap-4 p-4 rounded-2xl border border-border hover:border-primary/40 bg-card hover:bg-muted/40 transition-all group shadow-sm hover:shadow"
+                                    className="flex items-center justify-between gap-3 p-4 rounded-2xl border border-border bg-card hover:bg-muted/40 transition-all group shadow-sm hover:shadow"
                                   >
-                                    <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-105 transition-transform">
-                                      <FileText className="h-5 w-5" />
+                                    <div className="flex items-center gap-3 min-w-0">
+                                      <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-105 transition-transform shrink-0">
+                                        <FileText className="h-5 w-5" />
+                                      </div>
+                                      <div className="min-w-0 flex-1">
+                                        <h4 className="font-bold text-sm text-foreground truncate group-hover:text-primary transition-colors">
+                                          {doc.title}
+                                        </h4>
+                                        <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mt-0.5">
+                                          {doc.type || 'Document'}
+                                        </p>
+                                      </div>
                                     </div>
-                                    <div className="min-w-0 flex-1">
-                                      <h4 className="font-bold text-sm text-foreground truncate group-hover:text-primary transition-colors">
-                                        {doc.title}
-                                      </h4>
-                                      <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mt-0.5">
-                                        {doc.type || 'Document'}
-                                      </p>
+                                    <div className="flex items-center gap-1.5 shrink-0">
+                                      <Button asChild size="icon-sm" variant="ghost" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-primary" title="Download">
+                                        <a href={getDriveDownloadUrl(doc.url)} target="_blank" rel="noreferrer" download>
+                                          <Download className="h-4 w-4" />
+                                        </a>
+                                      </Button>
+                                      <Button asChild size="icon-sm" variant="ghost" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-primary" title="Open in New Tab">
+                                        <a href={doc.url} target="_blank" rel="noreferrer">
+                                          <ExternalLink className="h-4 w-4" />
+                                        </a>
+                                      </Button>
                                     </div>
-                                    <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                                  </a>
+                                  </div>
                                 ))}
                               </div>
                             )}
@@ -677,7 +721,7 @@ export default function ProjectKitDetailPage() {
                 loadingText="Processing Kit..."
               >
                 <ShoppingBag className="h-4 w-4" />
-                Add Full Kit to Cart
+                Buy Full Kit & Checkout
               </Button>
 
               {!isAuthenticated && (
