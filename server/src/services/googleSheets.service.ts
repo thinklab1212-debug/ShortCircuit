@@ -91,11 +91,11 @@ export class GoogleSheetsService {
       this.doc = new GoogleSpreadsheet(env.GOOGLE_SHEETS_ID!, auth);
       await this.doc.loadInfo();
 
-      // Ensure all tabs exist with headers
-      this.ordersSheet = await this.ensureSheet('Orders', ORDER_HEADERS);
-      this.eventOrdersSheet = await this.ensureSheet('Event Kit Orders', EVENT_ORDER_HEADERS);
-      this.cancellationsSheet = await this.ensureSheet('Cancellation Requests', CANCELLATION_HEADERS);
-      this.newUsersSheet = await this.ensureSheet('New Users', NEW_USER_HEADERS);
+      // Ensure all tabs exist with headers and styling
+      this.ordersSheet = await this.ensureSheet('Orders', ORDER_HEADERS, { red: 0.2, green: 0.66, blue: 0.33 });           // Green
+      this.eventOrdersSheet = await this.ensureSheet('Event Kit Orders', EVENT_ORDER_HEADERS, { red: 0.25, green: 0.52, blue: 0.96 }); // Blue
+      this.cancellationsSheet = await this.ensureSheet('Cancellation Requests', CANCELLATION_HEADERS, { red: 0.92, green: 0.26, blue: 0.21 }); // Red
+      this.newUsersSheet = await this.ensureSheet('New Users', NEW_USER_HEADERS, { red: 0.61, green: 0.35, blue: 0.71 });  // Purple
 
       logger.info(`📊 Google Sheets sync connected: "${this.doc.title}" (${Object.keys(this.doc.sheetsByTitle).length} tabs)`);
     } catch (error) {
@@ -106,21 +106,120 @@ export class GoogleSheetsService {
 
   /**
    * Creates a sheet tab if it doesn't exist, or loads it if it does.
-   * Sets header row on new sheets.
+   * Sets header row on new sheets and applies professional formatting.
    */
-  private static async ensureSheet(title: string, headers: string[]): Promise<GoogleSpreadsheetWorksheet | null> {
+  private static async ensureSheet(
+    title: string,
+    headers: string[],
+    tabColor?: { red: number; green: number; blue: number }
+  ): Promise<GoogleSpreadsheetWorksheet | null> {
     if (!this.doc) return null;
 
     try {
       let sheet = this.doc.sheetsByTitle[title];
+      const isNew = !sheet;
+
       if (!sheet) {
         sheet = await this.doc.addSheet({ title, headerValues: headers });
         logger.info(`  ✅ Created sheet tab: "${title}"`);
       }
+
+      // Apply formatting (on new sheets or first run)
+      if (isNew) {
+        await this.formatSheet(sheet, headers.length, tabColor);
+      }
+
       return sheet;
     } catch (error) {
       logger.warn(`  ⚠️  Failed to ensure sheet tab "${title}":`, error);
       return null;
+    }
+  }
+
+  /**
+   * Applies professional formatting to a sheet tab:
+   * - Bold white header text on dark background
+   * - Frozen header row
+   * - Tab color coding
+   * - Column widths
+   */
+  private static async formatSheet(
+    sheet: GoogleSpreadsheetWorksheet,
+    columnCount: number,
+    tabColor?: { red: number; green: number; blue: number }
+  ): Promise<void> {
+    try {
+      // Freeze header row & set tab color
+      await sheet.updateProperties({
+        gridProperties: { frozenRowCount: 1 } as any,
+        ...(tabColor ? { tabColor } : {}),
+      });
+
+      // Load header cells and apply styling
+      await sheet.loadCells({ startRowIndex: 0, endRowIndex: 1, startColumnIndex: 0, endColumnIndex: columnCount });
+
+      for (let col = 0; col < columnCount; col++) {
+        const cell = sheet.getCell(0, col);
+        // Bold white text
+        cell.textFormat = { bold: true, foregroundColorStyle: { rgbColor: { red: 1, green: 1, blue: 1 } }, fontSize: 10 };
+        // Dark header background
+        cell.backgroundColor = { red: 0.16, green: 0.16, blue: 0.2, alpha: 1 };
+        // Center alignment
+        cell.horizontalAlignment = 'CENTER';
+      }
+
+      await sheet.saveUpdatedCells();
+
+      // Set reasonable column widths using batch update
+      const sheetId = sheet.sheetId;
+      const columnWidths = [
+        140, // Order ID / Date
+        100, // Date / Name
+        160, // Customer Name
+        120, // Phone
+        200, // Email
+        120, // City
+        100, // State / other
+        100, // Pincode / other
+        250, // Items
+        60,  // Qty
+        100, // Subtotal
+        80,  // Tax
+        80,  // Shipping
+        80,  // Discount
+        100, // Coupon
+        100, // Total
+        120, // Payment Method
+        180, // Razorpay ID
+        100, // Status
+        250, // Admin Link
+      ];
+
+      const requests = [];
+      for (let i = 0; i < Math.min(columnCount, columnWidths.length); i++) {
+        requests.push({
+          updateDimensionProperties: {
+            range: {
+              sheetId,
+              dimension: 'COLUMNS',
+              startIndex: i,
+              endIndex: i + 1,
+            },
+            properties: { pixelSize: columnWidths[i] },
+            fields: 'pixelSize',
+          },
+        });
+      }
+
+      if (requests.length > 0) {
+        await (this.doc as any).sheetsApi.spreadsheets.batchUpdate({
+          spreadsheetId: this.doc!.spreadsheetId,
+          requestBody: { requests },
+        });
+      }
+    } catch (error) {
+      // Formatting is non-critical — log and continue
+      logger.debug(`  ℹ️  Could not apply formatting to "${sheet.title}":`, error);
     }
   }
 
