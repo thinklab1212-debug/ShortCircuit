@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router'
 import { motion } from 'framer-motion'
-import { Minus, Plus, Trash2, ShoppingCart, ShoppingBag, LogIn, ArrowRight } from 'lucide-react'
+import { Minus, Plus, Trash2, ShoppingCart, ShoppingBag, LogIn, ArrowRight, Truck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import {
@@ -244,6 +244,41 @@ export default function CartPage() {
           <div className="lg:col-span-1">
             <div className="sticky top-24 rounded-2xl border border-border bg-card p-6">
               <h2 className="text-lg font-semibold text-foreground">Order Summary</h2>
+
+              {/* Free Delivery Progress Nudge */}
+              {(() => {
+                const freeThreshold = 1499
+                const netSubtotal = itemsPrice - discountAmount
+                const amountAway = Math.max(0, freeThreshold - netSubtotal)
+                const progressPercent = Math.min(100, Math.round((netSubtotal / freeThreshold) * 100))
+
+                return (
+                  <div className="mt-4 rounded-2xl bg-muted/40 p-3.5 border border-border/80 text-xs">
+                    {amountAway > 0 ? (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-[11px] font-semibold text-foreground">
+                          <span className="flex items-center gap-1.5">
+                            <Truck className="h-3.5 w-3.5 text-primary" />
+                            Add <strong className="text-primary font-bold">{formatPrice(amountAway)}</strong> for FREE Delivery
+                          </span>
+                          <span className="text-muted-foreground">{progressPercent}%</span>
+                        </div>
+                        <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                          <div
+                            className="h-full bg-primary transition-all duration-300 rounded-full"
+                            style={{ width: `${progressPercent}%` }}
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 text-success-600 dark:text-success-400 font-semibold text-[11px]">
+                        <Truck className="h-4 w-4 shrink-0" />
+                        <span>🎉 You unlocked <strong>FREE Delivery</strong>!</span>
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
 
               <div className="mt-4 space-y-3 text-sm">
                 <div className="flex items-center justify-between">

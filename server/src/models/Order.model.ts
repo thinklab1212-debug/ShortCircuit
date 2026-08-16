@@ -151,7 +151,7 @@ export interface IOrder extends Document {
 
   // Pricing breakdown
   itemsPrice: number;                 // Sum of (item.price * item.quantity)
-  shippingPrice: number;              // ₹0 above ₹999, else ₹49
+  shippingPrice: number;              // ₹0 above ₹1499, else ₹75
   taxPrice: number;                   // GST 18%
   discountAmount: number;             // Coupon discount
   totalPrice: number;                 // Final payable

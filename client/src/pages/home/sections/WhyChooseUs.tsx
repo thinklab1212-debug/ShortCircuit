@@ -8,7 +8,7 @@ const features = [
   {
     icon: Truck,
     title: 'Fast Delivery',
-    description: 'Free shipping on orders above ₹999. Same-day delivery in select cities.',
+    description: 'Free shipping on orders above ₹1,499. Fast dispatch across India.',
     color: 'text-primary bg-primary/10',
   },
   {

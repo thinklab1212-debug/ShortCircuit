@@ -281,9 +281,9 @@ export class CartService {
     // Formula for inclusive tax: Tax = TotalPrice - (TotalPrice / (1 + TaxRate))
     const taxPrice = Math.round((itemsPrice - discountAmount) - ((itemsPrice - discountAmount) / 1.18));
 
-    // Calculate shipping (Free above ₹999, else ₹49)
+    // Calculate shipping (Free above ₹1499, else ₹75)
     const netSubtotal = itemsPrice - discountAmount;
-    const shippingPrice = netSubtotal >= 999 ? 0 : 49;
+    const shippingPrice = netSubtotal >= 1499 ? 0 : 75;
 
     // Final total
     const totalPrice = netSubtotal + shippingPrice;
