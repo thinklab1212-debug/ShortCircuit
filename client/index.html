@@ -5,12 +5,75 @@
     <link rel="icon" type="image/png" href="/logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="google-site-verification" content="google2ea1f9ddc60812e0" />
-    <meta name="description" content="Short Circuit — Shop Arduino, ESP32, Raspberry Pi, sensors, robotics kits, drone electronics and engineering tools at student-friendly prices." />
+    <meta name="description" content="Short Circuit — Shop Arduino, ESP32, Raspberry Pi, sensors, robotics kits, drone electronics and engineering tools at student-friendly prices in India." />
+    <meta name="keywords" content="electronics components India, Arduino, Raspberry Pi, ESP32, sensors, robotics kits, drone components, motor drivers, engineering student projects" />
     <meta name="theme-color" content="#7c3aed" />
+
+    <!-- Canonical Link -->
+    <link rel="canonical" href="https://www.shortcircuit.co.in/" />
+
+    <!-- OpenGraph / Social Media -->
+    <meta property="og:site_name" content="Short Circuit" />
+    <meta property="og:title" content="Short Circuit — Electronics for Makers & Engineers" />
+    <meta property="og:description" content="Shop Arduino, ESP32, Raspberry Pi, sensors, robotics kits, drone electronics, and engineering tools at student-friendly prices in India." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://www.shortcircuit.co.in/" />
+    <meta property="og:image" content="https://www.shortcircuit.co.in/logo.png" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Short Circuit — Electronics for Makers & Engineers" />
+    <meta name="twitter:description" content="Shop Arduino, ESP32, Raspberry Pi, sensors, robotics kits, drone electronics, and engineering tools at student-friendly prices in India." />
+    <meta name="twitter:image" content="https://www.shortcircuit.co.in/logo.png" />
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <title>Short Circuit — Electronics for Makers & Engineers</title>
+
+    <!-- Foundational Schema.org JSON-LD Structured Data -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://www.shortcircuit.co.in/#organization",
+            "name": "Short Circuit",
+            "url": "https://www.shortcircuit.co.in",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://www.shortcircuit.co.in/logo.png"
+            },
+            "contactPoint": {
+              "@type": "ContactPoint",
+              "telephone": "+91-9999999999",
+              "contactType": "customer service",
+              "areaServed": "IN",
+              "availableLanguage": ["English", "Hindi"]
+            }
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://www.shortcircuit.co.in/#website",
+            "url": "https://www.shortcircuit.co.in",
+            "name": "Short Circuit",
+            "description": "Electronics Components, Arduino, Sensors & Robotics Kits in India",
+            "publisher": {
+              "@id": "https://www.shortcircuit.co.in/#organization"
+            },
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": {
+                "@type": "EntryPoint",
+                "urlTemplate": "https://www.shortcircuit.co.in/shop?search={search_term_string}"
+              },
+              "query-input": "required name=search_term_string"
+            }
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <div id="root">
@@ -22,9 +85,11 @@
           <a href="/projects">Smart Project Builder Kits</a>
           <a href="/categories">Component Categories</a>
           <a href="/brands">Brands & Manufacturers</a>
+          <a href="/faq">Frequently Asked Questions</a>
         </nav>
       </main>
     </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
+

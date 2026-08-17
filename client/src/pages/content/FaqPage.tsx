@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown, HelpCircle } from 'lucide-react'
 import { Link } from 'react-router'
 import { Breadcrumb } from '@/components/ui/breadcrumb'
+import { useDocumentMetadata } from '@/hooks'
 import { cn } from '@/lib/utils'
 import { fadeInUp } from '@/config/animations'
 
@@ -89,6 +90,55 @@ function FaqItem({ faq, isOpen, onToggle }: { faq: Faq; isOpen: boolean; onToggl
 
 export default function FaqPage() {
   const [openIndex, setOpenIndex] = useState<number | null>(0)
+
+  // Build FAQPage and BreadcrumbList JSON-LD
+  const jsonLdData = useMemo(() => {
+    return [
+      {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: FAQS.map((f) => ({
+          '@type': 'Question',
+          name: f.question,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: f.answer,
+          },
+        })),
+      },
+      {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'Home',
+            item: 'https://www.shortcircuit.co.in',
+          },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: 'FAQ',
+            item: 'https://www.shortcircuit.co.in/faq',
+          },
+        ],
+      },
+    ]
+  }, [])
+
+  // Dynamic document metadata for SEO
+  useDocumentMetadata(
+    'Frequently Asked Questions & Support',
+    'Get quick answers to questions about shipping, delivery timelines, product warranty, cash on delivery, and bulk institutional orders at Short Circuit.',
+    {
+      keywords: ['Short Circuit FAQ', 'shipping delivery India', 'electronics return policy', 'bulk electronics orders'],
+      canonical: 'https://www.shortcircuit.co.in/faq',
+      type: 'website',
+      jsonLd: jsonLdData,
+    }
+  )
+
 
   return (
     <div className="container py-6 lg:py-8">

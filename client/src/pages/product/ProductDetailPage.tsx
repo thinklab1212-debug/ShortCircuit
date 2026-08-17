@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { useParams, Link, useNavigate, useLocation } from 'react-router'
 import { motion } from 'framer-motion'
 import { ArrowLeft, RefreshCw, PackageX } from 'lucide-react'
@@ -58,11 +59,116 @@ export default function ProductDetailPage() {
   const { slug } = useParams<{ slug: string }>()
   const { data: product, isLoading, isError, refetch } = useProductBySlug(slug || '')
 
+  // Build JSON-LD structured data for Product & BreadcrumbList
+  const jsonLdData = useMemo(() => {
+    if (!product) return undefined
+
+    const categoryObj = typeof product.category === 'object' ? product.category : null
+    const brandObj = typeof product.brand === 'object' ? product.brand : null
+
+    const breadcrumbList = [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: 'https://www.shortcircuit.co.in',
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Shop',
+        item: 'https://www.shortcircuit.co.in/shop',
+      },
+    ]
+
+    if (categoryObj) {
+      breadcrumbList.push({
+        '@type': 'ListItem',
+        position: 3,
+        name: categoryObj.name,
+        item: `https://www.shortcircuit.co.in/category/${categoryObj.slug}`,
+      })
+      breadcrumbList.push({
+        '@type': 'ListItem',
+        position: 4,
+        name: product.name,
+        item: `https://www.shortcircuit.co.in/product/${product.slug}`,
+      })
+    } else {
+      breadcrumbList.push({
+        '@type': 'ListItem',
+        position: 3,
+        name: product.name,
+        item: `https://www.shortcircuit.co.in/product/${product.slug}`,
+      })
+    }
+
+    const schema: Record<string, unknown>[] = [
+      {
+        '@context': 'https://schema.org',
+        '@type': 'Product',
+        '@id': `https://www.shortcircuit.co.in/product/${product.slug}#product`,
+        name: product.name,
+        description: product.shortDescription || product.description,
+        image: product.images?.map((img) => img.url) || [],
+        sku: product.sku,
+        brand: {
+          '@type': 'Brand',
+          name: brandObj?.name || 'Short Circuit',
+        },
+        category: categoryObj?.name || 'Electronics',
+        offers: {
+          '@type': 'Offer',
+          url: `https://www.shortcircuit.co.in/product/${product.slug}`,
+          priceCurrency: 'INR',
+          price: product.salePrice || product.price,
+          availability: product.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+          itemCondition: 'https://schema.org/NewCondition',
+          seller: {
+            '@type': 'Organization',
+            name: 'Short Circuit',
+          },
+        },
+        ...(product.ratingsCount > 0 && {
+          aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: product.ratingsAverage || 5,
+            reviewCount: product.ratingsCount,
+            bestRating: 5,
+            worstRating: 1,
+          },
+        }),
+      },
+      {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: breadcrumbList,
+      },
+    ]
+
+    return schema
+  }, [product])
+
+
   // Dynamic document metadata for SEO
   useDocumentMetadata(
-    product?.name || '',
-    product?.shortDescription || product?.description?.substring(0, 160)
+    product ? `${product.name} — Buy Online at Best Price` : '',
+    product?.shortDescription || product?.description?.substring(0, 160) || 'Buy electronic components and robotics parts online at student-friendly prices in India.',
+    {
+      keywords: [
+        product?.name,
+        product?.sku,
+        typeof product?.category === 'object' ? product?.category?.name : '',
+        'buy electronic components online India',
+        'sensors Arduino robotics',
+      ].filter(Boolean) as string[],
+      image: product?.images?.find((img) => img.isPrimary)?.url || product?.images?.[0]?.url,
+      type: 'product',
+      canonical: product ? `https://www.shortcircuit.co.in/product/${product.slug}` : undefined,
+      jsonLd: jsonLdData,
+    }
   )
+
 
   // Track recently viewed
   useTrackView(product)

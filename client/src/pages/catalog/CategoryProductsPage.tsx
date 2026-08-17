@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useParams } from 'react-router'
 import { motion } from 'framer-motion'
 import { ChevronLeft, ChevronRight, PackageSearch } from 'lucide-react'
@@ -38,12 +38,6 @@ export default function CategoryProductsPage() {
   const { data: categories } = useCategories()
   const category = categories?.find((c) => c.slug === slug)
 
-  // Dynamic document metadata for SEO
-  useDocumentMetadata(
-    category ? `${category.name} Catalog` : 'Category Products',
-    category?.description || 'Browse electronics products in this category at student-friendly prices.'
-  )
-
   const { data, isLoading, isError } = useProducts({
     category: slug,
     page,
@@ -51,12 +45,84 @@ export default function CategoryProductsPage() {
     sort,
   })
 
-  const addToCart = useAddToCart()
-  const toggleWishlist = useToggleWishlist()
-
   const products = data?.data || []
   const pagination = data?.pagination
   const title = category?.name || 'Category'
+
+  // Build JSON-LD structured data for CollectionPage, ItemList, and BreadcrumbList
+  const jsonLdData = useMemo(() => {
+    if (!category) return undefined
+
+    const itemListElements = products.map((p, idx) => ({
+      '@type': 'ListItem',
+      position: idx + 1,
+      name: p.name,
+      url: `https://www.shortcircuit.co.in/product/${p.slug}`,
+      image: p.images?.[0]?.url || '',
+      offers: {
+        '@type': 'Offer',
+        price: p.salePrice || p.price,
+        priceCurrency: 'INR',
+        availability: p.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+      },
+    }))
+
+    return [
+      {
+        '@context': 'https://schema.org',
+        '@type': 'CollectionPage',
+        '@id': `https://www.shortcircuit.co.in/category/${category.slug}#category`,
+        url: `https://www.shortcircuit.co.in/category/${category.slug}`,
+        name: `${category.name} Components & Modules — Short Circuit`,
+        description: category.description || `Browse and buy ${category.name} electronic components in India at student-friendly prices.`,
+        mainEntity: {
+          '@type': 'ItemList',
+          numberOfItems: products.length,
+          itemListElement: itemListElements,
+        },
+      },
+      {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'Home',
+            item: 'https://www.shortcircuit.co.in',
+          },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: 'Categories',
+            item: 'https://www.shortcircuit.co.in/categories',
+          },
+          {
+            '@type': 'ListItem',
+            position: 3,
+            name: category.name,
+            item: `https://www.shortcircuit.co.in/category/${category.slug}`,
+          },
+        ],
+      },
+    ]
+  }, [category, products])
+
+  // Dynamic document metadata for SEO
+  useDocumentMetadata(
+    category ? `Buy ${category.name} Online at Best Prices` : 'Category Catalog',
+    category?.description || `Explore genuine ${category?.name || 'electronics'} components, modules and accessories in India at student-friendly prices.`,
+    {
+      keywords: [category?.name, 'buy electronic components', 'robotics sensors modules India'].filter(Boolean) as string[],
+      type: 'website',
+      canonical: category ? `https://www.shortcircuit.co.in/category/${category.slug}` : undefined,
+      jsonLd: jsonLdData,
+    }
+  )
+
+  const addToCart = useAddToCart()
+  const toggleWishlist = useToggleWishlist()
+
 
   return (
     <div className="container py-6 lg:py-8">

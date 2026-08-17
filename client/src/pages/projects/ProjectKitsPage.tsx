@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router'
 import { Search, Cpu, Clock, Layers, ArrowRight, AlertCircle } from 'lucide-react'
@@ -35,11 +35,6 @@ const APPLICATION_AREAS = [
 const DIFFICULTIES = ['beginner', 'intermediate', 'advanced']
 
 export default function ProjectKitsPage() {
-  useDocumentMetadata(
-    'Smart Project Builder — ElectroKart',
-    'Browse our curated collection of engineering projects. View step-by-step guides, wiring diagrams, complete Bill of Materials (BOM), and buy the full kit with one click.'
-  )
-
   // State filters
   const [search, setSearch] = useState('')
   const [selectedArea, setSelectedArea] = useState<string>('')
@@ -57,6 +52,60 @@ export default function ProjectKitsPage() {
 
   const projects = data?.data || []
   const pagination = data?.pagination
+
+  const jsonLdData = useMemo(() => {
+    return [
+      {
+        '@context': 'https://schema.org',
+        '@type': 'CollectionPage',
+        '@id': 'https://www.shortcircuit.co.in/projects#collection',
+        url: 'https://www.shortcircuit.co.in/projects',
+        name: 'Smart Project Builder — DIY Electronics & Robotics Kits',
+        description: 'Browse curated engineering project kits with step-by-step guides, wiring diagrams, code, and complete bill of materials in India.',
+        mainEntity: {
+          '@type': 'ItemList',
+          numberOfItems: projects.length,
+          itemListElement: projects.map((p, idx) => ({
+            '@type': 'ListItem',
+            position: idx + 1,
+            name: p.name,
+            url: `https://www.shortcircuit.co.in/projects/${p.slug}`,
+            image: p.coverImage?.url || '',
+          })),
+        },
+      },
+      {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'Home',
+            item: 'https://www.shortcircuit.co.in',
+          },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: 'Smart Projects',
+            item: 'https://www.shortcircuit.co.in/projects',
+          },
+        ],
+      },
+    ]
+  }, [projects])
+
+  useDocumentMetadata(
+    'Smart Project Builder — DIY Electronics & Robotics Kits',
+    'Browse our curated collection of engineering projects. View step-by-step guides, wiring diagrams, complete Bill of Materials (BOM), and buy the full kit with one click.',
+    {
+      keywords: ['DIY robotics projects', 'IoT project kits', 'Arduino step by step projects', 'engineering student kits India'],
+      canonical: 'https://www.shortcircuit.co.in/projects',
+      type: 'website',
+      jsonLd: jsonLdData,
+    }
+  )
+
 
   // Helper to calculate total project cost based on populated product prices
   const getBOMTotal = (components: any[]) => {

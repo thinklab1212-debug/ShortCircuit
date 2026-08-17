@@ -1,5 +1,8 @@
+import { useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { PackageSearch, RefreshCw } from 'lucide-react'
+import { PackageSearch, RefreshCw, Cpu, ShieldCheck, Truck } from 'lucide-react'
+
+import { Link } from 'react-router'
 import { Breadcrumb } from '@/components/ui/breadcrumb'
 import { ProductGridCard } from '@/components/ui/product-card'
 import { ProductListCard } from '@/components/ui/product-card'
@@ -59,12 +62,6 @@ function ListSkeleton() {
 export default function ShopPage() {
   const { filters, setFilters, clearFilters, activeFilterCount } = useShopFilters()
 
-  // Dynamic document metadata for SEO
-  useDocumentMetadata(
-    filters.search ? `Search results for "${filters.search}"` : 'Shop Electronics Catalog',
-    'Browse and search our selection of microcontrollers, Arduino boards, Raspberry Pi kits, sensors, motors, and drone robotics parts at student-friendly prices.'
-  )
-
   const { data, isLoading, isError, refetch, isFetching } = useProducts(filters)
   const { data: categories } = useCategories()
   const { data: brands } = useBrands()
@@ -73,6 +70,79 @@ export default function ShopPage() {
   const products = data?.data || []
   const pagination = data?.pagination
   const isListView = filters.view === 'list'
+
+  // Build JSON-LD structured data for CollectionPage, ItemList, and BreadcrumbList
+  const jsonLdData = useMemo(() => {
+    const itemListElements = products.map((p, idx) => ({
+      '@type': 'ListItem',
+      position: idx + 1,
+      name: p.name,
+      url: `https://www.shortcircuit.co.in/product/${p.slug}`,
+      image: p.images?.[0]?.url || '',
+      offers: {
+        '@type': 'Offer',
+        price: p.salePrice || p.price,
+        priceCurrency: 'INR',
+        availability: p.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+      },
+    }))
+
+    return [
+      {
+        '@context': 'https://schema.org',
+        '@type': 'CollectionPage',
+        '@id': 'https://www.shortcircuit.co.in/shop#collection',
+        url: 'https://www.shortcircuit.co.in/shop',
+        name: 'Electronics Components & Robotics Store — Short Circuit',
+        description: 'Browse genuine microcontrollers, Arduino boards, Raspberry Pi, sensors, drone ESCs, motors, and robotics kits in India.',
+        mainEntity: {
+          '@type': 'ItemList',
+          numberOfItems: products.length,
+          itemListElement: itemListElements,
+        },
+      },
+      {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'Home',
+            item: 'https://www.shortcircuit.co.in',
+          },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: 'Shop',
+            item: 'https://www.shortcircuit.co.in/shop',
+          },
+        ],
+      },
+    ]
+  }, [products])
+
+  // Dynamic document metadata for SEO
+  useDocumentMetadata(
+    filters.search
+      ? `Search results for "${filters.search}"`
+      : 'Buy Electronic Components, Sensors, Arduino & Robotics Parts',
+    'Shop genuine electronic components in India at student-friendly prices. Explore Arduino, ESP32, Raspberry Pi, sensors, motors, drone parts, and DIY engineering kits with fast dispatch.',
+    {
+      keywords: [
+        'buy electronic components India',
+        'Arduino online store',
+        'sensors for robotics',
+        'Raspberry Pi boards',
+        'ESP32 microcontroller',
+        'drone motors and ESC',
+        'engineering project components',
+      ],
+      canonical: 'https://www.shortcircuit.co.in/shop',
+      type: 'website',
+      jsonLd: jsonLdData,
+    }
+  )
 
   // Build breadcrumb
   const breadcrumbItems: { label: string; href?: string }[] = [{ label: 'Shop', href: '/shop' }]
@@ -88,10 +158,10 @@ export default function ShopPage() {
       {/* Page Header */}
       <div className="mb-6">
         <h1 className="text-display-xs sm:text-display-sm font-heading text-foreground">
-          {filters.search ? `Results for "${filters.search}"` : 'All Products'}
+          {filters.search ? `Results for "${filters.search}"` : 'Electronics Components Catalog'}
         </h1>
         <p className="mt-1 text-body-md text-muted-foreground">
-          Discover the latest electronics and gadgets
+          Discover high-quality development boards, sensors, actuators, and robotics modules curated for students, engineers, and makers.
         </p>
       </div>
 
@@ -254,6 +324,81 @@ export default function ShopPage() {
           )}
         </div>
       </div>
+
+      {/* ─── Rich SEO Information & Electronics Guide Section ────────────────────── */}
+      <section className="mt-16 pt-12 border-t border-border space-y-10">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="flex gap-4 p-5 rounded-2xl bg-card border border-border">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <Cpu className="h-6 w-6" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-foreground text-sm">100% Tested Hardware</h3>
+              <p className="text-xs text-muted-foreground mt-1">
+                Every sensor, microcontroller, and IC is quality-verified before dispatch for reliable engineering projects.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-4 p-5 rounded-2xl bg-card border border-border">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <Truck className="h-6 w-6" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-foreground text-sm">Fast Dispatch Across India</h3>
+              <p className="text-xs text-muted-foreground mt-1">
+                Same-day or next-day shipping to Delhi, Bengaluru, Mumbai, Pune, Hyderabad, Chennai, and all serviceable pincodes.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-4 p-5 rounded-2xl bg-card border border-border">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <ShieldCheck className="h-6 w-6" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-foreground text-sm">Student & Maker Friendly</h3>
+              <p className="text-xs text-muted-foreground mt-1">
+                Affordable pricing on bulk college workshop orders, DIY kits, and individual lab components.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Informative Catalog Text & Category Links */}
+        <div className="rounded-2xl bg-muted/40 border border-border p-6 sm:p-8 space-y-6 text-sm text-muted-foreground leading-relaxed">
+          <div>
+            <h2 className="text-lg sm:text-xl font-heading font-semibold text-foreground mb-2">
+              Buy Genuine Electronic Components, Microcontrollers & DIY Kits Online in India
+            </h2>
+            <p>
+              Welcome to Short Circuit, your one-stop electronics marketplace designed for students, makers, hobbyists, and professional engineers.
+              Whether you are building your first line-following robot, prototyping an IoT sensor node with ESP32, or engineering an advanced autonomous drone,
+              we supply top-tier hardware from trusted manufacturers at competitive prices.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 pt-2">
+            <div className="space-y-1">
+              <h4 className="font-semibold text-foreground text-xs uppercase tracking-wider">Microcontrollers</h4>
+              <p className="text-xs">Arduino Uno, Mega, Nano, ESP32, ESP8266, Raspberry Pi Pico & development boards.</p>
+            </div>
+            <div className="space-y-1">
+              <h4 className="font-semibold text-foreground text-xs uppercase tracking-wider">Sensors & Modules</h4>
+              <p className="text-xs">Ultrasonic distance, IR, DHT11/22 temperature & humidity, MQ gas sensors, gyroscope & IMUs.</p>
+            </div>
+            <div className="space-y-1">
+              <h4 className="font-semibold text-foreground text-xs uppercase tracking-wider">Motors & Drivers</h4>
+              <p className="text-xs">L298N motor drivers, servo motors (SG90, MG996R), N20 micro gear motors, stepper drivers.</p>
+            </div>
+            <div className="space-y-1">
+              <h4 className="font-semibold text-foreground text-xs uppercase tracking-wider">DIY Project Kits</h4>
+              <p className="text-xs">Explore step-by-step smart kits in our <Link to="/projects" className="text-primary underline">Project Builder</Link> with verified component lists.</p>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   )
 }
+

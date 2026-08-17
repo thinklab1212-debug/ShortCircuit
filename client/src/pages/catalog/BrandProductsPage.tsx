@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useParams } from 'react-router'
 import { motion } from 'framer-motion'
 import { ChevronLeft, ChevronRight, PackageSearch } from 'lucide-react'
@@ -38,12 +38,6 @@ export default function BrandProductsPage() {
   const { data: brands } = useBrands()
   const brand = brands?.find((b) => b.slug === slug)
 
-  // Dynamic document metadata for SEO
-  useDocumentMetadata(
-    brand ? `${brand.name} Electronics` : 'Brand Products',
-    brand?.description || 'Browse electronics components and developer products from this brand at student-friendly prices.'
-  )
-
   const { data, isLoading, isError } = useProducts({
     brand: slug,
     page,
@@ -51,12 +45,84 @@ export default function BrandProductsPage() {
     sort,
   })
 
-  const addToCart = useAddToCart()
-  const toggleWishlist = useToggleWishlist()
-
   const products = data?.data || []
   const pagination = data?.pagination
   const title = brand?.name || 'Brand'
+
+  // Build JSON-LD structured data for CollectionPage, ItemList, and BreadcrumbList
+  const jsonLdData = useMemo(() => {
+    if (!brand) return undefined
+
+    const itemListElements = products.map((p, idx) => ({
+      '@type': 'ListItem',
+      position: idx + 1,
+      name: p.name,
+      url: `https://www.shortcircuit.co.in/product/${p.slug}`,
+      image: p.images?.[0]?.url || '',
+      offers: {
+        '@type': 'Offer',
+        price: p.salePrice || p.price,
+        priceCurrency: 'INR',
+        availability: p.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+      },
+    }))
+
+    return [
+      {
+        '@context': 'https://schema.org',
+        '@type': 'CollectionPage',
+        '@id': `https://www.shortcircuit.co.in/brand/${brand.slug}#brand`,
+        url: `https://www.shortcircuit.co.in/brand/${brand.slug}`,
+        name: `${brand.name} Electronics & Components — Short Circuit`,
+        description: brand.description || `Browse and buy genuine ${brand.name} boards, modules and sensors in India.`,
+        mainEntity: {
+          '@type': 'ItemList',
+          numberOfItems: products.length,
+          itemListElement: itemListElements,
+        },
+      },
+      {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'Home',
+            item: 'https://www.shortcircuit.co.in',
+          },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: 'Brands',
+            item: 'https://www.shortcircuit.co.in/brands',
+          },
+          {
+            '@type': 'ListItem',
+            position: 3,
+            name: brand.name,
+            item: `https://www.shortcircuit.co.in/brand/${brand.slug}`,
+          },
+        ],
+      },
+    ]
+  }, [brand, products])
+
+  // Dynamic document metadata for SEO
+  useDocumentMetadata(
+    brand ? `Buy ${brand.name} Electronics Online` : 'Brand Products',
+    brand?.description || `Explore genuine ${brand?.name || 'electronics'} products and components in India at student-friendly prices.`,
+    {
+      keywords: [brand?.name, 'buy original components', 'electronics manufacturer India'].filter(Boolean) as string[],
+      type: 'website',
+      canonical: brand ? `https://www.shortcircuit.co.in/brand/${brand.slug}` : undefined,
+      jsonLd: jsonLdData,
+    }
+  )
+
+  const addToCart = useAddToCart()
+  const toggleWishlist = useToggleWishlist()
+
 
   return (
     <div className="container py-6 lg:py-8">

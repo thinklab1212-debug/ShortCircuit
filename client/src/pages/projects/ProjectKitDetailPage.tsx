@@ -223,9 +223,72 @@ export default function ProjectKitDetailPage() {
   const addToCartMutation = useAddKitToCart()
 
   // SEO document metadata
+  const jsonLdData = React.useMemo(() => {
+    if (!project) return undefined
+
+    return [
+      {
+        '@context': 'https://schema.org',
+        '@type': 'Product',
+        '@id': `https://www.shortcircuit.co.in/projects/${project.slug}#project`,
+        name: project.name,
+        description: project.shortDescription || project.description,
+        image: project.coverImage?.url ? [project.coverImage.url] : [],
+        category: 'DIY Electronics & Robotics Kit',
+        brand: {
+          '@type': 'Brand',
+          name: 'Short Circuit',
+        },
+        offers: {
+          '@type': 'Offer',
+          url: `https://www.shortcircuit.co.in/projects/${project.slug}`,
+          priceCurrency: 'INR',
+          price: bomData?.summary?.totalPrice || 0,
+          availability: 'https://schema.org/InStock',
+          seller: {
+            '@type': 'Organization',
+            name: 'Short Circuit',
+          },
+        },
+
+      },
+      {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'Home',
+            item: 'https://www.shortcircuit.co.in',
+          },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: 'Smart Projects',
+            item: 'https://www.shortcircuit.co.in/projects',
+          },
+          {
+            '@type': 'ListItem',
+            position: 3,
+            name: project.name,
+            item: `https://www.shortcircuit.co.in/projects/${project.slug}`,
+          },
+        ],
+      },
+    ]
+  }, [project, bomData])
+
   useDocumentMetadata(
-    project ? `${project.name} — ElectroKart` : 'Project Builder details',
-    project?.shortDescription || 'View detailed schematics, instructions and BOM items for this project.'
+    project ? `${project.name} — DIY Robotics & IoT Kit Guide` : 'Project Builder Details',
+    project?.shortDescription || 'View schematics, code, wiring diagrams and complete BOM component kit for this electronics project.',
+    {
+      keywords: [project?.name, 'DIY robotics kit', 'IoT project', 'Arduino schematics', 'electronic kits India'].filter(Boolean) as string[],
+      image: project?.coverImage?.url,
+      type: 'product',
+      canonical: project ? `https://www.shortcircuit.co.in/projects/${project.slug}` : undefined,
+      jsonLd: jsonLdData,
+    }
   )
 
   const handleAddFullKit = () => {
