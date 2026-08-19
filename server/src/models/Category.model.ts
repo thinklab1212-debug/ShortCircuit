@@ -13,6 +13,16 @@ import slugify from 'slugify';
 // Interface
 // ---------------------------------------------------------------------------
 
+export interface IAttributeDefinition {
+  key: string;                       // Internal key: e.g. "resistance", "forwardVoltage", "channels"
+  label: string;                     // Display label: e.g. "Resistance", "Forward Voltage", "Channels"
+  type: 'string' | 'number' | 'boolean' | 'enum';
+  unit?: string;                     // Unit of measure: e.g. "Ω", "V", "A", "cm", "mcd"
+  options?: string[];                // Standard predefined options for 'enum' type
+  isFilterable?: boolean;            // Usable in parametric search filters
+  isRequired?: boolean;              // Recommended for variants in this category
+}
+
 export interface ICategory extends Document {
   _id: mongoose.Types.ObjectId;
   name: string;
@@ -24,6 +34,7 @@ export interface ICategory extends Document {
   };
   icon?: string;                   // Emoji or icon class
   parent?: mongoose.Types.ObjectId; // Self-ref for subcategories
+  attributeDefinitions?: IAttributeDefinition[]; // Category specification templates
   isActive: boolean;
   displayOrder: number;
   productCount: number;            // Denormalized for performance
@@ -46,6 +57,23 @@ export interface ICategoryModel extends Model<ICategory> {
 // ---------------------------------------------------------------------------
 // Schema
 // ---------------------------------------------------------------------------
+
+const attributeDefinitionSchema = new Schema<IAttributeDefinition>(
+  {
+    key: { type: String, required: true, trim: true, lowercase: true },
+    label: { type: String, required: true, trim: true },
+    type: {
+      type: String,
+      enum: ['string', 'number', 'boolean', 'enum'],
+      default: 'string',
+    },
+    unit: { type: String, trim: true },
+    options: { type: [String], default: [] },
+    isFilterable: { type: Boolean, default: true },
+    isRequired: { type: Boolean, default: false },
+  },
+  { _id: false }
+);
 
 const categorySchema = new Schema<ICategory, ICategoryModel>(
   {
@@ -79,6 +107,10 @@ const categorySchema = new Schema<ICategory, ICategoryModel>(
       type: Schema.Types.ObjectId,
       ref: 'Category',
       default: null,
+    },
+    attributeDefinitions: {
+      type: [attributeDefinitionSchema],
+      default: [],
     },
     isActive: {
       type: Boolean,

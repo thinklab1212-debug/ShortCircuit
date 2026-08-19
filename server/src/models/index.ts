@@ -10,6 +10,7 @@ export { default as Token, type IToken, type ITokenModel } from './Token.model.j
 export { default as Category, type ICategory, type ICategoryModel } from './Category.model.js';
 export { default as Brand, type IBrand } from './Brand.model.js';
 export { default as Product, type IProduct, type IProductModel } from './Product.model.js';
+export { default as ProductVariant, type IProductVariant, type IProductVariantModel } from './ProductVariant.model.js';
 export { default as Review, type IReview } from './Review.model.js';
 export { default as Cart, type ICart, type ICartItem } from './Cart.model.js';
 export { default as Wishlist, type IWishlist } from './Wishlist.model.js';

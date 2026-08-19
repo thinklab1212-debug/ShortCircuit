@@ -97,6 +97,12 @@ export interface IProduct extends Document {
   soldCount: number;
 
   // --- Variants ---
+  productMode: 'standalone' | 'family'; // 'standalone' (default for single items) or 'family' (linked ProductVariants)
+  variantCount?: number;               // Summary count of active linked variants
+  priceRange?: {                       // Price range across linked variants
+    min: number;
+    max: number;
+  };
   variants: IProductVariant[];         // e.g., "Color": ["Red", "Blue"]
 
   // --- Technical Specifications ---
@@ -356,6 +362,24 @@ const productSchema = new Schema<IProduct, IProductModel>(
     },
 
     // --- Variants ---
+    productMode: {
+      type: String,
+      enum: {
+        values: ['standalone', 'family'],
+        message: 'productMode must be standalone or family',
+      },
+      default: 'standalone',
+      index: true,
+    },
+    variantCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    priceRange: {
+      min: { type: Number, min: 0 },
+      max: { type: Number, min: 0 },
+    },
     variants: {
       type: [productVariantSchema],
       default: [],
