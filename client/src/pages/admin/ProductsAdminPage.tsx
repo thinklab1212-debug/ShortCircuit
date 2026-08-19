@@ -98,6 +98,7 @@ export default function ProductsAdminPage() {
               <tr className="border-b border-border bg-muted/30 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 <th className="px-4 py-3">Product</th>
                 <th className="px-4 py-3">SKU</th>
+                <th className="px-4 py-3">Type</th>
                 <th className="px-4 py-3">Category</th>
                 <th className="px-4 py-3">Price</th>
                 <th className="px-4 py-3">Stock</th>
@@ -109,7 +110,7 @@ export default function ProductsAdminPage() {
               {isLoading ? (
                 Array.from({ length: LIMIT }).map((_, i) => (
                   <tr key={i}>
-                    {Array.from({ length: 7 }).map((__, j) => (
+                    {Array.from({ length: 8 }).map((__, j) => (
                       <td key={j} className="px-4 py-3">
                         <div className="h-4 animate-pulse rounded bg-muted" />
                       </td>
@@ -118,7 +119,7 @@ export default function ProductsAdminPage() {
                 ))
               ) : products.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-sm text-muted-foreground">
+                  <td colSpan={8} className="px-4 py-12 text-center text-sm text-muted-foreground">
                     No products found
                   </td>
                 </tr>
@@ -142,6 +143,15 @@ export default function ProductsAdminPage() {
                         </div>
                       </td>
                       <td className="px-4 py-3 text-sm text-muted-foreground">{product.sku}</td>
+                      <td className="px-4 py-3 text-sm">
+                        {product.productType === 'family' ? (
+                          <Badge variant="outline" className="border-accent-500/50 bg-accent-500/10 text-accent-400 font-normal">
+                            Family ({product.variantCount ?? 0})
+                          </Badge>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">Standalone</span>
+                        )}
+                      </td>
                       <td className="px-4 py-3 text-sm text-muted-foreground">
                         {categoryName(product.category)}
                       </td>
@@ -183,13 +193,12 @@ export default function ProductsAdminPage() {
                         <div className="flex items-center justify-end gap-1">
                           {product.productType === 'family' && (
                             <Button
-                              variant="ghost"
-                              size="icon-sm"
-                              title="Manage Product Variants"
-                              aria-label="Manage Variants"
+                              variant="outline"
+                              size="sm"
+                              leftIcon={<Layers className="h-3.5 w-3.5" />}
                               onClick={() => navigate(`/admin/products/${product._id}/variants`)}
                             >
-                              <Layers className="h-4 w-4 text-accent-500" />
+                              Variants
                             </Button>
                           )}
                           <Button
