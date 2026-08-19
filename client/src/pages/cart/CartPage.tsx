@@ -72,6 +72,23 @@ function CartLineItem({ item }: { item: CartItem }) {
           {item.product.name}
         </Link>
 
+        {/* Component Variant details */}
+        {item.variantSnapshot?.sku && (
+          <p className="text-xs font-mono font-semibold text-accent-400">
+            SKU: {item.variantSnapshot.sku}
+          </p>
+        )}
+
+        {item.variantSnapshot?.attributes && (
+          <div className="flex flex-wrap gap-1 my-0.5">
+            {Object.entries(item.variantSnapshot.attributes).map(([k, v]) => (
+              <span key={k} className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-foreground">
+                {k}: {v}
+              </span>
+            ))}
+          </div>
+        )}
+
         {item.variant && (
           <p className="text-xs text-muted-foreground">
             {item.variant.name}: <span className="font-medium">{item.variant.value}</span>

@@ -7,6 +7,7 @@
 
 import Cart from '../models/Cart.model.js';
 import Product from '../models/Product.model.js';
+import ProductVariant from '../models/ProductVariant.model.js';
 import Coupon from '../models/Coupon.model.js';
 import { ApiError } from '../utils/index.js';
 
@@ -15,10 +16,15 @@ export class CartService {
    * Retrieves the user's cart (creating it if it does not exist).
    */
   public static async getCart(userId: string): Promise<InstanceType<typeof Cart>> {
-    let cart = await Cart.findOne({ user: userId }).populate({
-      path: 'items.product',
-      select: 'name slug images price salePrice stock isActive variants sku',
-    });
+    let cart = await Cart.findOne({ user: userId })
+      .populate({
+        path: 'items.product',
+        select: 'name slug images price salePrice stock isActive variants sku',
+      })
+      .populate({
+        path: 'items.productVariant',
+        select: 'sku mpn attributes numericalAttributes price salePrice stock isActive',
+      });
 
     if (!cart) {
       cart = await Cart.create({ user: userId, items: [] });
@@ -28,15 +34,26 @@ export class CartService {
   }
 
   /**
-   * Adds a product/variant to the cart. Enforces purchase limits and stock checks.
+   * Adds an item to the user's shopping cart.
    */
   public static async addToCart(
     userId: string,
     productId: string,
     variantDto: { name: string; value: string } | undefined,
-    quantity: number = 1
+    quantity: number = 1,
+    variantId?: string
   ): Promise<InstanceType<typeof Cart>> {
-    // 1. Verify product exists
+    return this.addItem(userId, productId, quantity, variantDto, variantId);
+  }
+
+  public static async addItem(
+    userId: string,
+    productId: string,
+    quantity: number,
+    variantDto?: { name: string; value: string },
+    variantId?: string
+  ): Promise<InstanceType<typeof Cart>> {
+    // 1. Verify master product exists and is active
     const product = await Product.findOne({ _id: productId, isActive: true });
     if (!product) {
       throw ApiError.notFound('Product not found or is currently inactive.');
@@ -45,12 +62,24 @@ export class CartService {
     // 2. Fetch or create cart
     const cart = await this.getCart(userId);
 
-    // 3. Resolve variant modifiers if variant is specified
+    // 3. Resolve variant metrics (ProductVariant vs embedded variant option)
     let selectedVariant: any = undefined;
     let priceModifier = 0;
     let availableStock = product.stock;
+    let linkedVariantDoc: any = undefined;
+    let variantSnapshotData: any = undefined;
 
-    if (variantDto) {
+    if (variantId) {
+      linkedVariantDoc = await ProductVariant.findOne({ _id: variantId, productId, isActive: true });
+      if (!linkedVariantDoc) {
+        throw ApiError.notFound('Selected product variant not found or inactive.');
+      }
+      availableStock = linkedVariantDoc.stock;
+      variantSnapshotData = {
+        sku: linkedVariantDoc.sku,
+        attributes: linkedVariantDoc.attributes,
+      };
+    } else if (variantDto) {
       const dbVariant = product.variants.find(
         (v) => v.name.toLowerCase() === variantDto.name.toLowerCase()
       );
@@ -83,8 +112,12 @@ export class CartService {
     const existingItemIndex = cart.items.findIndex((item) => {
       const productMatch = item.product._id.toString() === productId.toString();
       if (!productMatch) return false;
+
+      if (variantId && item.productVariant) {
+        return item.productVariant.toString() === variantId.toString();
+      }
       
-      if (!variantDto && !item.variant) return true;
+      if (!variantDto && !variantId && !item.variant && !item.productVariant) return true;
       if (variantDto && item.variant) {
         return (
           item.variant.name.toLowerCase() === variantDto.name.toLowerCase() &&
@@ -94,7 +127,9 @@ export class CartService {
       return false;
     });
 
-    const unitPrice = (product.salePrice || product.price) + priceModifier;
+    const unitPrice = linkedVariantDoc
+      ? (linkedVariantDoc.salePrice ?? linkedVariantDoc.price)
+      : (product.salePrice || product.price) + priceModifier;
 
     if (existingItemIndex > -1) {
       const existingItem = cart.items[existingItemIndex];
@@ -116,6 +151,8 @@ export class CartService {
 
       cart.items.push({
         product: productId as any,
+        productVariant: variantId as any,
+        variantSnapshot: variantSnapshotData,
         variant: selectedVariant,
         quantity,
         price: unitPrice,

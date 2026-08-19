@@ -1,4 +1,4 @@
-import { useMemo, useRef, useCallback } from 'react'
+import { useMemo, useRef, useCallback, useState } from 'react'
 import { useParams, Link, useNavigate, useLocation } from 'react-router'
 import { motion } from 'framer-motion'
 import { ArrowLeft, RefreshCw, PackageX } from 'lucide-react'
@@ -8,10 +8,12 @@ import { useProductBySlug } from '@/hooks/useProductDetail'
 import { useTrackView } from '@/hooks/useRecentlyViewed'
 import { useAddToCart, useToggleWishlist, useDocumentMetadata } from '@/hooks'
 import { useAuthStore, useWishlistStore } from '@/store'
+import type { LinkedProductVariant } from '@/types'
 import {
   ProductGallery,
   ProductInfo,
   AddToCart,
+  ProductVariantSelector,
   ProductTabs,
   ReviewsSection,
   RelatedProducts,
@@ -202,14 +204,18 @@ export default function ProductDetailPage() {
     return true
   }
 
-  const handleAddToCart = (productId: string, quantity: number) => {
+  const [activeVariant, setActiveVariant] = useState<LinkedProductVariant | null>(null)
+
+  const handleAddToCart = (productId: string, quantity: number, variantIdOverride?: string) => {
     if (!requireAuth()) return
-    addToCart.mutate({ productId, quantity })
+    const targetVariantId = variantIdOverride ?? activeVariant?._id
+    addToCart.mutate({ productId, quantity, variantId: targetVariantId })
   }
-  const handleBuyNow = (productId: string, quantity: number) => {
+  const handleBuyNow = (productId: string, quantity: number, variantIdOverride?: string) => {
     if (!requireAuth()) return
+    const targetVariantId = variantIdOverride ?? activeVariant?._id
     addToCart.mutate(
-      { productId, quantity },
+      { productId, quantity, variantId: targetVariantId },
       { onSuccess: () => navigate('/checkout') }
     )
   }
@@ -330,7 +336,20 @@ export default function ProductDetailPage() {
 
           {/* Right: Info + Actions */}
           <motion.div variants={fadeInUp} className="space-y-8">
-            <ProductInfo product={product} onScrollToReviews={scrollToReviews} />
+            <ProductInfo
+              product={product}
+              activeVariant={activeVariant}
+              onScrollToReviews={scrollToReviews}
+            />
+
+            {/* Product Family Variant Selector */}
+            {product.productType === 'family' && (
+              <ProductVariantSelector
+                product={product}
+                onVariantSelect={setActiveVariant}
+                onAddToCartVariant={(vId, qty) => handleAddToCart(product._id, qty, vId)}
+              />
+            )}
 
             <div ref={addToCartRef} className="border-t border-border pt-6">
               <AddToCart

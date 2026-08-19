@@ -3,21 +3,25 @@ import { Link } from 'react-router'
 import { Star, Shield, Truck, BadgeCheck, CreditCard, Headset, Share2, Link2, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ProductBadge } from '@/components/ui/product-badge'
-import { formatPrice, effectivePrice, productDiscount } from '@/utils'
-import type { Product } from '@/types'
+import { formatPrice, productDiscount } from '@/utils'
+import type { Product, LinkedProductVariant } from '@/types'
 import toast from 'react-hot-toast'
 
 // ─── Product Info ───────────────────────────────────────────────────────────────
 
 interface ProductInfoProps {
   product: Product
+  activeVariant?: LinkedProductVariant | null
   onScrollToReviews?: () => void
 }
 
-export default function ProductInfo({ product, onScrollToReviews }: ProductInfoProps) {
-  const discount = productDiscount(product)
-  const price = effectivePrice(product)
-  const hasDiscount = product.salePrice != null && product.salePrice < product.price
+export default function ProductInfo({ product, activeVariant, onScrollToReviews }: ProductInfoProps) {
+  // Use active variant pricing if provided for Product Family
+  const rawPrice = activeVariant ? activeVariant.price : product.price
+  const rawSalePrice = activeVariant ? activeVariant.salePrice : product.salePrice
+  const hasDiscount = rawSalePrice != null && rawSalePrice < rawPrice
+  const price = rawSalePrice ?? rawPrice
+  const discount = hasDiscount ? Math.round(((rawPrice - rawSalePrice!) / rawPrice) * 100) : productDiscount(product)
   const brand = typeof product.brand === 'object' ? product.brand : null
   const category = typeof product.category === 'object' ? product.category : null
   const [copied, setCopied] = useState(false)

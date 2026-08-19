@@ -20,6 +20,11 @@ interface ICartItemVariant {
 
 export interface ICartItem {
   product: mongoose.Types.ObjectId;
+  productVariant?: mongoose.Types.ObjectId;
+  variantSnapshot?: {
+    sku?: string;
+    attributes?: Map<string, string> | Record<string, string>;
+  };
   variant?: ICartItemVariant;
   quantity: number;
   price: number;               // Snapshot of unit price at time of add
@@ -60,6 +65,14 @@ const cartItemSchema = new Schema<ICartItem>(
       type: Schema.Types.ObjectId,
       ref: 'Product',
       required: [true, 'Product is required'],
+    },
+    productVariant: {
+      type: Schema.Types.ObjectId,
+      ref: 'ProductVariant',
+    },
+    variantSnapshot: {
+      sku: { type: String },
+      attributes: { type: Map, of: String, default: {} },
     },
     variant: {
       type: cartItemVariantSchema,

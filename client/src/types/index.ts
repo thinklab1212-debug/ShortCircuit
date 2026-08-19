@@ -404,6 +404,11 @@ export interface CartItemVariant {
 export interface CartItem {
   _id: string
   product: Product
+  productVariant?: LinkedProductVariant
+  variantSnapshot?: {
+    sku?: string
+    attributes?: Record<string, string>
+  }
   variant?: CartItemVariant
   quantity: number
   price: number
@@ -422,6 +427,7 @@ export interface Cart {
 export interface AddToCartData {
   productId: string
   quantity: number
+  variantId?: string
   variant?: { name: string; value: string }
 }
 

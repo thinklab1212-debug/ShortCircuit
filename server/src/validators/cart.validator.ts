@@ -18,6 +18,7 @@ import { objectIdSchema } from './common.validator.js';
  */
 export const addToCartSchema = z.object({
   productId: objectIdSchema,
+  variantId: objectIdSchema.optional(),
   
   variant: z
     .object({
