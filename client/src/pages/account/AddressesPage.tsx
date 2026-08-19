@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -114,24 +114,33 @@ function AddressFormModal({
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm<AddressFormValues>({
     resolver: zodResolver(addressSchema),
-    defaultValues: editing
-      ? {
-          fullName: editing.fullName,
-          phone: editing.phone,
-          addressLine1: editing.addressLine1,
+    defaultValues: EMPTY,
+  })
+
+  useEffect(() => {
+    if (open) {
+      if (editing) {
+        reset({
+          fullName: editing.fullName || '',
+          phone: editing.phone || '',
+          addressLine1: editing.addressLine1 || '',
           addressLine2: editing.addressLine2 ?? '',
           landmark: editing.landmark ?? '',
-          city: editing.city,
-          state: editing.state as AddressFormValues['state'],
-          pincode: editing.pincode,
-          type: editing.type,
-          isDefault: editing.isDefault,
-        }
-      : EMPTY,
-  })
+          city: editing.city || '',
+          state: (editing.state as AddressFormValues['state']) || 'Maharashtra',
+          pincode: editing.pincode || '',
+          type: editing.type || 'home',
+          isDefault: editing.isDefault || false,
+        })
+      } else {
+        reset(EMPTY)
+      }
+    }
+  }, [open, editing, reset])
 
   if (!open) return null
 
