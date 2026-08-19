@@ -47,6 +47,15 @@ const API_ROUTES = {
     BASE: '/categories',
     TREE: '/categories/tree',
     BY_ID: (id: string) => `/categories/${id}`,
+    ATTRIBUTE_DEFINITIONS: (id: string) => `/categories/${id}/attribute-definitions`,
+  },
+
+  // Variants & Parametric Engine
+  VARIANTS: {
+    PARAMETRIC_SEARCH: '/variants/parametric-search',
+    BY_PRODUCT: (productId: string) => `/variants/products/${productId}`,
+    BATCH: (productId: string) => `/variants/products/${productId}/batch`,
+    BY_ID: (variantId: string) => `/variants/${variantId}`,
   },
 
   // Brands

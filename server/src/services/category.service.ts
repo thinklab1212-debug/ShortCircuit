@@ -181,6 +181,25 @@ export class CategoryService {
   }
 
   /**
+   * Sets or updates Category Attribute Definitions (template for specifications).
+   * Purely additive / template-level — does NOT invalidate existing variants in DB.
+   */
+  public static async updateAttributeDefinitions(
+    categoryId: string,
+    attributeDefinitions: any[]
+  ): Promise<InstanceType<typeof Category>> {
+    const category = await Category.findById(categoryId);
+    if (!category) {
+      throw ApiError.notFound('Category not found.');
+    }
+
+    category.attributeDefinitions = attributeDefinitions;
+    await category.save();
+
+    return category;
+  }
+
+  /**
    * Recalculates denormalized product counts.
    */
   public static async recalculateCategoryCounts(categoryId: string): Promise<void> {

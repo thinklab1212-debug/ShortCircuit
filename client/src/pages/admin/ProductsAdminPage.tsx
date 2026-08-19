@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from 'react-router'
 import toast from 'react-hot-toast'
-import { Plus, Search, Pencil, Trash2 } from 'lucide-react'
+import { Plus, Search, Pencil, Trash2, Layers } from 'lucide-react'
 import { productApi } from '@/services'
 import {
   AdminPageHeader,
@@ -181,6 +181,17 @@ export default function ProductsAdminPage() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-1">
+                          {product.productType === 'family' && (
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              title="Manage Product Variants"
+                              aria-label="Manage Variants"
+                              onClick={() => navigate(`/admin/products/${product._id}/variants`)}
+                            >
+                              <Layers className="h-4 w-4 text-accent-500" />
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="icon-sm"

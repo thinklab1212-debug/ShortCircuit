@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Plus, Pencil, Trash2, X, Upload, Tags } from 'lucide-react'
+import { Plus, Pencil, Trash2, X, Upload, Tags, SlidersHorizontal } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { categoryApi, uploadApi } from '@/services'
+import { categoryApi, variantApi, uploadApi } from '@/services'
 import { DataTable, AdminPageHeader, StatusIndicator } from '@/components/admin'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,7 +13,7 @@ import { FormField } from '@/components/ui/form-field'
 import { Loader } from '@/components/ui/loader'
 import { ErrorFallback } from '@/components/ui/error'
 import { modalOverlayVariants, modalContentVariants } from '@/config/animations'
-import type { Category, CategoryFormData } from '@/types'
+import type { AttributeDefinition, Category, CategoryFormData } from '@/types'
 
 interface ApiError {
   response?: { data?: { message?: string } }
@@ -34,12 +34,58 @@ export default function CategoriesAdminPage() {
   const [form, setForm] = useState<CategoryFormData>(emptyForm)
   const [uploading, setUploading] = useState(false)
 
+  // Spec Template Modal State
+  const [specModalOpen, setSpecModalOpen] = useState(false)
+  const [specCategory, setSpecCategory] = useState<Category | null>(null)
+  const [attrDefs, setAttrDefs] = useState<AttributeDefinition[]>([])
+
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['admin', 'categories'],
     queryFn: async () => (await categoryApi.getAll()).data.data,
   })
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['admin', 'categories'] })
+
+  const updateSpecMutation = useMutation({
+    mutationFn: ({ categoryId, attributeDefinitions }: { categoryId: string; attributeDefinitions: AttributeDefinition[] }) =>
+      variantApi.updateCategoryAttributeDefs(categoryId, attributeDefinitions),
+    onSuccess: () => {
+      toast.success('Category specification templates saved!')
+      invalidate()
+      closeSpecModal()
+    },
+    onError: (err: ApiError) => toast.error(err.response?.data?.message || 'Failed to update attribute templates'),
+  })
+
+  const openSpecModal = (cat: Category) => {
+    setSpecCategory(cat)
+    setAttrDefs(cat.attributeDefinitions || [])
+    setSpecModalOpen(true)
+  }
+
+  const closeSpecModal = () => {
+    setSpecModalOpen(false)
+    setSpecCategory(null)
+  }
+
+  const addAttrDef = () => {
+    setAttrDefs((prev) => [
+      ...prev,
+      { key: '', label: '', type: 'string', isFilterable: true, isRequired: false },
+    ])
+  }
+
+  const removeAttrDef = (index: number) => {
+    setAttrDefs((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  const updateAttrDef = (index: number, field: keyof AttributeDefinition, value: any) => {
+    setAttrDefs((prev) => {
+      const copy = [...prev]
+      copy[index] = { ...copy[index], [field]: value }
+      return copy
+    })
+  }
 
   const createMutation = useMutation({
     mutationFn: (payload: CategoryFormData) => categoryApi.create(payload),
@@ -165,6 +211,15 @@ export default function CategoriesAdminPage() {
       className: 'text-right',
       render: (row: Category) => (
         <div className="flex items-center justify-end gap-1">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => openSpecModal(row)}
+            title="Manage Specification Templates"
+            aria-label="Manage Specs"
+          >
+            <SlidersHorizontal className="h-4 w-4 text-accent-500" />
+          </Button>
           <Button variant="ghost" size="icon-sm" onClick={() => openEdit(row)} aria-label="Edit">
             <Pencil className="h-4 w-4" />
           </Button>
@@ -299,6 +354,109 @@ export default function CategoriesAdminPage() {
                   </Button>
                 </div>
               </form>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {/* ─── Modal 2: Specification Templates Modal ─── */}
+        {specModalOpen && specCategory && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            variants={modalOverlayVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+          >
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={closeSpecModal} />
+            <motion.div
+              className="relative z-10 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-border bg-card p-6 shadow-xl space-y-4"
+              variants={modalContentVariants}
+            >
+              <div className="flex items-center justify-between border-b border-border pb-3">
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                    <SlidersHorizontal className="h-5 w-5 text-accent-500" />
+                    Specification Templates: {specCategory.name}
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    Define expected component attributes (e.g. Resistance, Voltage, Package) for this category.
+                  </p>
+                </div>
+                <Button variant="ghost" size="icon-sm" onClick={closeSpecModal}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {/* Attribute List */}
+              <div className="space-y-3">
+                {attrDefs.map((def, idx) => (
+                  <div key={idx} className="flex flex-wrap items-center gap-2 p-3 rounded-xl border border-border bg-muted/20">
+                    <div className="flex-1 min-w-[120px]">
+                      <Input
+                        placeholder="Key (e.g. resistance)"
+                        value={def.key}
+                        onChange={(e) => updateAttrDef(idx, 'key', e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                        className="text-xs"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-[120px]">
+                      <Input
+                        placeholder="Label (e.g. Resistance)"
+                        value={def.label}
+                        onChange={(e) => updateAttrDef(idx, 'label', e.target.value)}
+                        className="text-xs"
+                      />
+                    </div>
+                    <div className="w-28">
+                      <select
+                        value={def.type}
+                        onChange={(e) => updateAttrDef(idx, 'type', e.target.value)}
+                        className="w-full h-9 rounded-md border border-input bg-background px-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                      >
+                        <option value="string">string</option>
+                        <option value="number">number</option>
+                        <option value="boolean">boolean</option>
+                        <option value="enum">enum</option>
+                      </select>
+                    </div>
+                    <div className="w-20">
+                      <Input
+                        placeholder="Unit (Ω, V)"
+                        value={def.unit || ''}
+                        onChange={(e) => updateAttrDef(idx, 'unit', e.target.value)}
+                        className="text-xs"
+                      />
+                    </div>
+                    <Button variant="ghost" size="icon-sm" onClick={() => removeAttrDef(idx)} className="text-error-500 hover:text-error-600">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+
+                {attrDefs.length === 0 && (
+                  <div className="text-center py-6 text-xs text-muted-foreground border border-dashed border-border rounded-xl">
+                    No specification templates configured for this category yet.
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between border-t border-border pt-4">
+                <Button variant="outline" size="sm" leftIcon={<Plus className="h-4 w-4" />} onClick={addAttrDef}>
+                  Add Attribute Definition
+                </Button>
+                <div className="flex items-center gap-2">
+                  <Button variant="ghost" size="sm" onClick={closeSpecModal}>
+                    Cancel
+                  </Button>
+                  <Button
+                    size="sm"
+                    loading={updateSpecMutation.isPending}
+                    onClick={() => updateSpecMutation.mutate({ categoryId: specCategory._id, attributeDefinitions: attrDefs })}
+                  >
+                    Save Templates
+                  </Button>
+                </div>
+              </div>
             </motion.div>
           </motion.div>
         )}

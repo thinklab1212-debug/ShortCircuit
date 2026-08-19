@@ -7,6 +7,7 @@
 
 import mongoose from 'mongoose';
 import Product from '../models/Product.model.js';
+import ProductVariant from '../models/ProductVariant.model.js';
 import Category from '../models/Category.model.js';
 import Brand from '../models/Brand.model.js';
 import { ApiError } from '../utils/index.js';
@@ -126,6 +127,16 @@ export class ProductService {
       }
     }
 
+    // Prevent changing productType from 'family' to 'standalone' if active variants exist
+    if (dto.productType === 'standalone' && product.productType === 'family') {
+      const activeVariantsExist = await ProductVariant.exists({ productId: product._id, isActive: true });
+      if (activeVariantsExist) {
+        throw ApiError.badRequest(
+          'Cannot change productType from family to standalone while active variants exist. Please deactivate or remove variants first.'
+        );
+      }
+    }
+
     // Check Category and Brand updates
     const oldCategoryId = product.category;
     if (dto.category && dto.category.toString() !== product.category.toString()) {
@@ -172,7 +183,7 @@ export class ProductService {
   public static async getProductBySlug(slug: string): Promise<InstanceType<typeof Product>> {
     // SAFETY: Both isActive AND approvalStatus are required for public access
     const product = await Product.findOne({ slug, isActive: true, approvalStatus: 'approved' })
-      .populate({ path: 'category', select: 'name slug icon' })
+      .populate({ path: 'category', select: 'name slug icon attributeDefinitions' })
       .populate({ path: 'brand', select: 'name slug logo' });
 
     if (!product) {

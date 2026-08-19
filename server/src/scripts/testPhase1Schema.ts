@@ -67,10 +67,10 @@ async function verifyPhase1() {
   if (standaloneValErr) {
     throw new Error(`Standalone Product validation failed: ${standaloneValErr.message}`);
   }
-  if (standaloneProduct.productMode !== 'standalone') {
-    throw new Error(`Expected default productMode to be 'standalone', got '${standaloneProduct.productMode}'`);
+  if (standaloneProduct.productType !== 'standalone') {
+    throw new Error(`Expected default productType to be 'standalone', got '${standaloneProduct.productType}'`);
   }
-  console.log('✔ Standalone Product validation PASSED (productMode defaulted to "standalone")');
+  console.log('✔ Standalone Product validation PASSED (productType defaulted to "standalone")');
 
   // 3. Verify Product Family (e.g. Resistor Family)
   const familyProduct = new Product({
@@ -79,7 +79,7 @@ async function verifyPhase1() {
     sku: 'FAMILY-RES-0805',
     price: 2,
     stock: 0,
-    productMode: 'family',
+    productType: 'family',
     category: testCategory._id,
     brand: new mongoose.Types.ObjectId(),
     variantCount: 144,
@@ -90,10 +90,10 @@ async function verifyPhase1() {
   if (familyValErr) {
     throw new Error(`Product Family validation failed: ${familyValErr.message}`);
   }
-  if (familyProduct.productMode !== 'family') {
-    throw new Error(`Expected productMode to be 'family', got '${familyProduct.productMode}'`);
+  if (familyProduct.productType !== 'family') {
+    throw new Error(`Expected productType to be 'family', got '${familyProduct.productType}'`);
   }
-  console.log('✔ Product Family validation PASSED (productMode: "family")');
+  console.log('✔ Product Family validation PASSED (productType: "family")');
 
   // 4. Verify Linked ProductVariant (Resistor SKU)
   const resistorVariant = new ProductVariant({

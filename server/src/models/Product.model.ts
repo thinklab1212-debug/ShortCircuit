@@ -96,8 +96,8 @@ export interface IProduct extends Document {
   ratingsCount: number;
   soldCount: number;
 
-  // --- Variants ---
-  productMode: 'standalone' | 'family'; // 'standalone' (default for single items) or 'family' (linked ProductVariants)
+  // --- Product Type & Variants ---
+  productType: 'standalone' | 'family'; // 'standalone' (default for single items) or 'family' (linked ProductVariants)
   variantCount?: number;               // Summary count of active linked variants
   priceRange?: {                       // Price range across linked variants
     min: number;
@@ -361,12 +361,12 @@ const productSchema = new Schema<IProduct, IProductModel>(
       min: 0,
     },
 
-    // --- Variants ---
-    productMode: {
+    // --- Product Type & Variants ---
+    productType: {
       type: String,
       enum: {
         values: ['standalone', 'family'],
-        message: 'productMode must be standalone or family',
+        message: 'productType must be standalone or family',
       },
       default: 'standalone',
       index: true,

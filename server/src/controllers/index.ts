@@ -9,6 +9,7 @@ export * as UserController from './user.controller.js';
 export * as AddressController from './address.controller.js';
 export * as ProductController from './product.controller.js';
 export * as CategoryController from './category.controller.js';
+export * as VariantController from './variant.controller.js';
 export * as BrandController from './brand.controller.js';
 export * as ReviewController from './review.controller.js';
 export * as CartController from './cart.controller.js';

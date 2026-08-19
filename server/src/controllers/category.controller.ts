@@ -32,3 +32,13 @@ export const deleteCategory = asyncHandler(async (req: Request, res: Response) =
   await CategoryService.deleteCategory(req.params.id);
   res.status(200).json(new ApiResponse(200, null, 'Category deleted successfully.'));
 });
+
+export const updateAttributeDefinitions = asyncHandler(async (req: Request, res: Response) => {
+  const category = await CategoryService.updateAttributeDefinitions(
+    req.params.id,
+    req.body.attributeDefinitions
+  );
+  res
+    .status(200)
+    .json(new ApiResponse(200, category, 'Category attribute definitions updated successfully.'));
+});

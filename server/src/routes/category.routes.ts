@@ -7,7 +7,12 @@
 import { Router } from 'express';
 import { CategoryController } from '../controllers/index.js';
 import { authenticate, authorize, validate } from '../middlewares/index.js';
-import { createCategorySchema, updateCategorySchema, objectIdSchema } from '../validators/index.js';
+import {
+  createCategorySchema,
+  updateCategorySchema,
+  updateCategoryAttributeDefsSchema,
+  objectIdSchema,
+} from '../validators/index.js';
 import { z } from 'zod';
 
 const router = Router();
@@ -87,6 +92,33 @@ router.post('/', validate({ body: createCategorySchema }), CategoryController.cr
  *         description: Category updated successfully
  */
 router.patch('/:id', validate({ params: z.object({ id: objectIdSchema }), body: updateCategorySchema }), CategoryController.updateCategory);
+
+/**
+ * @openapi
+ * /categories/{id}/attribute-definitions:
+ *   put:
+ *     summary: Set or update Category Attribute Definitions template (Admin only)
+ *     tags: [Categories]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Category attribute definitions updated successfully
+ */
+router.put(
+  '/:id/attribute-definitions',
+  validate({
+    params: z.object({ id: objectIdSchema }),
+    body: updateCategoryAttributeDefsSchema,
+  }),
+  CategoryController.updateAttributeDefinitions
+);
 
 /**
  * @openapi

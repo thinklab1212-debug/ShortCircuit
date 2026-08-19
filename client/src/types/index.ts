@@ -147,6 +147,16 @@ export interface UpdateProfileData {
 
 // ─── Category ─────────────────────────────────────────────────────────────────
 
+export interface AttributeDefinition {
+  key: string
+  label: string
+  type: 'string' | 'number' | 'boolean' | 'enum'
+  unit?: string
+  options?: string[]
+  isFilterable?: boolean
+  isRequired?: boolean
+}
+
 export interface Category {
   _id: string
   name: string
@@ -155,6 +165,7 @@ export interface Category {
   image?: CloudinaryAsset
   icon?: string
   parent?: Category | string | null
+  attributeDefinitions?: AttributeDefinition[]
   isActive: boolean
   displayOrder?: number
   productCount?: number
@@ -219,6 +230,25 @@ export interface ProductVariant {
   options: ProductVariantOption[]
 }
 
+export interface LinkedProductVariant {
+  _id: string
+  productId: string | Product
+  sku: string
+  mpn?: string
+  attributes: Record<string, string>
+  numericalAttributes: Record<string, number>
+  price: number
+  salePrice?: number
+  costPrice?: number
+  stock: number
+  lowStockThreshold?: number
+  isActive: boolean
+  image?: ProductImage
+  datasheetUrl?: string
+  createdAt?: string
+  updatedAt?: string
+}
+
 export interface ProductDimensions {
   length?: number
   width?: number
@@ -243,6 +273,12 @@ export interface Product {
   lowStockThreshold?: number
   isFeatured: boolean
   isActive: boolean
+  productType?: 'standalone' | 'family'
+  variantCount?: number
+  priceRange?: {
+    min: number
+    max: number
+  }
   ratingsAverage: number
   ratingsCount: number
   soldCount: number

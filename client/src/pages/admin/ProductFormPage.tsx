@@ -40,6 +40,7 @@ interface FormState {
   tags: string
   isFeatured: boolean
   isActive: boolean
+  productType: 'standalone' | 'family'
 }
 
 const EMPTY: FormState = {
@@ -56,6 +57,7 @@ const EMPTY: FormState = {
   tags: '',
   isFeatured: false,
   isActive: true,
+  productType: 'standalone',
 }
 
 const SKU_RE = /^[A-Z0-9-]+$/
@@ -118,6 +120,7 @@ export default function ProductFormPage() {
       tags: (existing.tags ?? []).join(', '),
       isFeatured: existing.isFeatured ?? false,
       isActive: existing.isActive ?? true,
+      productType: existing.productType ?? 'standalone',
     })
     setImages(existing.images ?? [])
     setSpecs(existing.specifications ?? [])
@@ -211,6 +214,7 @@ export default function ProductFormPage() {
           : undefined,
         isFeatured: form.isFeatured,
         isActive: form.isActive,
+        productType: form.productType,
         specifications: specs.filter((s) => s.key.trim() && s.value.trim()),
       }
       return isEdit && id
@@ -271,6 +275,34 @@ export default function ProductFormPage() {
           {/* Basic info */}
           <AdminSection title="Basic Information">
             <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <FormField label="Product Type" htmlFor="productType" hint="Standalone product vs Component Family">
+                  <Select
+                    id="productType"
+                    value={form.productType}
+                    onChange={(e) => set('productType', e.target.value as 'standalone' | 'family')}
+                  >
+                    <option value="standalone">Standalone Product (Single Item)</option>
+                    <option value="family">Product Family (Linked Specification Variants)</option>
+                  </Select>
+                </FormField>
+
+                {form.productType === 'family' && isEdit && existing && (
+                  <div className="flex flex-col justify-center p-3 rounded-xl border border-accent-500/30 bg-accent-500/10">
+                    <div className="text-xs font-semibold text-accent-400">Product Family Metrics</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">
+                      {existing.variantCount ?? 0} variants | Range: ₹{existing.priceRange?.min ?? 0} – ₹{existing.priceRange?.max ?? 0}
+                    </div>
+                    <Link
+                      to={`/admin/products/${existing._id}/variants`}
+                      className="mt-2 inline-flex items-center text-xs font-semibold text-accent-500 hover:underline"
+                    >
+                      Manage Variants & Batch Import →
+                    </Link>
+                  </div>
+                )}
+              </div>
+
               <FormField label="Name" htmlFor="name" required error={errors.name}>
                 <Input
                   id="name"

@@ -9,6 +9,7 @@ export { UserService } from './user.service.js';
 export { AddressService } from './address.service.js';
 export { ProductService } from './product.service.js';
 export { CategoryService } from './category.service.js';
+export { VariantService } from './variant.service.js';
 export { BrandService } from './brand.service.js';
 export { ReviewService } from './review.service.js';
 export { CartService } from './cart.service.js';
