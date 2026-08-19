@@ -71,3 +71,21 @@ export const syncGoogleSheets = asyncHandler(async (_req: Request, res: Response
   const result = await GoogleSheetsService.syncAllProducts();
   res.status(200).json(new ApiResponse(200, result, 'All catalog products and specification variants synced to Google Sheets successfully.'));
 });
+
+export const previewBulkImport = asyncHandler(async (req: Request, res: Response) => {
+  const { BulkImportService } = await import('../services/bulkImport.service.js');
+  const source = (req.query.source as string) === 'google_sheets' ? 'google_sheets' : 'file';
+  const fileBuffer = req.file?.buffer;
+  
+  const result = await BulkImportService.previewImport(source, fileBuffer);
+  res.status(200).json(new ApiResponse(200, result, 'Bulk import dry-run validation preview generated successfully.'));
+});
+
+export const executeBulkImport = asyncHandler(async (req: Request, res: Response) => {
+  const { BulkImportService } = await import('../services/bulkImport.service.js');
+  const { validItems } = req.body;
+  
+  const result = await BulkImportService.executeImport(validItems);
+  res.status(200).json(new ApiResponse(200, result, 'Bulk product import executed successfully.'));
+});
+

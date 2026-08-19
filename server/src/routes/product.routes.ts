@@ -7,7 +7,7 @@
 
 import { Router } from 'express';
 import { ProductController } from '../controllers/index.js';
-import { authenticate, authorize, validate } from '../middlewares/index.js';
+import { authenticate, authorize, validate, uploadSpreadsheet } from '../middlewares/index.js';
 import {
   createProductSchema,
   updateProductSchema,
@@ -23,6 +23,7 @@ const router = Router();
 
 // Nested review routes (handles /products/:productId/reviews)
 router.use('/:productId/reviews', reviewRoutes);
+
 
 // Public catalogue routes
 /**
@@ -137,6 +138,11 @@ router.use(authenticate, authorize('admin'));
  */
 router.get('/admin/all', validate({ query: paginationQuerySchema }), ProductController.getAdminProducts);
 router.post('/sync-google-sheets', ProductController.syncGoogleSheets);
+
+// Bulk Import endpoints
+router.post('/admin/bulk-import/preview', uploadSpreadsheet.single('file'), ProductController.previewBulkImport);
+router.post('/admin/bulk-import/execute', ProductController.executeBulkImport);
+
 
 /**
  * @openapi

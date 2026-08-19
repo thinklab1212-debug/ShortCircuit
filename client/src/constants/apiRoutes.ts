@@ -41,6 +41,8 @@ const API_ROUTES = {
     ADMIN_ALL: '/products/admin/all',
     BY_ID: (id: string) => `/products/${id}`,
     SYNC_GOOGLE_SHEETS: '/products/sync-google-sheets',
+    BULK_IMPORT_PREVIEW: '/products/admin/bulk-import/preview',
+    BULK_IMPORT_EXECUTE: '/products/admin/bulk-import/execute',
   },
 
   // Categories

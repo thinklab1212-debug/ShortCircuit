@@ -1152,3 +1152,31 @@ export interface ProductRequestFormData {
   notes?: string
 }
 
+// ─── Bulk Import ─────────────────────────────────────────────────────────────
+
+export interface BulkPreviewItem {
+  rowNumber: number
+  action: 'create' | 'update' | 'error'
+  sku: string
+  name: string
+  categoryName?: string
+  brandName?: string
+  price: number
+  salePrice?: number
+  stock: number
+  isActive: boolean
+  changes?: string[]
+  errors?: string[]
+  parsedData?: any
+}
+
+export interface BulkImportPreviewResult {
+  totalRows: number
+  validCount: number
+  errorCount: number
+  newProductsCount: number
+  updatedProductsCount: number
+  items: BulkPreviewItem[]
+}
+
+

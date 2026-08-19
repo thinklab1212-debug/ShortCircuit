@@ -12,6 +12,6 @@ export { validate } from './validate.middleware.js';
 export { globalErrorHandler } from './errorHandler.middleware.js';
 export { notFoundHandler } from './notFound.middleware.js';
 export { publicLimiter, authLimiter, adminLimiter, teamVerifyLimiter } from './rateLimiter.middleware.js';
-export { uploadImages, uploadDatasheet, uploadCsv } from './upload.middleware.js';
+export { uploadImages, uploadDatasheet, uploadCsv, uploadSpreadsheet } from './upload.middleware.js';
 export { requestId, mongoSanitizer, xssSanitizer } from './security.middleware.js';
 export { requestLogger } from './logging.middleware.js';

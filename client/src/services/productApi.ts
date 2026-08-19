@@ -40,6 +40,28 @@ const productApi = {
     apiClient.post<ApiResponse<{ totalProducts: number; totalVariants: number; totalSynced: number }>>(
       API_ROUTES.PRODUCTS.SYNC_GOOGLE_SHEETS
     ),
+
+  previewBulkImport: (source: 'file' | 'google_sheets', file?: File) => {
+    if (source === 'file' && file) {
+      const formData = new FormData()
+      formData.append('file', file)
+      return apiClient.post<ApiResponse<import('@/types').BulkImportPreviewResult>>(
+        API_ROUTES.PRODUCTS.BULK_IMPORT_PREVIEW,
+        formData,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
+      )
+    }
+    return apiClient.post<ApiResponse<import('@/types').BulkImportPreviewResult>>(
+      `${API_ROUTES.PRODUCTS.BULK_IMPORT_PREVIEW}?source=google_sheets`
+    )
+  },
+
+  executeBulkImport: (validItems: any[]) =>
+    apiClient.post<ApiResponse<{ createdCount: number; updatedCount: number; totalExecuted: number }>>(
+      API_ROUTES.PRODUCTS.BULK_IMPORT_EXECUTE,
+      { validItems }
+    ),
 }
 
 export default productApi
+

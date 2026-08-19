@@ -2,11 +2,12 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from 'react-router'
 import toast from 'react-hot-toast'
-import { Plus, Search, Pencil, Trash2, Layers, RefreshCw } from 'lucide-react'
+import { Plus, Search, Pencil, Trash2, Layers, RefreshCw, Upload } from 'lucide-react'
 import { productApi } from '@/services'
 import {
   AdminPageHeader,
   TablePagination,
+  BulkImportModal,
 } from '@/components/admin'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -32,6 +33,7 @@ export default function ProductsAdminPage() {
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null)
+  const [isBulkImportOpen, setIsBulkImportOpen] = useState(false)
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['admin', 'products', { page, search }],
@@ -86,6 +88,13 @@ export default function ProductsAdminPage() {
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
+              onClick={() => setIsBulkImportOpen(true)}
+              leftIcon={<Upload className="h-4 w-4 text-primary-400" />}
+            >
+              Bulk Import
+            </Button>
+            <Button
+              variant="outline"
               loading={syncSheetsMutation.isPending}
               onClick={() => syncSheetsMutation.mutate()}
               leftIcon={<RefreshCw className="h-4 w-4 text-success-500" />}
@@ -98,6 +107,7 @@ export default function ProductsAdminPage() {
           </div>
         }
       />
+
 
       <form onSubmit={submitSearch} className="flex gap-2">
         <Input
@@ -286,6 +296,13 @@ export default function ProductsAdminPage() {
           </div>
         </div>
       )}
+
+      {/* Bulk Import Modal */}
+      <BulkImportModal
+        isOpen={isBulkImportOpen}
+        onClose={() => setIsBulkImportOpen(false)}
+      />
     </div>
   )
 }
+

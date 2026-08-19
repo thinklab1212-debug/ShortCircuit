@@ -92,6 +92,27 @@ const csvFilter = (req: Request, file: Express.Multer.File, cb: FileFilterCallba
 };
 
 /**
+ * Filter to allow Excel (.xlsx, .xls) and CSV uploads.
+ */
+const spreadsheetFilter = (req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
+  const allowedMimeTypes = [
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-excel',
+    'text/csv',
+    'application/csv',
+    'text/plain',
+  ];
+  const originalName = file.originalname.toLowerCase();
+  const isValidExt = originalName.endsWith('.xlsx') || originalName.endsWith('.xls') || originalName.endsWith('.csv');
+
+  if (allowedMimeTypes.includes(file.mimetype) || isValidExt) {
+    cb(null, true);
+  } else {
+    cb(new ApiError(400, 'Invalid file type. Only Excel (.xlsx, .xls) and CSV files are allowed.'));
+  }
+};
+
+/**
  * Upload helper for CSV files.
  * Enforces a 2MB limit.
  */
@@ -104,8 +125,23 @@ export const uploadCsv = multer({
   },
 });
 
+/**
+ * Upload helper for Spreadsheet files (Excel/CSV).
+ * Enforces a 10MB limit.
+ */
+export const uploadSpreadsheet = multer({
+  storage,
+  fileFilter: spreadsheetFilter,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit
+    files: 1,
+  },
+});
+
 export default {
   uploadImages,
   uploadDatasheet,
   uploadCsv,
+  uploadSpreadsheet,
 };
+
