@@ -14,6 +14,8 @@
 
 import { GoogleSpreadsheet, GoogleSpreadsheetWorksheet } from 'google-spreadsheet';
 import { JWT } from 'google-auth-library';
+import Product from '../models/Product.model.js';
+import ProductVariant from '../models/ProductVariant.model.js';
 import { env } from '../config/env.js';
 import { logger } from '../utils/index.js';
 
@@ -43,6 +45,13 @@ const NEW_USER_HEADERS = [
   'Date', 'Name', 'Email', 'Phone', 'Role',
 ];
 
+const PRODUCT_HEADERS = [
+  'Product ID', 'SKU', 'Name', 'Type', 'Category', 'Brand',
+  'Price / Range', 'Total Stock', 'Variant Count',
+  'Select Variant (Dropdown)', 'Variant Options & Specifications',
+  'Status', 'Admin Link', 'Last Updated',
+];
+
 // ---------------------------------------------------------------------------
 // Service
 // ---------------------------------------------------------------------------
@@ -53,6 +62,7 @@ export class GoogleSheetsService {
   private static eventOrdersSheet: GoogleSpreadsheetWorksheet | null = null;
   private static cancellationsSheet: GoogleSpreadsheetWorksheet | null = null;
   private static newUsersSheet: GoogleSpreadsheetWorksheet | null = null;
+  private static productsSheet: GoogleSpreadsheetWorksheet | null = null;
 
   /**
    * Returns true if Google Sheets credentials are configured.
@@ -96,6 +106,7 @@ export class GoogleSheetsService {
       this.eventOrdersSheet = await this.ensureSheet('Event Kit Orders', EVENT_ORDER_HEADERS, { red: 0.25, green: 0.52, blue: 0.96 }); // Blue
       this.cancellationsSheet = await this.ensureSheet('Cancellation Requests', CANCELLATION_HEADERS, { red: 0.92, green: 0.26, blue: 0.21 }); // Red
       this.newUsersSheet = await this.ensureSheet('New Users', NEW_USER_HEADERS, { red: 0.61, green: 0.35, blue: 0.71 });  // Purple
+      this.productsSheet = await this.ensureSheet('Products', PRODUCT_HEADERS, { red: 0.98, green: 0.73, blue: 0.01 });   // Gold/Orange
 
       logger.info(`📊 Google Sheets sync connected: "${this.doc.title}" (${Object.keys(this.doc.sheetsByTitle).length} tabs)`);
     } catch (error) {
@@ -169,54 +180,6 @@ export class GoogleSheetsService {
       }
 
       await sheet.saveUpdatedCells();
-
-      // Set reasonable column widths using batch update
-      const sheetId = sheet.sheetId;
-      const columnWidths = [
-        140, // Order ID / Date
-        100, // Date / Name
-        160, // Customer Name
-        120, // Phone
-        200, // Email
-        120, // City
-        100, // State / other
-        100, // Pincode / other
-        250, // Items
-        60,  // Qty
-        100, // Subtotal
-        80,  // Tax
-        80,  // Shipping
-        80,  // Discount
-        100, // Coupon
-        100, // Total
-        120, // Payment Method
-        180, // Razorpay ID
-        100, // Status
-        250, // Admin Link
-      ];
-
-      const requests = [];
-      for (let i = 0; i < Math.min(columnCount, columnWidths.length); i++) {
-        requests.push({
-          updateDimensionProperties: {
-            range: {
-              sheetId,
-              dimension: 'COLUMNS',
-              startIndex: i,
-              endIndex: i + 1,
-            },
-            properties: { pixelSize: columnWidths[i] },
-            fields: 'pixelSize',
-          },
-        });
-      }
-
-      if (requests.length > 0) {
-        await (this.doc as any).sheetsApi.spreadsheets.batchUpdate({
-          spreadsheetId: this.doc!.spreadsheetId,
-          requestBody: { requests },
-        });
-      }
     } catch (error) {
       // Formatting is non-critical — log and continue
       logger.debug(`  ℹ️  Could not apply formatting to "${sheet.title}":`, error);
@@ -350,5 +313,144 @@ export class GoogleSheetsService {
     } catch (error) {
       logger.warn(`⚠️  Sheet sync failed for user ${user.email}:`, error);
     }
+  }
+
+  /**
+   * Consolidated One-Way Export to Google Sheets (1 Row per Product; Product Families list all variants in a dropdown/details cell).
+   */
+  public static async syncAllProducts(): Promise<{ totalProducts: number; totalVariants: number; totalSynced: number }> {
+    if (!this.productsSheet) {
+      if (this.isConfigured()) {
+        await this.initialize();
+      }
+      if (!this.productsSheet) {
+        throw new Error('Google Sheets is not configured or failed to initialize credentials.');
+      }
+    }
+
+    // 1. Fetch all products (populated with category & brand)
+    const products = await Product.find({})
+      .populate('category', 'name')
+      .populate('brand', 'name')
+      .lean();
+
+    // 2. Fetch all product variants
+    const variants = await ProductVariant.find({}).lean();
+
+    // Group variants by productId
+    const variantsByProductMap = new Map<string, any[]>();
+    for (const v of variants) {
+      const pId = v.productId?.toString();
+      if (pId) {
+        if (!variantsByProductMap.has(pId)) {
+          variantsByProductMap.set(pId, []);
+        }
+        variantsByProductMap.get(pId)!.push(v);
+      }
+    }
+
+    const rows: any[] = [];
+
+    // Map each product to exactly 1 consolidated row
+    for (const p of products) {
+      const categoryName = (p.category as any)?.name || 'Uncategorized';
+      const brandName = (p.brand as any)?.name || '—';
+      const isFamily = p.productType === 'family';
+      const pIdStr = p._id.toString();
+
+      if (isFamily) {
+        const familyVariants = variantsByProductMap.get(pIdStr) || [];
+        const totalStock = familyVariants.reduce((sum, v) => sum + (v.stock || 0), 0);
+        const minPrice = familyVariants.length > 0 ? Math.min(...familyVariants.map((v) => v.price)) : 0;
+        const maxPrice = familyVariants.length > 0 ? Math.max(...familyVariants.map((v) => v.price)) : 0;
+        const priceDisplay = `₹${minPrice} – ₹${maxPrice}`;
+
+        const dropdownDefault = familyVariants.length > 0 ? familyVariants[0].sku : 'No Variants';
+        const variantsListString = familyVariants.length > 0
+          ? familyVariants
+              .map((v, idx) => {
+                const attrStr = v.attributes
+                  ? Object.entries(v.attributes).map(([k, val]) => `${k}: ${val}`).join(', ')
+                  : '';
+                const priceStr = v.salePrice ? `₹${v.salePrice} (MRP ₹${v.price})` : `₹${v.price}`;
+                return `${idx + 1}. [${v.sku}] ${priceStr} | Stock: ${v.stock} | (${attrStr})`;
+              })
+              .join('\n')
+          : 'No variants configured';
+
+        rows.push({
+          'Product ID': pIdStr,
+          'SKU': p.sku || '',
+          'Name': p.name || '',
+          'Type': 'Product Family',
+          'Category': categoryName,
+          'Brand': brandName,
+          'Price / Range': priceDisplay,
+          'Total Stock': `${totalStock} total`,
+          'Variant Count': familyVariants.length.toString(),
+          'Select Variant (Dropdown)': dropdownDefault,
+          'Variant Options & Specifications': variantsListString,
+          'Status': p.isActive ? 'Active' : 'Inactive',
+          'Admin Link': `${env.CLIENT_URL}/admin/products/${p._id}/variants`,
+          'Last Updated': (p as any).updatedAt ? new Date((p as any).updatedAt).toLocaleDateString('en-IN') : '—',
+        });
+      } else {
+        rows.push({
+          'Product ID': pIdStr,
+          'SKU': p.sku || '',
+          'Name': p.name || '',
+          'Type': 'Standalone',
+          'Category': categoryName,
+          'Brand': brandName,
+          'Price / Range': `₹${p.salePrice || p.price || 0}`,
+          'Total Stock': p.stock?.toString() || '0',
+          'Variant Count': '0',
+          'Select Variant (Dropdown)': 'N/A (Standalone)',
+          'Variant Options & Specifications': '—',
+          'Status': p.isActive ? 'Active' : 'Inactive',
+          'Admin Link': `${env.CLIENT_URL}/admin/products/${p._id}/edit`,
+          'Last Updated': (p as any).updatedAt ? new Date((p as any).updatedAt).toLocaleDateString('en-IN') : '—',
+        });
+      }
+    }
+
+    // Clear existing sheet rows and append fresh rows
+    await this.productsSheet.clearRows();
+    if (rows.length > 0) {
+      await this.productsSheet.addRows(rows);
+    }
+
+    // Apply Data Validation rules for family rows so Google Sheets displays interactive dropdowns
+    try {
+      await this.productsSheet.loadCells();
+      let rowIndex = 1; // row 0 is header
+      for (const p of products) {
+        if (p.productType === 'family') {
+          const familyVariants = variantsByProductMap.get(p._id.toString()) || [];
+          if (familyVariants.length > 0) {
+            const cell = this.productsSheet.getCell(rowIndex, 9); // Column index 9 is 'Select Variant (Dropdown)'
+            const skuList = familyVariants.map((v) => v.sku);
+            (cell as any).dataValidation = {
+              condition: {
+                type: 'ONE_OF_LIST',
+                values: skuList.map((sku) => ({ userEnteredValue: sku })),
+              },
+              showCustomUi: true,
+            };
+          }
+        }
+        rowIndex++;
+      }
+      await this.productsSheet.saveUpdatedCells();
+    } catch (err) {
+      logger.debug('  ℹ️  Data validation rules skipped (non-critical):', err);
+    }
+
+    logger.info(`📊 Google Sheets sync: Exported ${rows.length} consolidated product rows (${variants.length} total variants) to Products tab`);
+    return {
+      totalProducts: products.length,
+      totalVariants: variants.length,
+      totalSynced: rows.length,
+    };
   }
 }

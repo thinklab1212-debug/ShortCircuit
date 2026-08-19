@@ -136,6 +136,7 @@ router.use(authenticate, authorize('admin'));
  *         description: Admin catalog fetched successfully
  */
 router.get('/admin/all', validate({ query: paginationQuerySchema }), ProductController.getAdminProducts);
+router.post('/sync-google-sheets', ProductController.syncGoogleSheets);
 
 /**
  * @openapi

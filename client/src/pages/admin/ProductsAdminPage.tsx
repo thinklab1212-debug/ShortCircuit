@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from 'react-router'
 import toast from 'react-hot-toast'
-import { Plus, Search, Pencil, Trash2, Layers } from 'lucide-react'
+import { Plus, Search, Pencil, Trash2, Layers, RefreshCw } from 'lucide-react'
 import { productApi } from '@/services'
 import {
   AdminPageHeader,
@@ -51,6 +51,17 @@ export default function ProductsAdminPage() {
     onError: () => toast.error('Failed to delete product'),
   })
 
+  const syncSheetsMutation = useMutation({
+    mutationFn: () => productApi.syncGoogleSheets(),
+    onSuccess: (res) => {
+      const { totalSynced } = res.data.data
+      toast.success(`Successfully exported ${totalSynced} items to Google Sheets!`)
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || 'Failed to sync to Google Sheets. Verify credentials in .env.')
+    },
+  })
+
   const products = data?.data ?? []
   const pagination = data?.pagination
 
@@ -72,9 +83,19 @@ export default function ProductsAdminPage() {
         title="Products"
         description="Manage your product catalog"
         action={
-          <Button asChild leftIcon={<Plus />}>
-            <Link to="/admin/products/new">Add Product</Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              loading={syncSheetsMutation.isPending}
+              onClick={() => syncSheetsMutation.mutate()}
+              leftIcon={<RefreshCw className="h-4 w-4 text-success-500" />}
+            >
+              Sync to Google Sheets
+            </Button>
+            <Button asChild leftIcon={<Plus />}>
+              <Link to="/admin/products/new">Add Product</Link>
+            </Button>
+          </div>
         }
       />
 

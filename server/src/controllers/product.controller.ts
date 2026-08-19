@@ -65,3 +65,9 @@ export const getSearchSuggestions = asyncHandler(async (req: Request, res: Respo
   const suggestions = await ProductService.getSearchSuggestions(req.query.q as string, limit);
   res.status(200).json(new ApiResponse(200, suggestions, 'Search suggestions generated.'));
 });
+
+export const syncGoogleSheets = asyncHandler(async (_req: Request, res: Response) => {
+  const { GoogleSheetsService } = await import('../services/googleSheets.service.js');
+  const result = await GoogleSheetsService.syncAllProducts();
+  res.status(200).json(new ApiResponse(200, result, 'All catalog products and specification variants synced to Google Sheets successfully.'));
+});

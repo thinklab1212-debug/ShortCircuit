@@ -35,6 +35,11 @@ const productApi = {
 
   remove: (id: string) =>
     apiClient.delete<ApiResponse<null>>(API_ROUTES.PRODUCTS.BY_ID(id)),
+
+  syncGoogleSheets: () =>
+    apiClient.post<ApiResponse<{ totalProducts: number; totalVariants: number; totalSynced: number }>>(
+      API_ROUTES.PRODUCTS.SYNC_GOOGLE_SHEETS
+    ),
 }
 
 export default productApi
