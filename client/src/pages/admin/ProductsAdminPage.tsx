@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Link, useNavigate } from 'react-router'
+import { Link, useNavigate, useSearchParams } from 'react-router'
 import toast from 'react-hot-toast'
 import { Plus, Search, Pencil, Trash2, Layers, RefreshCw, Upload } from 'lucide-react'
 import { productApi } from '@/services'
@@ -29,11 +29,28 @@ function categoryName(category: Product['category']): string {
 export default function ProductsAdminPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const [page, setPage] = useState(1)
-  const [searchInput, setSearchInput] = useState('')
-  const [search, setSearch] = useState('')
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  const page = parseInt(searchParams.get('page') || '1', 10)
+  const search = searchParams.get('search') || ''
+
+  const [searchInput, setSearchInput] = useState(search)
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null)
   const [isBulkImportOpen, setIsBulkImportOpen] = useState(false)
+
+  // Keep searchInput in sync when URL search parameter changes
+  useEffect(() => {
+    setSearchInput(search)
+  }, [search])
+
+  const setPage = (newPage: number) => {
+    setSearchParams((prev) => {
+      const p = new URLSearchParams(prev)
+      p.set('page', newPage.toString())
+      if (search) p.set('search', search)
+      return p
+    })
+  }
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['admin', 'products', { page, search }],
@@ -69,8 +86,16 @@ export default function ProductsAdminPage() {
 
   const submitSearch = (e: React.FormEvent) => {
     e.preventDefault()
-    setPage(1)
-    setSearch(searchInput.trim())
+    setSearchParams((prev) => {
+      const p = new URLSearchParams(prev)
+      p.set('page', '1')
+      if (searchInput.trim()) {
+        p.set('search', searchInput.trim())
+      } else {
+        p.delete('search')
+      }
+      return p
+    })
   }
 
   if (isError) {
