@@ -68,7 +68,7 @@ export function Navbar() {
   return (
     <>
       <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/90 backdrop-blur-xl supports-[backdrop-filter]:bg-background/80">
-        <div className="container flex h-16 items-center justify-between gap-4">
+        <div className="container flex h-16 items-center justify-between gap-2 sm:gap-4">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 shrink-0">
             <BrandLogo size="md" />
@@ -102,20 +102,20 @@ export function Navbar() {
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5 sm:gap-1">
             {/* Mobile Search */}
             <button
               onClick={() => setIsSearchOpen(!isSearchOpen)}
-              className="md:hidden flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+              className="md:hidden flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
               aria-label="Search"
             >
-              <Search className="h-5 w-5" />
+              <Search className="h-4 w-4 sm:h-5 sm:w-5" />
             </button>
 
             {/* Theme Toggle */}
             <button
               onClick={() => setTheme(nextTheme[theme])}
-              className="flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+              className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
               aria-label={`Switch to ${nextTheme[theme]} theme`}
             >
               {themeIcon[theme]}
@@ -125,22 +125,22 @@ export function Navbar() {
             {isAuthenticated && (
               <Link
                 to="/wishlist"
-                className="flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                 aria-label="Wishlist"
               >
-                <Heart className="h-5 w-5" />
+                <Heart className="h-4 w-4 sm:h-5 sm:w-5" />
               </Link>
             )}
 
             {/* Cart */}
             <Link
               to="/cart"
-              className="relative flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+              className="relative flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
               aria-label="Cart"
             >
-              <ShoppingCart className="h-5 w-5" />
+              <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5" />
               {totalItems > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                <span className="absolute -top-0.5 -right-0.5 flex h-4.5 w-4.5 sm:h-5 sm:w-5 items-center justify-center rounded-full bg-primary text-[9px] sm:text-[10px] font-bold text-primary-foreground">
                   {totalItems > 99 ? '99+' : totalItems}
                 </span>
               )}
@@ -151,12 +151,12 @@ export function Navbar() {
               <div className="relative">
                 <button
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
-                  className="flex h-10 items-center gap-2 rounded-full pl-1 pr-3 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                  className="flex h-9 sm:h-10 items-center gap-1.5 sm:gap-2 rounded-full pl-1 pr-2 sm:pr-3 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                 >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/12 text-primary text-xs font-semibold">
+                  <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-primary/12 text-primary text-xs font-semibold">
                     {user?.firstName?.charAt(0).toUpperCase()}
                   </div>
-                  <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', isProfileOpen && 'rotate-180')} />
+                  <ChevronDown className={cn('h-3.5 w-3.5 transition-transform hidden xs:block', isProfileOpen && 'rotate-180')} />
                 </button>
 
                 <AnimatePresence>
@@ -166,7 +166,7 @@ export function Navbar() {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 8, scale: 0.96 }}
                       transition={{ duration: 0.15 }}
-                      className="absolute right-0 top-full mt-2 w-56 rounded-xl border border-border bg-popover p-1.5 shadow-lg"
+                      className="absolute right-0 top-full mt-2 w-56 rounded-xl border border-border bg-popover p-1.5 shadow-lg z-50"
                     >
                       <div className="px-3 py-2 border-b border-border mb-1">
                         <p className="text-sm font-medium text-foreground truncate">{getUserName(user)}</p>
@@ -224,7 +224,7 @@ export function Navbar() {
             {/* Mobile Menu Toggle */}
             <button
               onClick={() => setMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+              className="lg:hidden flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
               aria-label="Toggle menu"
             >
               {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}

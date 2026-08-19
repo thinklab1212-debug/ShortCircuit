@@ -97,9 +97,9 @@ export function ProductGridCard({
           </button>
         )}
 
-        {/* Slide-up Add to Cart button */}
+        {/* Slide-up Add to Cart button (desktop hover) */}
         {onAddToCart && !isOutOfStock && (
-          <div className="absolute bottom-0 left-0 right-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+          <div className="hidden sm:block absolute bottom-0 left-0 right-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
             <button
               onClick={() => onAddToCart(product._id)}
               className="flex items-center justify-center gap-2 w-full h-10 bg-primary text-primary-foreground text-xs font-semibold uppercase tracking-wider hover:bg-primary/90 transition-colors"
@@ -112,17 +112,17 @@ export function ProductGridCard({
       </div>
 
       {/* Content */}
-      <div className="flex flex-1 flex-col gap-2 p-4">
+      <div className="flex flex-1 flex-col gap-2 p-3 sm:p-4">
         {/* Brand */}
         {brandName && (
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          <p className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wider">
             {brandName}
           </p>
         )}
 
         {/* Name */}
         <Link to={`/product/${product.slug}`} className="group/name">
-          <h3 className="text-sm font-semibold text-foreground line-clamp-2 group-hover/name:text-primary transition-colors">
+          <h3 className="text-xs sm:text-sm font-semibold text-foreground line-clamp-2 group-hover/name:text-primary transition-colors">
             {product.name}
           </h3>
         </Link>
@@ -131,25 +131,37 @@ export function ProductGridCard({
         {product.ratingsCount > 0 && (
           <div className="flex items-center gap-1.5">
             <div className="flex items-center gap-0.5 rounded bg-success-50 dark:bg-success-950/50 px-1.5 py-0.5">
-              <span className="text-xs font-bold text-success-700 dark:text-success-400">
+              <span className="text-[10px] sm:text-xs font-bold text-success-700 dark:text-success-400">
                 {product.ratingsAverage.toFixed(1)}
               </span>
               <Star className="h-3 w-3 fill-success-600 text-success-600 dark:fill-success-400 dark:text-success-400" />
             </div>
-            <span className="text-xs text-muted-foreground">({product.ratingsCount})</span>
+            <span className="text-[10px] sm:text-xs text-muted-foreground">({product.ratingsCount})</span>
           </div>
         )}
 
-        {/* Price */}
-        <div className="mt-auto flex items-baseline gap-2 pt-1">
-          <span className="text-lg font-bold text-foreground">{formatPrice(price)}</span>
-          {hasDiscount && (
-            <span className="text-xs text-muted-foreground line-through">{formatPrice(product.price)}</span>
-          )}
-          {discount > 0 && (
-            <span className="text-xs font-semibold text-success-600 dark:text-success-400">
-              {discount}% off
-            </span>
+        {/* Price & Mobile Add Button */}
+        <div className="mt-auto flex items-center justify-between gap-1 pt-1">
+          <div className="flex flex-wrap items-baseline gap-1 sm:gap-2">
+            <span className="text-base sm:text-lg font-bold text-foreground">{formatPrice(price)}</span>
+            {hasDiscount && (
+              <span className="text-[10px] sm:text-xs text-muted-foreground line-through">{formatPrice(product.price)}</span>
+            )}
+            {discount > 0 && (
+              <span className="text-[10px] sm:text-xs font-semibold text-success-600 dark:text-success-400">
+                {discount}% off
+              </span>
+            )}
+          </div>
+
+          {onAddToCart && !isOutOfStock && (
+            <button
+              onClick={() => onAddToCart(product._id)}
+              className="sm:hidden flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shrink-0"
+              aria-label="Add to cart"
+            >
+              <ShoppingCart className="h-4 w-4" />
+            </button>
           )}
         </div>
       </div>

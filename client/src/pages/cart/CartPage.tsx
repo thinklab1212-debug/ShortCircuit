@@ -48,12 +48,12 @@ function CartLineItem({ item }: { item: CartItem }) {
   return (
     <motion.div
       variants={fadeInUp}
-      className="flex gap-4 rounded-2xl border border-border bg-card p-4"
+      className="flex gap-3 sm:gap-4 rounded-2xl border border-border bg-card p-3.5 sm:p-4"
     >
       {/* Image */}
       <Link
         to={`/product/${item.product.slug}`}
-        className="h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-muted/30"
+        className="h-20 w-20 sm:h-24 sm:w-24 shrink-0 overflow-hidden rounded-xl bg-muted/30"
       >
         <img
           src={primaryImage(item.product)}
@@ -64,59 +64,66 @@ function CartLineItem({ item }: { item: CartItem }) {
       </Link>
 
       {/* Details */}
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <Link
-          to={`/product/${item.product.slug}`}
-          className="text-sm font-semibold text-foreground line-clamp-2 hover:text-primary transition-colors"
-        >
-          {item.product.name}
-        </Link>
-
-        {/* Component Variant details */}
-        {item.variantSnapshot?.sku && (
-          <p className="text-xs font-mono font-semibold text-accent-400">
-            SKU: {item.variantSnapshot.sku}
-          </p>
-        )}
-
-        {item.variantSnapshot?.attributes && (
-          <div className="flex flex-wrap gap-1 my-0.5">
-            {Object.entries(item.variantSnapshot.attributes).map(([k, v]) => (
-              <span key={k} className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-foreground">
-                {k}: {v}
-              </span>
-            ))}
+      <div className="flex min-w-0 flex-1 flex-col gap-1 justify-between">
+        <div>
+          <div className="flex items-start justify-between gap-2">
+            <Link
+              to={`/product/${item.product.slug}`}
+              className="text-sm font-semibold text-foreground line-clamp-2 hover:text-primary transition-colors"
+            >
+              {item.product.name}
+            </Link>
+            <div className="shrink-0 text-right">
+              <span className="text-sm font-bold text-foreground">{formatPrice(lineTotal)}</span>
+            </div>
           </div>
-        )}
 
-        {item.variant && (
-          <p className="text-xs text-muted-foreground">
-            {item.variant.name}: <span className="font-medium">{item.variant.value}</span>
-          </p>
-        )}
+          {/* Component Variant details */}
+          {item.variantSnapshot?.sku && (
+            <p className="text-xs font-mono font-semibold text-accent-400 mt-0.5">
+              SKU: {item.variantSnapshot.sku}
+            </p>
+          )}
 
-        <p className="text-xs text-muted-foreground">{formatPrice(item.price)} each</p>
+          {item.variantSnapshot?.attributes && (
+            <div className="flex flex-wrap gap-1 my-0.5">
+              {Object.entries(item.variantSnapshot.attributes).map(([k, v]) => (
+                <span key={k} className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-foreground">
+                  {k}: {v}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {item.variant && (
+            <p className="text-xs text-muted-foreground">
+              {item.variant.name}: <span className="font-medium">{item.variant.value}</span>
+            </p>
+          )}
+
+          <p className="text-xs text-muted-foreground">{formatPrice(item.price)} each</p>
+        </div>
 
         {/* Quantity stepper + remove */}
-        <div className="mt-auto flex flex-wrap items-center gap-3 pt-2">
+        <div className="flex flex-wrap items-center gap-3 pt-2">
           <div className="flex items-center rounded-lg border border-border">
             <button
               type="button"
               onClick={() => setQuantity(item.quantity - 1)}
               disabled={item.quantity <= 1 || updateItem.isPending}
-              className="flex h-8 w-8 items-center justify-center rounded-l-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-40 disabled:hover:bg-transparent"
+              className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-l-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-40 disabled:hover:bg-transparent"
               aria-label="Decrease quantity"
             >
               <Minus className="h-3.5 w-3.5" />
             </button>
-            <span className="w-9 text-center text-sm font-medium tabular-nums">
+            <span className="w-8 sm:w-9 text-center text-xs sm:text-sm font-medium tabular-nums">
               {item.quantity}
             </span>
             <button
               type="button"
               onClick={() => setQuantity(item.quantity + 1)}
               disabled={item.quantity >= maxQty || updateItem.isPending}
-              className="flex h-8 w-8 items-center justify-center rounded-r-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-40 disabled:hover:bg-transparent"
+              className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-r-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-40 disabled:hover:bg-transparent"
               aria-label="Increase quantity"
             >
               <Plus className="h-3.5 w-3.5" />
@@ -127,17 +134,12 @@ function CartLineItem({ item }: { item: CartItem }) {
             type="button"
             onClick={() => removeItem.mutate(item._id)}
             disabled={removeItem.isPending}
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-error-500 disabled:opacity-50"
+            className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground transition-colors hover:text-error-500 disabled:opacity-50"
           >
             <Trash2 className="h-3.5 w-3.5" />
             Remove
           </button>
         </div>
-      </div>
-
-      {/* Line total */}
-      <div className="shrink-0 text-right">
-        <span className="text-sm font-bold text-foreground">{formatPrice(lineTotal)}</span>
       </div>
     </motion.div>
   )

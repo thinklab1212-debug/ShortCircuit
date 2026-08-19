@@ -139,7 +139,7 @@ export function OrganizerLayout() {
         </header>
 
         {/* Page Content */}
-        <main id="organizer-main" className="flex-1 overflow-y-auto p-6">
+        <main id="organizer-main" className="flex-1 overflow-y-auto p-3.5 sm:p-4 lg:p-6">
           <motion.div
             key={location.pathname}
             initial={{ opacity: 0, y: 8 } as const}

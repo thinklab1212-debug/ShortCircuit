@@ -96,17 +96,17 @@ export default function ProductVariantSelector({
   }
 
   return (
-    <div className="space-y-5 rounded-2xl border border-border bg-card p-5 shadow-sm">
+    <div className="space-y-5 rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-sm">
       {/* Top Header & View Toggle */}
-      <div className="flex items-center justify-between border-b border-border pb-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
         <div className="flex items-center gap-2">
-          <SlidersHorizontal className="h-4 w-4 text-accent-500" />
+          <SlidersHorizontal className="h-4 w-4 text-accent-500 shrink-0" />
           <span className="text-sm font-semibold text-foreground">
             Select Specifications ({variants.length} options available)
           </span>
         </div>
 
-        <div className="flex items-center gap-1 rounded-lg border border-border bg-muted/40 p-1">
+        <div className="flex items-center gap-1 rounded-lg border border-border bg-muted/40 p-1 self-start sm:self-auto">
           <button
             type="button"
             onClick={() => setViewMode('pills')}
