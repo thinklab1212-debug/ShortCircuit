@@ -78,7 +78,7 @@ const productVariantSchema = new Schema<IProductVariant, IProductVariantModel>(
       unique: true,
       uppercase: true,
       trim: true,
-      match: [/^[A-Z0-9-]+$/, 'SKU can only contain uppercase letters, numbers, and hyphens'],
+      match: [/^[A-Z0-9-_./]+$/, 'SKU can only contain uppercase letters, numbers, hyphens, dots, underscores, and slashes'],
     },
     mpn: {
       type: String,

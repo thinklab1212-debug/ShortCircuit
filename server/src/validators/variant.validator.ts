@@ -68,7 +68,7 @@ export const createVariantSchema = z.object({
     .toUpperCase()
     .min(1, 'SKU cannot be empty')
     .max(100, 'SKU must not exceed 100 characters')
-    .regex(/^[A-Z0-9-]+$/, 'SKU can only contain uppercase letters, numbers, and hyphens'),
+    .regex(/^[A-Z0-9-_./]+$/, 'SKU can only contain uppercase letters, numbers, hyphens, dots, underscores, and slashes'),
 
   mpn: z.string().trim().optional(),
 
