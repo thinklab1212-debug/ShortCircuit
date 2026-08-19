@@ -78,13 +78,15 @@ apiClient.interceptors.response.use(
 
         processQueue(null)
         return apiClient(originalRequest)
-      } catch (refreshError) {
+      } catch (refreshError: any) {
         processQueue(refreshError)
-        useAuthStore.getState().logout()
-        // Avoid redirect loops if we are already on an auth page.
-        if (!window.location.pathname.startsWith('/login')) {
-          const redirect = encodeURIComponent(window.location.pathname + window.location.search)
-          window.location.href = `/login?redirect=${redirect}`
+        // Do not force logout or redirect if error is 503 maintenance mode
+        if (refreshError?.response?.status !== 503) {
+          useAuthStore.getState().logout()
+          if (!window.location.pathname.startsWith('/login')) {
+            const redirect = encodeURIComponent(window.location.pathname + window.location.search)
+            window.location.href = `/login?redirect=${redirect}`
+          }
         }
         return Promise.reject(refreshError)
       } finally {

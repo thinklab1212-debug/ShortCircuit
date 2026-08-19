@@ -42,9 +42,13 @@ export function useInitAuth() {
           setLoading(false)
           setInitialized(true)
         }
-      } catch {
+      } catch (err: any) {
         if (active) {
-          logout()
+          if (err?.response?.status !== 503) {
+            logout()
+          }
+          setLoading(false)
+          setInitialized(true)
         }
       }
     }

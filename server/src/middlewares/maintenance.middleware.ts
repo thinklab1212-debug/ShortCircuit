@@ -21,10 +21,8 @@ const WHITELISTED_PATHS = [
   '/health/ready',
   '/api/v1/health',
   '/api/v1/settings/public',
-  '/api/v1/auth/login',
-  '/api/v1/auth/me',
-  '/api/v1/auth/logout',
-  '/api/v1/auth/refresh-token',
+  '/api/v1/users/me',
+  '/api/v1/auth',
 ];
 
 /**
@@ -45,26 +43,61 @@ async function checkIsAdminUser(req: Request): Promise<boolean> {
     token = req.cookies[AUTH_CONSTANTS.ACCESS_TOKEN_COOKIE] || req.cookies.accessToken;
   }
 
-  if (!token) return false;
-
-  try {
-    const decoded = jwt.verify(token, env.JWT_ACCESS_SECRET) as IAccessTokenPayload;
-    const userDoc = await User.findById(decoded.userId).select('role isBlocked');
-    if (userDoc && !userDoc.isBlocked && userDoc.role === 'admin') {
-      req.user = {
-        _id: userDoc._id.toString(),
-        email: userDoc.email,
-        role: userDoc.role,
-        isOrganizer: userDoc.isOrganizer,
-        firstName: userDoc.firstName,
-        lastName: userDoc.lastName,
-        isBlocked: userDoc.isBlocked,
-        isEmailVerified: userDoc.isEmailVerified,
-      };
-      return true;
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, env.JWT_ACCESS_SECRET) as IAccessTokenPayload;
+      const userDoc = await User.findById(decoded.userId).select('role isBlocked email firstName lastName isOrganizer isEmailVerified');
+      if (userDoc && !userDoc.isBlocked && userDoc.role === 'admin') {
+        req.user = {
+          _id: userDoc._id.toString(),
+          email: userDoc.email,
+          role: userDoc.role,
+          isOrganizer: userDoc.isOrganizer,
+          firstName: userDoc.firstName,
+          lastName: userDoc.lastName,
+          isBlocked: userDoc.isBlocked,
+          isEmailVerified: userDoc.isEmailVerified,
+        };
+        return true;
+      }
+    } catch {
+      // Access token is expired or invalid. Check payload claims without verification.
+      try {
+        const decoded = jwt.decode(token) as IAccessTokenPayload | null;
+        if (decoded && decoded.userId && decoded.role === 'admin') {
+          const userDoc = await User.findById(decoded.userId).select('role isBlocked');
+          if (userDoc && !userDoc.isBlocked && userDoc.role === 'admin') {
+            // Allow request through so downstream authMiddleware can respond with 401
+            // and trigger client-side silent token refresh.
+            return true;
+          }
+        }
+      } catch {
+        // Decode failed
+      }
     }
-  } catch {
-    // Token invalid or expired
+  }
+
+  // Check refresh token cookie if access token cookie is missing/expired
+  const rawRefreshToken = req.cookies?.[AUTH_CONSTANTS.REFRESH_TOKEN_COOKIE] || req.cookies?.refreshToken;
+  if (rawRefreshToken) {
+    try {
+      const Token = (await import('../models/Token.model.js')).default;
+      const bcrypt = (await import('bcryptjs')).default;
+      const activeTokens = await Token.find({ expiresAt: { $gt: new Date() } }).select('userId token');
+      for (const tDoc of activeTokens) {
+        const isMatch = await bcrypt.compare(rawRefreshToken, tDoc.token);
+        if (isMatch) {
+          const userDoc = await User.findById(tDoc.userId).select('role isBlocked');
+          if (userDoc && !userDoc.isBlocked && userDoc.role === 'admin') {
+            return true;
+          }
+          break;
+        }
+      }
+    } catch {
+      // Refresh token check error
+    }
   }
 
   return false;
