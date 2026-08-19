@@ -1,13 +1,26 @@
-import { Outlet } from 'react-router'
-import { Link } from 'react-router'
+import { Outlet, Link, useLocation } from 'react-router'
 import { X } from 'lucide-react'
 import { APP } from '@/constants'
 import { BrandLogo } from '@/components/layout/BrandLogo'
 import { ScrollToTop } from '@/components/layout/ScrollToTop'
+import { usePublicSettings } from '@/hooks/useSettings'
+import { useAuthStore } from '@/store'
+import MaintenancePage from '@/pages/MaintenancePage'
 
 // ─── Auth Layout (Login, Register, Forgot Password) ────────────────────────────
 
 export function AuthLayout() {
+  const location = useLocation()
+  const user = useAuthStore((s) => s.user)
+  const { data: settings } = usePublicSettings()
+
+  const isAdmin = user?.role === 'admin'
+  const isMaintenance = settings?.isMaintenanceMode
+  const isLoginRoute = location.pathname === '/login'
+
+  if (isMaintenance && !isAdmin && !isLoginRoute) {
+    return <MaintenancePage />
+  }
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-900 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4 relative overflow-hidden">
       <ScrollToTop />

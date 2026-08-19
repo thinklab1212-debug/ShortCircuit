@@ -15,6 +15,9 @@ import { APP } from '@/constants'
 import { BrandLogo } from '@/components/layout/BrandLogo'
 import { useIsMobile } from '@/hooks'
 import { ScrollToTop } from '@/components/layout/ScrollToTop'
+import { usePublicSettings } from '@/hooks/useSettings'
+import { useAuthStore } from '@/store'
+import MaintenancePage from '@/pages/MaintenancePage'
 
 // ─── Vendor Layout ──────────────────────────────────────────────────────────────
 
@@ -29,6 +32,16 @@ export function VendorLayout() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const location = useLocation()
   const isMobile = useIsMobile()
+
+  const user = useAuthStore((s) => s.user)
+  const { data: settings } = usePublicSettings()
+
+  const isAdmin = user?.role === 'admin'
+  const isMaintenance = settings?.isMaintenanceMode
+
+  if (isMaintenance && !isAdmin) {
+    return <MaintenancePage />
+  }
 
   const isActive = (href: string) => {
     if (href === '/vendor') return location.pathname === '/vendor'
