@@ -40,16 +40,16 @@ app.use(helmet());
 // 2. Enable Cross-Origin Resource Sharing (CORS)
 app.use(cors(corsOptions));
 
-// 3. Request Parsers (10kb body size limits to prevent DOS)
+// 3. Request Parsers (10mb body size limits to support bulk product operations)
 app.use(
   express.json({
-    limit: '10kb',
+    limit: '10mb',
     verify: (req: express.Request, _res, buf) => {
       req.rawBody = buf;
     },
   })
 );
-app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // 4. Request Tracing & Winston logging

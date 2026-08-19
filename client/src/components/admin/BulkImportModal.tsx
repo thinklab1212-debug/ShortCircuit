@@ -44,10 +44,25 @@ export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
     },
   })
 
-  // Execute Mutation
+  // Execute Mutation (with batch chunking to prevent 413 payload limit errors)
   const executeMutation = useMutation({
-    mutationFn: (validItems: BulkPreviewItem[]) =>
-      productApi.executeBulkImport(validItems).then((res) => res.data.data),
+    mutationFn: async (validItems: BulkPreviewItem[]) => {
+      const BATCH_SIZE = 50
+      let createdCount = 0
+      let updatedCount = 0
+      let totalExecuted = 0
+
+      for (let i = 0; i < validItems.length; i += BATCH_SIZE) {
+        const chunk = validItems.slice(i, i + BATCH_SIZE)
+        const res = await productApi.executeBulkImport(chunk)
+        const data = res.data.data
+        createdCount += data.createdCount
+        updatedCount += data.updatedCount
+        totalExecuted += data.totalExecuted
+      }
+
+      return { createdCount, updatedCount, totalExecuted }
+    },
     onSuccess: (data) => {
       toast.success(
         `Bulk Import Successful! Created ${data.createdCount} products, updated ${data.updatedCount} products.`
