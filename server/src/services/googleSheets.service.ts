@@ -414,36 +414,14 @@ export class GoogleSheetsService {
       }
     }
 
-    // Clear existing sheet rows and append fresh rows
+    // Clear existing sheet rows, set header row, and append array values
+    await this.productsSheet.setHeaderRow(PRODUCT_HEADERS);
     await this.productsSheet.clearRows();
-    if (rows.length > 0) {
-      await this.productsSheet.addRows(rows);
-    }
 
-    // Apply Data Validation rules for family rows so Google Sheets displays interactive dropdowns
-    try {
-      await this.productsSheet.loadCells();
-      let rowIndex = 1; // row 0 is header
-      for (const p of products) {
-        if (p.productType === 'family') {
-          const familyVariants = variantsByProductMap.get(p._id.toString()) || [];
-          if (familyVariants.length > 0) {
-            const cell = this.productsSheet.getCell(rowIndex, 9); // Column index 9 is 'Select Variant (Dropdown)'
-            const skuList = familyVariants.map((v) => v.sku);
-            (cell as any).dataValidation = {
-              condition: {
-                type: 'ONE_OF_LIST',
-                values: skuList.map((sku) => ({ userEnteredValue: sku })),
-              },
-              showCustomUi: true,
-            };
-          }
-        }
-        rowIndex++;
-      }
-      await this.productsSheet.saveUpdatedCells();
-    } catch (err) {
-      logger.debug('  ℹ️  Data validation rules skipped (non-critical):', err);
+    if (rows.length > 0) {
+      // Map row objects into ordered arrays matching PRODUCT_HEADERS order
+      const rowArrays = rows.map((r) => PRODUCT_HEADERS.map((h) => r[h] ?? ''));
+      await this.productsSheet.addRows(rowArrays);
     }
 
     logger.info(`📊 Google Sheets sync: Exported ${rows.length} consolidated product rows (${variants.length} total variants) to Products tab`);
