@@ -24,6 +24,9 @@ export interface BulkPreviewItem {
   salePrice?: number;
   stock: number;
   isActive: boolean;
+  productType?: 'standalone' | 'family';
+  description?: string;
+  specificationsCount?: number;
   changes?: string[];
   errors?: string[];
   parsedData?: any;
@@ -39,6 +42,54 @@ export interface BulkImportPreviewResult {
 }
 
 export class BulkImportService {
+  /**
+   * Helper to clean common UTF-8 encoding glitches (en-dashes, smart quotes, corrupted accents).
+   */
+  private static cleanText(str: any): string {
+    if (str === undefined || str === null) return '';
+    let val = String(str);
+    val = val
+      .replace(/â€“|â€”|–|—/g, '-')    // Normalize en-dashes / em-dashes
+      .replace(/â€œ|â€|“|”/g, '"')     // Normalize double quotes
+      .replace(/â€™|’/g, "'")           // Normalize single quotes
+      .replace(/Â/g, '')               // Strip ghost encoding characters
+      .replace(/\u00A0/g, ' ')          // Non-breaking spaces
+      .trim();
+    return val;
+  }
+
+  /**
+   * Helper to parse specifications string into structured Key-Value array.
+   * Handles middle dots (·), semicolons (;), newlines (\n), and pipes (|).
+   */
+  private static parseSpecifications(rawSpecs: string): Array<{ key: string; value: string; group?: string }> {
+    if (!rawSpecs) return [];
+    
+    // Split by middle dot ·, semicolon ;, newline \n, or pipe |
+    const items = rawSpecs.split(/[·;\n|]/);
+    const specs: Array<{ key: string; value: string; group?: string }> = [];
+
+    for (const item of items) {
+      const trimmed = this.cleanText(item);
+      if (!trimmed) continue;
+
+      const colonIdx = trimmed.indexOf(':');
+      if (colonIdx > 0) {
+        const key = this.cleanText(trimmed.substring(0, colonIdx));
+        const val = this.cleanText(trimmed.substring(colonIdx + 1));
+        if (key && val) {
+          specs.push({
+            key,
+            value: val,
+            group: 'General',
+          });
+        }
+      }
+    }
+
+    return specs;
+  }
+
   /**
    * Helper to safely extract numeric values from raw strings/numbers.
    */
@@ -56,26 +107,33 @@ export class BulkImportService {
    */
   private static normalizeRow(rawRow: Record<string, any>): Record<string, any> {
     const normalized: Record<string, any> = {};
+
     for (const [key, value] of Object.entries(rawRow)) {
       const cleanKey = key.trim().toLowerCase();
+
       if (cleanKey === 'sku' || cleanKey === 'product sku') {
-        normalized.sku = String(value || '').trim().toUpperCase();
+        normalized.sku = this.cleanText(value).toUpperCase();
       } else if (cleanKey === 'name' || cleanKey === 'product name' || cleanKey === 'title') {
-        normalized.name = String(value || '').trim();
+        normalized.name = this.cleanText(value);
       } else if (cleanKey === 'category' || cleanKey === 'category name') {
-        normalized.categoryName = String(value || '').trim();
+        normalized.categoryName = this.cleanText(value);
       } else if (cleanKey === 'brand' || cleanKey === 'brand name') {
-        normalized.brandName = String(value || '').trim();
+        normalized.brandName = this.cleanText(value);
       } else if (cleanKey === 'price' || cleanKey === 'mrp' || cleanKey === 'price / range') {
         normalized.price = this.parseNumber(value);
       } else if (cleanKey === 'sale price' || cleanKey === 'saleprice' || cleanKey === 'discount price') {
         normalized.salePrice = this.parseNumber(value);
       } else if (cleanKey === 'stock' || cleanKey === 'total stock' || cleanKey === 'quantity') {
         normalized.stock = this.parseNumber(value);
-      } else if (cleanKey === 'description') {
-        normalized.description = String(value || '').trim();
+      } else if (cleanKey === 'description' || cleanKey === 'short description') {
+        normalized.description = this.cleanText(value);
+      } else if (cleanKey === 'specifications' || cleanKey === 'specs' || cleanKey === 'variant options & specifications') {
+        normalized.specificationsRaw = String(value || '').trim();
+      } else if (cleanKey === 'type' || cleanKey === 'product type') {
+        const typeStr = this.cleanText(value).toLowerCase();
+        normalized.productType = typeStr === 'family' ? 'family' : 'standalone';
       } else if (cleanKey === 'status') {
-        const strVal = String(value || '').trim().toLowerCase();
+        const strVal = this.cleanText(value).toLowerCase();
         normalized.isActive = strVal === 'active' || strVal === 'true' || strVal === '1';
       }
     }
@@ -96,7 +154,8 @@ export class BulkImportService {
         throw new ApiError(400, 'No file uploaded for bulk import.');
       }
       try {
-        const workbook = XLSX.read(fileBuffer, { type: 'buffer' });
+        // Read with UTF-8 raw buffer parsing to preserve special characters
+        const workbook = XLSX.read(fileBuffer, { type: 'buffer', codepage: 65001 });
         const sheetName = workbook.SheetNames[0];
         if (!sheetName) {
           throw new ApiError(400, 'Uploaded spreadsheet is empty.');
@@ -107,11 +166,9 @@ export class BulkImportService {
         throw new ApiError(400, `Failed to parse spreadsheet file: ${err.message || 'Invalid format'}`);
       }
     } else if (source === 'google_sheets') {
-      // Pull products from Google Sheets
-      const syncRes = await GoogleSheetsService.syncAllProducts(); // Ensure initialized
+      const syncRes = await GoogleSheetsService.syncAllProducts();
       logger.info(`Bulk import pulling from Google Sheets (synced ${syncRes.totalSynced} items baseline)`);
       
-      // Access doc directly
       const doc = (GoogleSheetsService as any).doc;
       if (!doc || !doc.sheetsByTitle['Products']) {
         throw new ApiError(400, 'Google Sheets Products tab is not available or credentials missing.');
@@ -132,7 +189,6 @@ export class BulkImportService {
       };
     }
 
-    // Limit batch size to safeguard server memory
     if (rawRows.length > 1000) {
       throw new ApiError(400, `Bulk import batch limit exceeded. Maximum 1,000 rows allowed (found ${rawRows.length}).`);
     }
@@ -179,12 +235,14 @@ export class BulkImportService {
       const sku = norm.sku || '';
       const name = norm.name || '';
       const categoryName = norm.categoryName || '';
-      const brandName = norm.brandName || '';
+      let brandName = norm.brandName || 'Generic';
       const price = norm.price;
       const salePrice = norm.salePrice;
       const stock = norm.stock !== undefined ? norm.stock : 0;
       const isActive = norm.isActive !== undefined ? norm.isActive : true;
-      const description = norm.description || `${name} - Bulk imported item`;
+      const productType = norm.productType || 'standalone';
+      const description = norm.description || `${name} - High-quality component.`;
+      const specifications = this.parseSpecifications(norm.specificationsRaw || '');
 
       // Validation Rules
       if (!sku) {
@@ -223,10 +281,14 @@ export class BulkImportService {
       if (brandName) {
         brandId = brandMap.get(brandName.toLowerCase());
         if (!brandId) {
-          errors.push(`Brand "${brandName}" does not exist in database`);
+          // Auto-create brand if it doesn't exist (e.g. "Generic", "ST / Generic")
+          const newBrand = await Brand.create({
+            name: brandName,
+            isActive: true,
+          });
+          brandId = newBrand._id.toString();
+          brandMap.set(brandName.toLowerCase(), brandId);
         }
-      } else {
-        errors.push('Brand name is required');
       }
 
       if (errors.length > 0) {
@@ -242,6 +304,9 @@ export class BulkImportService {
           salePrice,
           stock,
           isActive,
+          productType,
+          description,
+          specificationsCount: specifications.length,
           errors,
         });
         continue;
@@ -262,10 +327,11 @@ export class BulkImportService {
         }
         if (existing.stock !== stock) changes.push(`Stock: ${existing.stock} ➔ ${stock}`);
         if (existing.isActive !== isActive) changes.push(`Status: ${existing.isActive ? 'Active' : 'Inactive'} ➔ ${isActive ? 'Active' : 'Inactive'}`);
+        if (specifications.length > 0) changes.push(`Updated ${specifications.length} technical specifications`);
       } else {
         action = 'create';
         newProductsCount++;
-        changes.push('New product document will be created');
+        changes.push(`New product with ${specifications.length} technical specs will be created`);
       }
 
       validCount++;
@@ -280,6 +346,9 @@ export class BulkImportService {
         salePrice,
         stock,
         isActive,
+        productType,
+        description,
+        specificationsCount: specifications.length,
         changes,
         parsedData: {
           sku,
@@ -288,10 +357,12 @@ export class BulkImportService {
           price,
           salePrice: salePrice || undefined,
           stock,
+          productType,
           category: categoryId,
           brand: brandId,
+          specifications,
           isActive,
-          approvalStatus: 'approved', // Admin bulk imports are pre-approved
+          approvalStatus: 'approved',
         },
       });
     }
@@ -332,7 +403,6 @@ export class BulkImportService {
               ...data,
               slug,
               images: [],
-              specifications: [],
               tags: [data.name.toLowerCase(), data.sku.toLowerCase()],
               soldCount: 0,
               ratingsAverage: 0,
@@ -351,11 +421,14 @@ export class BulkImportService {
               $set: {
                 name: data.name,
                 slug,
+                description: data.description,
                 price: data.price,
                 ...(data.salePrice ? { salePrice: data.salePrice } : { $unset: { salePrice: '' } }),
                 stock: data.stock,
+                productType: data.productType,
                 category: data.category,
                 brand: data.brand,
+                specifications: data.specifications,
                 isActive: data.isActive,
                 updatedAt: new Date(),
               },

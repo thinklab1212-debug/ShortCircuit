@@ -1165,6 +1165,9 @@ export interface BulkPreviewItem {
   salePrice?: number
   stock: number
   isActive: boolean
+  productType?: 'standalone' | 'family'
+  description?: string
+  specificationsCount?: number
   changes?: string[]
   errors?: string[]
   parsedData?: any
