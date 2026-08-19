@@ -1,8 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import queryKeys from '@/api/queryKeys'
-import settingsApi, { SystemSettingsData } from '@/services/settingsApi'
+import settingsApi, { type SystemSettingsData } from '@/services/settingsApi'
 import { useAuthStore } from '@/store'
+
 import type { AxiosErrorLike } from '@/types/helpers'
 
 function errMsg(error: AxiosErrorLike, fallback: string) {

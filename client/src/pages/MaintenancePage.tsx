@@ -62,9 +62,10 @@ export default function MaintenancePage() {
           </Button>
 
           <a
-            href={`mailto:${APP.SUPPORT_EMAIL || 'support@electrokart.com'}`}
+            href="mailto:support@electrokart.com"
             className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-6 text-sm font-medium text-slate-200 transition-colors hover:bg-slate-800 ring-1 ring-white/10 sm:w-auto"
           >
+
             <Mail className="h-4 w-4 text-slate-400" />
             Contact Support
           </a>
