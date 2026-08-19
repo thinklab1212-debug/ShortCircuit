@@ -240,6 +240,12 @@ const API_ROUTES = {
     ADMIN_BY_ID: (id: string) => `/delivery-pincodes/admin/${id}`,
     ADMIN_STATUS: (id: string) => `/delivery-pincodes/admin/${id}/status`,
   },
+  // System & Store Settings
+  SETTINGS: {
+    PUBLIC: '/settings/public',
+    ADMIN: '/settings/admin',
+  },
 } as const
+
 
 export default API_ROUTES

@@ -181,6 +181,14 @@ const queryKeys = {
     lists: () => [...queryKeys.deliveryPincodes.all, 'list'] as const,
     list: (params: Record<string, unknown>) => [...queryKeys.deliveryPincodes.lists(), params] as const,
   },
+
+  // Settings
+  settings: {
+    all: ['settings'] as const,
+    public: () => [...queryKeys.settings.all, 'public'] as const,
+    admin: () => [...queryKeys.settings.all, 'admin'] as const,
+  },
 } as const
+
 
 export default queryKeys

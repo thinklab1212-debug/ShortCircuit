@@ -47,3 +47,5 @@ export * from './useTeams'
 export * from './useAdminEvents'
 export * from './usePublicEvents'
 export * from './useDeliveryPincodes'
+export * from './useSettings'
+

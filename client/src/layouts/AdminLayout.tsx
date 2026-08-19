@@ -127,7 +127,10 @@ const getSidebarNav = (pendingCancellationCount: number): SidebarEntry[] => [
   },
 ]
 
+import { AdminMaintenanceBanner } from '@/components/admin'
+
 // ─── Admin Layout ───────────────────────────────────────────────────────────────
+
 
 export function AdminLayout() {
   const [collapsed, setCollapsed] = useState(false)
@@ -348,8 +351,10 @@ export function AdminLayout() {
 
       {/* Main Content */}
       <div className="flex flex-1 flex-col overflow-hidden">
+        <AdminMaintenanceBanner />
         {/* Admin Top Bar */}
         <header className="flex h-16 items-center gap-4 border-b border-border bg-background px-6">
+
           <button
             onClick={() => setMobileOpen(true)}
             className="lg:hidden flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent"

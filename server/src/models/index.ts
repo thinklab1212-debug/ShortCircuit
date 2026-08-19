@@ -25,3 +25,5 @@ export { default as ProjectKit, type IProjectKit } from './ProjectKit.model.js';
 export { default as OrganizerApplication, type IOrganizerApplication } from './OrganizerApplication.model.js';
 export { default as Event, type IEvent, type IEventKitProduct, type IEventTeam } from './Event.model.js';
 export { default as DeliveryPincode, type IDeliveryPincode } from './DeliveryPincode.model.js';
+export { default as SystemSettings, type ISystemSettings, type ISystemSettingsModel } from './SystemSettings.model.js';
+

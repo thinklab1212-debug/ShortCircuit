@@ -20,7 +20,9 @@ import {
   mongoSanitizer,
   xssSanitizer,
   requestLogger,
+  maintenanceMiddleware,
 } from './middlewares/index.js';
+
 import apiRoutes from './routes/index.js';
 import sitemapRoutes from './routes/sitemap.routes.js';
 import robotsRoutes from './routes/robots.routes.js';
@@ -93,11 +95,15 @@ app.get('/health/ready', (req, res) => {
   );
 });
 
-// 8. Swagger Interactive Docs (Mounted under /api/v1/docs)
+// 8. Maintenance Mode Gate (intercepts non-whitelisted routes if maintenance mode is enabled)
+app.use(maintenanceMiddleware);
+
+// 9. Swagger Interactive Docs (Mounted under /api/v1/docs)
 setupSwagger(app);
 
-// 9. Mount modular API endpoints
+// 10. Mount modular API endpoints
 app.use('/api/v1', apiRoutes);
+
 
 // Mount sitemap & robots.txt routes at root for SEO crawlers (/sitemap.xml, /robots.txt)
 app.use('/', sitemapRoutes);

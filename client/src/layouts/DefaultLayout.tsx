@@ -6,6 +6,10 @@ import { AuthModal } from '@/components/auth'
 import { useCart } from '@/hooks/useCart'
 import { useWishlist } from '@/hooks/useWishlist'
 
+import { usePublicSettings } from '@/hooks/useSettings'
+import { useAuthStore } from '@/store'
+import MaintenancePage from '@/pages/MaintenancePage'
+
 // ─── Default Layout (Public + Authenticated Pages) ──────────────────────────────
 
 export function DefaultLayout() {
@@ -13,6 +17,16 @@ export function DefaultLayout() {
   // so the navbar badges and product-card heart states are always accurate.
   useCart()
   useWishlist()
+
+  const user = useAuthStore((s) => s.user)
+  const { data: settings } = usePublicSettings()
+
+  const isAdmin = user?.role === 'admin'
+  const isMaintenance = settings?.isMaintenanceMode
+
+  if (isMaintenance && !isAdmin) {
+    return <MaintenancePage />
+  }
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -26,3 +40,4 @@ export function DefaultLayout() {
     </div>
   )
 }
+

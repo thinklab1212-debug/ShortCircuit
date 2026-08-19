@@ -15,3 +15,5 @@ export { publicLimiter, authLimiter, adminLimiter, teamVerifyLimiter } from './r
 export { uploadImages, uploadDatasheet, uploadCsv, uploadSpreadsheet } from './upload.middleware.js';
 export { requestId, mongoSanitizer, xssSanitizer } from './security.middleware.js';
 export { requestLogger } from './logging.middleware.js';
+export { maintenanceMiddleware } from './maintenance.middleware.js';
+

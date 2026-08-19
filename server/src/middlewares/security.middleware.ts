@@ -43,16 +43,15 @@ export const mongoSanitizer = mongoSanitize({
 // ---------------------------------------------------------------------------
 
 /**
- * Recursive sanitizer helper to scrub string values of HTML characters.
+ * Recursive sanitizer helper to scrub string values of dangerous HTML execution scripts
+ * without converting standard quotes (") or ampersands (&) into literal HTML entities (&quot;, &amp;).
  */
 function cleanXss(value: any): any {
   if (typeof value === 'string') {
     return value
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#x27;');
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+      .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
+      .replace(/javascript:/gi, '');
   }
   
   if (Array.isArray(value)) {

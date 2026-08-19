@@ -33,8 +33,10 @@ import adminOrganizerRoutes from './adminOrganizer.routes.js';
 import adminEventRoutes from './adminEvent.routes.js';
 import eventRoutes from './event.routes.js';
 import deliveryPincodeRoutes from './deliveryPincode.routes.js';
+import systemSettingsRoutes from './systemSettings.routes.js';
 
 const router = Router();
+
 
 // Route mappings
 router.use('/auth', authRoutes);
@@ -69,4 +71,8 @@ router.use('/events', eventRoutes);
 // Delivery Serviceability
 router.use('/delivery-pincodes', deliveryPincodeRoutes);
 
+// System & Store Settings
+router.use('/settings', systemSettingsRoutes);
+
 export default router;
+
