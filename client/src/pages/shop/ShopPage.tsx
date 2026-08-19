@@ -1,6 +1,6 @@
-import { useMemo } from 'react'
-import { motion } from 'framer-motion'
-import { PackageSearch, RefreshCw, Cpu, ShieldCheck, Truck } from 'lucide-react'
+import { useMemo, useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { PackageSearch, RefreshCw, Cpu, ShieldCheck, Truck, ArrowUp } from 'lucide-react'
 
 import { Link } from 'react-router'
 import { Breadcrumb } from '@/components/ui/breadcrumb'
@@ -20,7 +20,9 @@ import {
   MobileFilterDrawer,
   ShopPagination,
 } from './components'
+import ProductRequestCard from '@/components/common/ProductRequestCard'
 import { staggerContainer, fadeInUp } from '@/config/animations'
+
 
 // ─── Product Grid Skeleton ──────────────────────────────────────────────────────
 
@@ -70,6 +72,14 @@ export default function ShopPage() {
   const products = data?.data || []
   const pagination = data?.pagination
   const isListView = filters.view === 'list'
+
+  // Back to top button visibility
+  const [showBackToTop, setShowBackToTop] = useState(false)
+  useEffect(() => {
+    const handler = () => setShowBackToTop(window.scrollY > 600)
+    window.addEventListener('scroll', handler, { passive: true })
+    return () => window.removeEventListener('scroll', handler)
+  }, [])
 
   // Build JSON-LD structured data for CollectionPage, ItemList, and BreadcrumbList
   const jsonLdData = useMemo(() => {
@@ -151,254 +161,311 @@ export default function ShopPage() {
   }
 
   return (
-    <div className="container py-6 lg:py-8">
-      {/* Breadcrumb */}
-      <Breadcrumb items={breadcrumbItems} className="mb-6" />
+    <div>
+      {/* ─── Gradient Hero Banner ──────────────────────────────────────────────── */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+        {/* Background pattern */}
+        <div className="absolute inset-0 bg-grid opacity-10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent" />
 
-      {/* Page Header */}
-      <div className="mb-6">
-        <h1 className="text-display-xs sm:text-display-sm font-heading text-foreground">
-          {filters.search ? `Results for "${filters.search}"` : 'Electronics Components Catalog'}
-        </h1>
-        <p className="mt-1 text-body-md text-muted-foreground">
-          Discover high-quality development boards, sensors, actuators, and robotics modules curated for students, engineers, and makers.
-        </p>
-      </div>
+        {/* Gradient orbs */}
+        <div className="absolute top-0 left-1/4 w-72 h-72 bg-primary/20 rounded-full blur-[100px]" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-48 bg-primary/10 rounded-full blur-[80px]" />
 
-      {/* Search Bar */}
-      <div className="mb-6">
-        <ShopSearch
-          value={filters.search || ''}
-          onChange={(search) => setFilters({ search })}
-          className="max-w-lg"
-        />
-      </div>
+        <div className="container relative py-10 sm:py-14">
+          <Breadcrumb items={breadcrumbItems} className="mb-5 [&_*]:text-white/60 [&_a]:hover:text-white/80" />
 
-      {/* Main Layout */}
-      <div className="flex gap-8">
-        {/* Desktop Filter Sidebar */}
-        <div className="hidden lg:block w-[260px] shrink-0">
-          <div className="sticky top-24">
-            <FilterSidebar
-              filters={filters}
-              onFilterChange={setFilters}
-              onClear={clearFilters}
-              activeCount={activeFilterCount}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="max-w-2xl"
+          >
+            <h1 className="text-display-xs sm:text-display-sm lg:text-display-md font-heading text-white leading-tight">
+              {filters.search ? (
+                <>Results for <span className="text-primary-foreground/80">"{filters.search}"</span></>
+              ) : (
+                <>Electronics Components <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">Catalog</span></>
+              )}
+            </h1>
+            <p className="mt-3 text-base text-white/60 max-w-lg leading-relaxed">
+              Discover high-quality development boards, sensors, actuators, and robotics modules curated for students, engineers, and makers.
+            </p>
+          </motion.div>
+
+          {/* Search Bar — integrated into hero */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.15 }}
+            className="mt-6 max-w-xl"
+          >
+            <ShopSearch
+              value={filters.search || ''}
+              onChange={(search) => setFilters({ search })}
+              isSearching={isFetching && !isLoading}
             />
-          </div>
+          </motion.div>
         </div>
+      </div>
 
-        {/* Product Area */}
-        <div className="flex-1 min-w-0">
-          {/* Toolbar: Mobile Filter + Sort + View */}
-          <div className="flex flex-wrap items-center gap-3 mb-4">
-            <MobileFilterDrawer
-              filters={filters}
-              onFilterChange={setFilters}
-              onClear={clearFilters}
-              activeCount={activeFilterCount}
-            />
-            <SortControls
-              filters={filters}
-              onFilterChange={setFilters}
-              total={pagination?.totalResults}
-              className="flex-1"
-            />
-          </div>
-
-          {/* Active Filter Tags */}
-          {activeFilterCount > 0 && (
-            <div className="mb-4">
-              <ActiveFilterTags
+      {/* ─── Main Content ──────────────────────────────────────────────────────── */}
+      <div className="container py-6 lg:py-8">
+        {/* Main Layout */}
+        <div className="flex gap-8">
+          {/* Desktop Filter Sidebar */}
+          <div className="hidden lg:block w-[260px] shrink-0">
+            <div className="sticky top-24">
+              <FilterSidebar
                 filters={filters}
                 onFilterChange={setFilters}
                 onClear={clearFilters}
-                categories={categories}
-                brands={brands}
+                activeCount={activeFilterCount}
               />
             </div>
-          )}
+          </div>
 
-          {/* Loading indicator for background refetch */}
-          {isFetching && !isLoading && (
-            <div className="flex items-center gap-2 mb-4 text-sm text-muted-foreground">
-              <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-              Updating...
+          {/* Product Area */}
+          <div className="flex-1 min-w-0">
+            {/* Toolbar: Mobile Filter + Sort + View */}
+            <div className="flex flex-wrap items-center gap-3 mb-4">
+              <MobileFilterDrawer
+                filters={filters}
+                onFilterChange={setFilters}
+                onClear={clearFilters}
+                activeCount={activeFilterCount}
+              />
+              <SortControls
+                filters={filters}
+                onFilterChange={setFilters}
+                total={pagination?.totalResults}
+                className="flex-1"
+              />
             </div>
-          )}
 
-          {/* Loading State */}
-          {isLoading && (
-            <div className={
-              isListView
-                ? 'space-y-4'
-                : 'grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6'
-            }>
-              {Array.from({ length: 6 }).map((_, i) =>
-                isListView ? <ListSkeleton key={i} /> : <ProductSkeleton key={i} />
-              )}
-            </div>
-          )}
-
-          {/* Error State */}
-          {isError && !isLoading && (
-            <div className="flex flex-col items-center justify-center rounded-2xl border border-border bg-card py-20 px-6 text-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-error-50 dark:bg-error-950/50 mb-4">
-                <PackageSearch className="h-8 w-8 text-error-500" />
-              </div>
-              <h3 className="text-lg font-semibold text-foreground mb-2">Unable to load products</h3>
-              <p className="text-sm text-muted-foreground mb-6 max-w-sm">
-                Something went wrong while fetching products. Please try again.
-              </p>
-              <Button onClick={() => refetch()} variant="outline">
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Try Again
-              </Button>
-            </div>
-          )}
-
-          {/* Empty State */}
-          {!isLoading && !isError && products.length === 0 && (
-            <div className="flex flex-col items-center justify-center rounded-2xl border border-border bg-card py-20 px-6 text-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted mb-4">
-                <PackageSearch className="h-8 w-8 text-muted-foreground" />
-              </div>
-              <h3 className="text-lg font-semibold text-foreground mb-2">No products found</h3>
-              <p className="text-sm text-muted-foreground mb-6 max-w-sm">
-                Try adjusting your filters or search terms to find what you're looking for.
-              </p>
-              {activeFilterCount > 0 && (
-                <Button onClick={clearFilters} variant="outline">
-                  Clear All Filters
-                </Button>
-              )}
-            </div>
-          )}
-
-          {/* Product Grid */}
-          {!isLoading && !isError && products.length > 0 && (
-            <>
-              <motion.div
-                variants={staggerContainer}
-                initial="initial"
-                animate="animate"
-                key={`${filters.page}-${filters.sort}-${filters.view}`}
-                className={
-                  isListView
-                    ? 'space-y-4'
-                    : 'grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6'
-                }
-              >
-                {products.map((product) => (
-                  <motion.div key={product._id} variants={fadeInUp}>
-                    {isListView ? (
-                      <ProductListCard
-                        product={product}
-                        isWishlisted={isInWishlist(product._id)}
-                        onAddToCart={onAddToCart}
-                        onWishlistToggle={onWishlistToggle}
-                      />
-                    ) : (
-                      <ProductGridCard
-                        product={product}
-                        isWishlisted={isInWishlist(product._id)}
-                        onAddToCart={onAddToCart}
-                        onWishlistToggle={onWishlistToggle}
-                      />
-                    )}
-                  </motion.div>
-                ))}
-              </motion.div>
-
-              {/* Pagination */}
-              {pagination && (
-                <ShopPagination
-                  page={pagination.page}
-                  totalPages={pagination.totalPages}
-                  total={pagination.totalResults}
-                  limit={pagination.limit}
-                  onPageChange={(page) => setFilters({ page })}
+            {/* Active Filter Tags */}
+            {activeFilterCount > 0 && (
+              <div className="mb-4">
+                <ActiveFilterTags
+                  filters={filters}
+                  onFilterChange={setFilters}
+                  onClear={clearFilters}
+                  categories={categories}
+                  brands={brands}
                 />
-              )}
-            </>
-          )}
+              </div>
+            )}
+
+            {/* Loading indicator for background refetch */}
+            {isFetching && !isLoading && (
+              <div className="flex items-center gap-2 mb-4 text-sm text-muted-foreground">
+                <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                Updating...
+              </div>
+            )}
+
+            {/* Loading State */}
+            {isLoading && (
+              <div className={
+                isListView
+                  ? 'space-y-4'
+                  : 'grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6'
+              }>
+                {Array.from({ length: 6 }).map((_, i) =>
+                  isListView ? <ListSkeleton key={i} /> : <ProductSkeleton key={i} />
+                )}
+              </div>
+            )}
+
+            {/* Error State */}
+            {isError && !isLoading && (
+              <div className="flex flex-col items-center justify-center rounded-2xl border border-border bg-card py-20 px-6 text-center">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-error-50 dark:bg-error-950/50 mb-4">
+                  <PackageSearch className="h-8 w-8 text-error-500" />
+                </div>
+                <h3 className="text-lg font-semibold text-foreground mb-2">Unable to load products</h3>
+                <p className="text-sm text-muted-foreground mb-6 max-w-sm">
+                  Something went wrong while fetching products. Please try again.
+                </p>
+                <Button onClick={() => refetch()} variant="outline">
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Try Again
+                </Button>
+              </div>
+            )}
+
+            {/* Empty State */}
+            {!isLoading && !isError && products.length === 0 && (
+              <div className="space-y-6">
+                <div className="flex flex-col items-center justify-center rounded-2xl border border-border bg-card py-12 px-6 text-center">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted mb-4">
+                    <PackageSearch className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-foreground mb-2">No products found</h3>
+                  <p className="text-sm text-muted-foreground mb-4 max-w-sm">
+                    {filters.search
+                      ? `No components matched your search for "${filters.search}".`
+                      : "Try adjusting your filters or search terms to find what you're looking for."}
+                  </p>
+                  {activeFilterCount > 0 && (
+                    <Button onClick={clearFilters} variant="outline" size="sm">
+                      Clear All Filters
+                    </Button>
+                  )}
+                </div>
+
+                {/* Product Request / Missing Product Card */}
+                <ProductRequestCard searchTerm={filters.search || ''} />
+              </div>
+            )}
+
+
+            {/* Product Grid */}
+            {!isLoading && !isError && products.length > 0 && (
+              <>
+                <motion.div
+                  variants={staggerContainer}
+                  initial="initial"
+                  animate="animate"
+                  key={`${filters.page}-${filters.sort}-${filters.view}`}
+                  className={
+                    isListView
+                      ? 'space-y-4'
+                      : 'grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6'
+                  }
+                >
+                  {products.map((product) => (
+                    <motion.div key={product._id} variants={fadeInUp}>
+                      {isListView ? (
+                        <ProductListCard
+                          product={product}
+                          isWishlisted={isInWishlist(product._id)}
+                          onAddToCart={onAddToCart}
+                          onWishlistToggle={onWishlistToggle}
+                        />
+                      ) : (
+                        <ProductGridCard
+                          product={product}
+                          isWishlisted={isInWishlist(product._id)}
+                          onAddToCart={onAddToCart}
+                          onWishlistToggle={onWishlistToggle}
+                        />
+                      )}
+                    </motion.div>
+                  ))}
+                </motion.div>
+
+                {/* Pagination */}
+                {pagination && (
+                  <ShopPagination
+                    page={pagination.page}
+                    totalPages={pagination.totalPages}
+                    total={pagination.totalResults}
+                    limit={pagination.limit}
+                    onPageChange={(page) => setFilters({ page })}
+                  />
+                )}
+              </>
+            )}
+          </div>
         </div>
+
+        {/* Product Request Banner */}
+        <div className="mt-14">
+          <ProductRequestCard variant="banner" searchTerm={filters.search || ''} />
+        </div>
+
+        {/* ─── Rich SEO Information & Electronics Guide Section ────────────────────── */}
+        <section className="mt-12 pt-12 border-t border-border space-y-10">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="flex gap-4 p-5 rounded-2xl bg-card border border-border hover:shadow-card-hover transition-shadow">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <Cpu className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground text-sm">100% Tested Hardware</h3>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Every sensor, microcontroller, and IC is quality-verified before dispatch for reliable engineering projects.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-4 p-5 rounded-2xl bg-card border border-border hover:shadow-card-hover transition-shadow">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <Truck className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground text-sm">Fast Dispatch Across India</h3>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Same-day or next-day shipping to Delhi, Bengaluru, Mumbai, Pune, Hyderabad, Chennai, and all serviceable pincodes.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-4 p-5 rounded-2xl bg-card border border-border hover:shadow-card-hover transition-shadow">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <ShieldCheck className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground text-sm">Student & Maker Friendly</h3>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Affordable pricing on bulk college workshop orders, DIY kits, and individual lab components.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Informative Catalog Text & Category Links */}
+          <div className="rounded-2xl bg-muted/40 border border-border p-6 sm:p-8 space-y-6 text-sm text-muted-foreground leading-relaxed">
+            <div>
+              <h2 className="text-lg sm:text-xl font-heading font-semibold text-foreground mb-2">
+                Buy Genuine Electronic Components, Microcontrollers & DIY Kits Online in India
+              </h2>
+              <p>
+                Welcome to Short Circuit, your one-stop electronics marketplace designed for students, makers, hobbyists, and professional engineers.
+                Whether you are building your first line-following robot, prototyping an IoT sensor node with ESP32, or engineering an advanced autonomous drone,
+                we supply top-tier hardware from trusted manufacturers at competitive prices.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 pt-2">
+              <div className="space-y-1">
+                <h4 className="font-semibold text-foreground text-xs uppercase tracking-wider">Microcontrollers</h4>
+                <p className="text-xs">Arduino Uno, Mega, Nano, ESP32, ESP8266, Raspberry Pi Pico & development boards.</p>
+              </div>
+              <div className="space-y-1">
+                <h4 className="font-semibold text-foreground text-xs uppercase tracking-wider">Sensors & Modules</h4>
+                <p className="text-xs">Ultrasonic distance, IR, DHT11/22 temperature & humidity, MQ gas sensors, gyroscope & IMUs.</p>
+              </div>
+              <div className="space-y-1">
+                <h4 className="font-semibold text-foreground text-xs uppercase tracking-wider">Motors & Drivers</h4>
+                <p className="text-xs">L298N motor drivers, servo motors (SG90, MG996R), N20 micro gear motors, stepper drivers.</p>
+              </div>
+              <div className="space-y-1">
+                <h4 className="font-semibold text-foreground text-xs uppercase tracking-wider">DIY Project Kits</h4>
+                <p className="text-xs">Explore step-by-step smart kits in our <Link to="/projects" className="text-primary underline">Project Builder</Link> with verified component lists.</p>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
 
-      {/* ─── Rich SEO Information & Electronics Guide Section ────────────────────── */}
-      <section className="mt-16 pt-12 border-t border-border space-y-10">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="flex gap-4 p-5 rounded-2xl bg-card border border-border">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <Cpu className="h-6 w-6" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-foreground text-sm">100% Tested Hardware</h3>
-              <p className="text-xs text-muted-foreground mt-1">
-                Every sensor, microcontroller, and IC is quality-verified before dispatch for reliable engineering projects.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex gap-4 p-5 rounded-2xl bg-card border border-border">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <Truck className="h-6 w-6" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-foreground text-sm">Fast Dispatch Across India</h3>
-              <p className="text-xs text-muted-foreground mt-1">
-                Same-day or next-day shipping to Delhi, Bengaluru, Mumbai, Pune, Hyderabad, Chennai, and all serviceable pincodes.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex gap-4 p-5 rounded-2xl bg-card border border-border">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <ShieldCheck className="h-6 w-6" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-foreground text-sm">Student & Maker Friendly</h3>
-              <p className="text-xs text-muted-foreground mt-1">
-                Affordable pricing on bulk college workshop orders, DIY kits, and individual lab components.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Informative Catalog Text & Category Links */}
-        <div className="rounded-2xl bg-muted/40 border border-border p-6 sm:p-8 space-y-6 text-sm text-muted-foreground leading-relaxed">
-          <div>
-            <h2 className="text-lg sm:text-xl font-heading font-semibold text-foreground mb-2">
-              Buy Genuine Electronic Components, Microcontrollers & DIY Kits Online in India
-            </h2>
-            <p>
-              Welcome to Short Circuit, your one-stop electronics marketplace designed for students, makers, hobbyists, and professional engineers.
-              Whether you are building your first line-following robot, prototyping an IoT sensor node with ESP32, or engineering an advanced autonomous drone,
-              we supply top-tier hardware from trusted manufacturers at competitive prices.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 pt-2">
-            <div className="space-y-1">
-              <h4 className="font-semibold text-foreground text-xs uppercase tracking-wider">Microcontrollers</h4>
-              <p className="text-xs">Arduino Uno, Mega, Nano, ESP32, ESP8266, Raspberry Pi Pico & development boards.</p>
-            </div>
-            <div className="space-y-1">
-              <h4 className="font-semibold text-foreground text-xs uppercase tracking-wider">Sensors & Modules</h4>
-              <p className="text-xs">Ultrasonic distance, IR, DHT11/22 temperature & humidity, MQ gas sensors, gyroscope & IMUs.</p>
-            </div>
-            <div className="space-y-1">
-              <h4 className="font-semibold text-foreground text-xs uppercase tracking-wider">Motors & Drivers</h4>
-              <p className="text-xs">L298N motor drivers, servo motors (SG90, MG996R), N20 micro gear motors, stepper drivers.</p>
-            </div>
-            <div className="space-y-1">
-              <h4 className="font-semibold text-foreground text-xs uppercase tracking-wider">DIY Project Kits</h4>
-              <p className="text-xs">Explore step-by-step smart kits in our <Link to="/projects" className="text-primary underline">Project Builder</Link> with verified component lists.</p>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* ─── Back to Top Button ──────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {showBackToTop && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ duration: 0.2 }}
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            className="fixed bottom-6 right-6 z-40 flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-colors hover:scale-105 active:scale-95"
+            aria-label="Back to top"
+          >
+            <ArrowUp className="h-5 w-5" />
+          </motion.button>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
-

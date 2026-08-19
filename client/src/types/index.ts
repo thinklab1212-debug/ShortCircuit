@@ -1096,3 +1096,17 @@ export interface PincodeCheckResult {
   pincode: string
   message: string
 }
+
+// ─── Product Request / Enquiry ───────────────────────────────────────────────
+
+export interface ProductRequestFormData {
+  name: string
+  email: string
+  productName: string
+  quantity?: number | string
+  targetPrice?: number | string
+  referenceUrl?: string
+  specifications?: string
+  notes?: string
+}
+

@@ -1,22 +1,53 @@
+import { useState } from 'react'
 import { Link } from 'react-router'
-import { Star, Shield, Truck, BadgeCheck, CreditCard, Headset } from 'lucide-react'
+import { Star, Shield, Truck, BadgeCheck, CreditCard, Headset, Share2, Link2, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ProductBadge } from '@/components/ui/product-badge'
 import { formatPrice, effectivePrice, productDiscount } from '@/utils'
 import type { Product } from '@/types'
+import toast from 'react-hot-toast'
 
 // ─── Product Info ───────────────────────────────────────────────────────────────
 
 interface ProductInfoProps {
   product: Product
+  onScrollToReviews?: () => void
 }
 
-export default function ProductInfo({ product }: ProductInfoProps) {
+export default function ProductInfo({ product, onScrollToReviews }: ProductInfoProps) {
   const discount = productDiscount(product)
   const price = effectivePrice(product)
   const hasDiscount = product.salePrice != null && product.salePrice < product.price
   const brand = typeof product.brand === 'object' ? product.brand : null
   const category = typeof product.category === 'object' ? product.category : null
+  const [copied, setCopied] = useState(false)
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href)
+      setCopied(true)
+      toast.success('Link copied!')
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      toast.error('Failed to copy link')
+    }
+  }
+
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: product.name,
+          text: product.shortDescription || `Check out ${product.name}`,
+          url: window.location.href,
+        })
+      } catch {
+        // user cancelled share
+      }
+    } else {
+      handleCopyLink()
+    }
+  }
 
   return (
     <div className="space-y-5">
@@ -45,23 +76,27 @@ export default function ProductInfo({ product }: ProductInfoProps) {
         {product.name}
       </h1>
 
-      {/* Rating */}
+      {/* Rating — clickable to scroll to reviews */}
       {product.ratingsCount > 0 && (
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1 rounded-lg bg-success-50 dark:bg-success-950/50 px-2.5 py-1">
+        <button
+          type="button"
+          onClick={onScrollToReviews}
+          className="flex items-center gap-3 group"
+        >
+          <div className="flex items-center gap-1 rounded-lg bg-success-50 dark:bg-success-950/50 px-2.5 py-1 transition-colors group-hover:bg-success-100 dark:group-hover:bg-success-950/70">
             <span className="text-sm font-bold text-success-700 dark:text-success-400">
               {product.ratingsAverage.toFixed(1)}
             </span>
             <Star className="h-3.5 w-3.5 fill-success-600 text-success-600 dark:fill-success-400 dark:text-success-400" />
           </div>
-          <span className="text-sm text-muted-foreground">
+          <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors underline-offset-2 group-hover:underline">
             {product.ratingsCount} {product.ratingsCount === 1 ? 'review' : 'reviews'}
           </span>
-        </div>
+        </button>
       )}
 
       {/* Price */}
-      <div className="space-y-1">
+      <div className="space-y-1.5">
         <div className="flex items-baseline gap-3">
           <span className="text-3xl sm:text-4xl font-bold text-foreground">
             {formatPrice(price)}
@@ -87,6 +122,51 @@ export default function ProductInfo({ product }: ProductInfoProps) {
         </p>
       )}
 
+      {/* Divider */}
+      <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+
+      {/* Stock Status + Share Row */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {product.stock > 0 ? (
+            <>
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success-500 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-success-500" />
+              </span>
+              <span className="text-sm font-medium text-success-600 dark:text-success-400">
+                In Stock — dispatches in 24h
+              </span>
+            </>
+          ) : (
+            <>
+              <span className="h-2.5 w-2.5 rounded-full bg-error-500" />
+              <span className="text-sm font-medium text-error-500">
+                Out of Stock
+              </span>
+            </>
+          )}
+        </div>
+
+        {/* Share buttons */}
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={handleCopyLink}
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
+            aria-label="Copy link"
+          >
+            {copied ? <Check className="h-3.5 w-3.5 text-success-500" /> : <Link2 className="h-3.5 w-3.5" />}
+          </button>
+          <button
+            onClick={handleShare}
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
+            aria-label="Share product"
+          >
+            <Share2 className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </div>
+
       {/* Meta Info */}
       <div className="grid grid-cols-2 gap-3 text-sm">
         {category && (
@@ -101,12 +181,6 @@ export default function ProductInfo({ product }: ProductInfoProps) {
           <span className="text-muted-foreground">SKU: </span>
           <span className="font-medium text-foreground font-mono text-xs">{product.sku}</span>
         </div>
-        <div>
-          <span className="text-muted-foreground">Availability: </span>
-          <span className={cn('font-medium', product.stock > 0 ? 'text-success-600' : 'text-error-500')}>
-            {product.stock > 0 ? 'In Stock' : 'Out of Stock'}
-          </span>
-        </div>
         {product.soldCount > 0 && (
           <div>
             <span className="text-muted-foreground">Sold: </span>
@@ -115,17 +189,23 @@ export default function ProductInfo({ product }: ProductInfoProps) {
         )}
       </div>
 
-      {/* Trust Badges */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
+      {/* Trust Badges — Redesigned as gradient pills */}
+      <div className="flex flex-wrap gap-2 pt-1">
         {[
-          { icon: BadgeCheck, label: 'Genuine Components' },
-          { icon: Shield, label: 'Tested Quality' },
-          { icon: Truck, label: 'Fast Shipping' },
-          { icon: CreditCard, label: 'Secure Payments' },
-          { icon: Headset, label: 'Technical Support' },
-        ].map(({ icon: Icon, label }) => (
-          <div key={label} className="flex items-center gap-2 rounded-lg border border-border bg-muted/20 px-2.5 py-2 text-xs text-muted-foreground">
-            <Icon className="h-3.5 w-3.5 text-primary" />
+          { icon: BadgeCheck, label: 'Genuine Components', color: 'from-blue-500/10 to-indigo-500/10 dark:from-blue-500/20 dark:to-indigo-500/20' },
+          { icon: Shield, label: 'Tested Quality', color: 'from-emerald-500/10 to-teal-500/10 dark:from-emerald-500/20 dark:to-teal-500/20' },
+          { icon: Truck, label: 'Fast Shipping', color: 'from-amber-500/10 to-orange-500/10 dark:from-amber-500/20 dark:to-orange-500/20' },
+          { icon: CreditCard, label: 'Secure Payments', color: 'from-violet-500/10 to-purple-500/10 dark:from-violet-500/20 dark:to-purple-500/20' },
+          { icon: Headset, label: 'Tech Support', color: 'from-rose-500/10 to-pink-500/10 dark:from-rose-500/20 dark:to-pink-500/20' },
+        ].map(({ icon: Icon, label, color }) => (
+          <div
+            key={label}
+            className={cn(
+              'flex items-center gap-1.5 rounded-full bg-gradient-to-r px-3 py-1.5 text-xs font-medium text-foreground/80 transition-all hover:scale-[1.02]',
+              color
+            )}
+          >
+            <Icon className="h-3.5 w-3.5 text-primary shrink-0" />
             {label}
           </div>
         ))}

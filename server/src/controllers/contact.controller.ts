@@ -24,3 +24,34 @@ export const sendContactEmail = asyncHandler(async (req: Request, res: Response)
     new ApiResponse(200, null, 'Message sent successfully. We will get back to you shortly.')
   );
 });
+
+/**
+ * Handles sending missing product / stock request inquiry emails to the admin.
+ */
+export const sendProductRequest = asyncHandler(async (req: Request, res: Response) => {
+  const { name, email, productName, quantity, targetPrice, referenceUrl, specifications, notes } = req.body;
+
+  const success = await EmailService.sendProductRequestEmail({
+    userName: name,
+    userEmail: email,
+    productName,
+    quantity,
+    targetPrice,
+    referenceUrl,
+    specifications,
+    notes,
+  });
+
+  if (!success) {
+    throw ApiError.internal('Failed to send product inquiry. Please try again later.');
+  }
+
+  res.status(200).json(
+    new ApiResponse(
+      200,
+      null,
+      'Product request submitted successfully! Our catalog team will review it and notify you.'
+    )
+  );
+});
+

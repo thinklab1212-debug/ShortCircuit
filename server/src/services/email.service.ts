@@ -277,6 +277,132 @@ export class EmailService {
   }
 
   /**
+   * Sends a missing product / component enquiry notification to the admin.
+   */
+  public static async sendProductRequestEmail(details: {
+    userName: string;
+    userEmail: string;
+    productName: string;
+    quantity?: number | string;
+    targetPrice?: number | string;
+    referenceUrl?: string;
+    specifications?: string;
+    notes?: string;
+  }): Promise<boolean> {
+    const adminEmail = 'sales.shortcircuit@gmail.com';
+    const emailSubject = `🛒 Product Request: ${details.productName} (from ${details.userName})`;
+    const requestDate = new Date().toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 620px; margin: 0 auto; padding: 25px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
+        <div style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); padding: 18px 24px; border-radius: 8px; margin-bottom: 20px;">
+          <h2 style="color: #ffffff; margin: 0; font-size: 20px; font-weight: bold; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+            ⚡ New Product / Stock Request
+          </h2>
+          <p style="color: #e0e7ff; margin: 4px 0 0 0; font-size: 13px;">
+            A user couldn't find a component on Short Circuit and requested it to be added.
+          </p>
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px;">
+          <tr>
+            <td style="padding: 10px 0; font-weight: bold; width: 140px; color: #475569; border-bottom: 1px solid #f1f5f9;">Product Name:</td>
+            <td style="padding: 10px 0; color: #0f172a; font-weight: 600; font-size: 15px; border-bottom: 1px solid #f1f5f9;">${details.productName}</td>
+          </tr>
+          <tr>
+            <td style="padding: 10px 0; font-weight: bold; width: 140px; color: #475569; border-bottom: 1px solid #f1f5f9;">Requested By:</td>
+            <td style="padding: 10px 0; color: #334155; border-bottom: 1px solid #f1f5f9;">${details.userName} (<a href="mailto:${details.userEmail}" style="color: #4f46e5; text-decoration: none;">${details.userEmail}</a>)</td>
+          </tr>
+          <tr>
+            <td style="padding: 10px 0; font-weight: bold; width: 140px; color: #475569; border-bottom: 1px solid #f1f5f9;">Date & Time:</td>
+            <td style="padding: 10px 0; color: #334155; border-bottom: 1px solid #f1f5f9;">${requestDate}</td>
+          </tr>
+          ${
+            details.quantity
+              ? `<tr>
+                  <td style="padding: 10px 0; font-weight: bold; width: 140px; color: #475569; border-bottom: 1px solid #f1f5f9;">Quantity Needed:</td>
+                  <td style="padding: 10px 0; color: #334155; border-bottom: 1px solid #f1f5f9;">${details.quantity}</td>
+                </tr>`
+              : ''
+          }
+          ${
+            details.targetPrice
+              ? `<tr>
+                  <td style="padding: 10px 0; font-weight: bold; width: 140px; color: #475569; border-bottom: 1px solid #f1f5f9;">Target Budget:</td>
+                  <td style="padding: 10px 0; color: #16a34a; font-weight: 600; border-bottom: 1px solid #f1f5f9;">₹${details.targetPrice}</td>
+                </tr>`
+              : ''
+          }
+          ${
+            details.referenceUrl
+              ? `<tr>
+                  <td style="padding: 10px 0; font-weight: bold; width: 140px; color: #475569; border-bottom: 1px solid #f1f5f9;">Reference / Datasheet:</td>
+                  <td style="padding: 10px 0; border-bottom: 1px solid #f1f5f9;"><a href="${details.referenceUrl}" target="_blank" rel="noopener noreferrer" style="color: #2563eb; text-decoration: underline; word-break: break-all;">${details.referenceUrl}</a></td>
+                </tr>`
+              : ''
+          }
+        </table>
+
+        ${
+          details.specifications
+            ? `
+            <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin-bottom: 15px;">
+              <h4 style="margin: 0 0 8px 0; color: #1e293b; font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Technical Specifications:</h4>
+              <p style="margin: 0; color: #334155; font-size: 14px; line-height: 1.5; white-space: pre-wrap;">${details.specifications}</p>
+            </div>
+            `
+            : ''
+        }
+
+        ${
+          details.notes
+            ? `
+            <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin-bottom: 15px;">
+              <h4 style="margin: 0 0 8px 0; color: #1e293b; font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Additional Notes / Use Case:</h4>
+              <p style="margin: 0; color: #334155; font-size: 14px; line-height: 1.5; white-space: pre-wrap;">${details.notes}</p>
+            </div>
+            `
+            : ''
+        }
+
+        <div style="text-align: center; margin: 25px 0 15px 0;">
+          <a href="mailto:${details.userEmail}?subject=Re:%20Product%20Request%20for%20${encodeURIComponent(details.productName)}" style="background-color: #4f46e5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; font-size: 14px;">Reply to Customer</a>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 25px 0 15px 0;" />
+        <p style="font-size: 12px; color: #94a3b8; text-align: center; margin: 0;">This notification was generated automatically by Short Circuit Product Inquiry System.</p>
+      </div>
+    `;
+
+    try {
+      const response = await resend.emails.send({
+        from: env.EMAIL_FROM,
+        to: adminEmail,
+        reply_to: details.userEmail,
+        subject: emailSubject,
+        html,
+      });
+
+      if (response.error) {
+        logger.error(`❌ Resend Email Error: ${response.error.message}`, response.error);
+        return false;
+      }
+
+      logger.info(`📧 Product request email sent successfully to: ${adminEmail} for "${details.productName}"`);
+      return true;
+    } catch (error) {
+      logger.error(`❌ Failed to send product request email:`, error);
+      return false;
+    }
+  }
+
+  /**
    * Sends an email notification to the organizer regarding event approval or rejection.
    */
   public static async sendEventStatusNotification(

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Star, ThumbsUp, User } from 'lucide-react'
+import { Star, ThumbsUp, User, MessageSquare } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -17,16 +17,16 @@ function RatingSummary({ average, count }: { average: number; count: number }) {
   const bars = [5, 4, 3, 2, 1]
 
   return (
-    <div className="flex flex-col sm:flex-row gap-8 items-start">
+    <div className="flex flex-col sm:flex-row gap-8 items-start rounded-2xl border border-border bg-muted/20 p-6">
       {/* Big Score */}
-      <div className="text-center space-y-1">
+      <div className="text-center space-y-2">
         <div className="text-5xl font-bold font-heading text-foreground">{average.toFixed(1)}</div>
         <div className="flex items-center justify-center gap-0.5">
           {Array.from({ length: 5 }).map((_, i) => (
             <Star
               key={i}
               className={cn(
-                'h-4 w-4',
+                'h-5 w-5',
                 i < Math.round(average)
                   ? 'fill-warning-400 text-warning-400'
                   : 'fill-none text-muted-foreground/30'
@@ -38,14 +38,14 @@ function RatingSummary({ average, count }: { average: number; count: number }) {
       </div>
 
       {/* Distribution Bars (placeholder — backend doesn't provide this) */}
-      <div className="flex-1 space-y-2 w-full sm:max-w-xs">
+      <div className="flex-1 space-y-2.5 w-full sm:max-w-xs">
         {bars.map((star) => (
-          <div key={star} className="flex items-center gap-2 text-sm">
-            <span className="w-3 text-muted-foreground">{star}</span>
-            <Star className="h-3 w-3 fill-warning-400 text-warning-400 shrink-0" />
-            <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+          <div key={star} className="flex items-center gap-3 text-sm">
+            <span className="w-3 text-muted-foreground font-medium">{star}</span>
+            <Star className="h-3.5 w-3.5 fill-warning-400 text-warning-400 shrink-0" />
+            <div className="flex-1 h-2.5 rounded-full bg-muted overflow-hidden">
               <div
-                className="h-full rounded-full bg-warning-400 transition-all"
+                className="h-full rounded-full bg-gradient-to-r from-warning-300 to-warning-500 transition-all duration-500"
                 style={{ width: `${star === Math.round(average) ? 60 : star > average ? 10 : 20}%` }}
               />
             </div>
@@ -59,6 +59,7 @@ function RatingSummary({ average, count }: { average: number; count: number }) {
 // ─── Review Card ────────────────────────────────────────────────────────────────
 
 function ReviewCard({ review }: { review: Review }) {
+  const [expanded, setExpanded] = useState(false)
   const user = typeof review.user === 'object' ? review.user : null
   const date = new Date(review.createdAt).toLocaleDateString('en-IN', {
     year: 'numeric',
@@ -66,14 +67,16 @@ function ReviewCard({ review }: { review: Review }) {
     day: 'numeric',
   })
 
+  const isLong = review.comment.length > 200
+
   return (
     <motion.div
       variants={fadeInUp}
-      className="rounded-xl border border-border bg-card p-5 space-y-3"
+      className="rounded-xl border border-border bg-card p-5 space-y-3 hover:shadow-sm transition-shadow"
     >
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-primary/10 text-primary">
             <User className="h-4 w-4" />
           </div>
           <div>
@@ -90,7 +93,23 @@ function ReviewCard({ review }: { review: Review }) {
       {review.title && (
         <h4 className="text-sm font-semibold text-foreground">{review.title}</h4>
       )}
-      <p className="text-sm text-muted-foreground leading-relaxed">{review.comment}</p>
+
+      <div>
+        <p className={cn(
+          'text-sm text-muted-foreground leading-relaxed',
+          !expanded && isLong && 'line-clamp-3'
+        )}>
+          {review.comment}
+        </p>
+        {isLong && (
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="text-xs font-medium text-primary hover:text-primary/80 mt-1 transition-colors"
+          >
+            {expanded ? 'Show less' : 'Read more'}
+          </button>
+        )}
+      </div>
 
       {review.isVerifiedPurchase && (
         <div className="flex items-center gap-1.5 text-xs text-success-600 dark:text-success-400">
@@ -157,7 +176,7 @@ function WriteReviewForm({ productId }: { productId: string }) {
             >
               <Star
                 className={cn(
-                  'h-6 w-6 transition-colors',
+                  'h-7 w-7 transition-colors',
                   star <= (hoveredRating || rating)
                     ? 'fill-warning-400 text-warning-400'
                     : 'fill-none text-muted-foreground/30'
@@ -166,7 +185,7 @@ function WriteReviewForm({ productId }: { productId: string }) {
             </button>
           ))}
           {rating > 0 && (
-            <span className="ml-2 text-sm text-muted-foreground">
+            <span className="ml-2 text-sm text-muted-foreground font-medium">
               {['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'][rating]}
             </span>
           )}
@@ -261,9 +280,15 @@ export default function ReviewsSection({ productId, ratingsAverage, ratingsQuant
       )}
 
       {data && data.data.length === 0 && ratingsQuantity === 0 && (
-        <p className="text-sm text-muted-foreground py-4">
-          No reviews yet. Be the first to review this product!
-        </p>
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-12 px-6 text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted mb-4">
+            <MessageSquare className="h-6 w-6 text-muted-foreground" />
+          </div>
+          <h3 className="text-base font-semibold text-foreground mb-1">No reviews yet</h3>
+          <p className="text-sm text-muted-foreground max-w-sm">
+            Be the first to share your experience with this product!
+          </p>
+        </div>
       )}
 
       {/* Pagination */}

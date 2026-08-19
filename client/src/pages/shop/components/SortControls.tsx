@@ -30,10 +30,13 @@ export default function SortControls({ filters, onFilterChange, total, className
       <p className="text-sm text-muted-foreground">
         {total !== undefined ? (
           <>
-            <span className="font-medium text-foreground">{total.toLocaleString()}</span> products found
+            <span className="font-bold text-foreground tabular-nums">{total.toLocaleString()}</span>
+            {' '}products found
           </>
         ) : (
-          'Loading...'
+          <span className="inline-flex items-center gap-2">
+            <span className="h-4 w-12 skeleton rounded" />
+          </span>
         )}
       </p>
 
@@ -55,14 +58,14 @@ export default function SortControls({ filters, onFilterChange, total, className
         </div>
 
         {/* View Toggle */}
-        <div className="hidden sm:flex items-center border border-border rounded-lg p-0.5">
+        <div className="hidden sm:flex items-center border border-border rounded-lg p-0.5 bg-muted/30">
           <button
             onClick={() => onFilterChange({ view: 'grid' })}
             className={cn(
-              'flex items-center justify-center h-8 w-8 rounded-md transition-colors',
+              'flex items-center justify-center h-8 w-8 rounded-md transition-all duration-200',
               filters.view === 'grid'
-                ? 'bg-primary text-primary-foreground'
-                : 'text-muted-foreground hover:text-foreground'
+                ? 'bg-primary text-primary-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
             )}
             aria-label="Grid view"
           >
@@ -71,10 +74,10 @@ export default function SortControls({ filters, onFilterChange, total, className
           <button
             onClick={() => onFilterChange({ view: 'list' })}
             className={cn(
-              'flex items-center justify-center h-8 w-8 rounded-md transition-colors',
+              'flex items-center justify-center h-8 w-8 rounded-md transition-all duration-200',
               filters.view === 'list'
-                ? 'bg-primary text-primary-foreground'
-                : 'text-muted-foreground hover:text-foreground'
+                ? 'bg-primary text-primary-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
             )}
             aria-label="List view"
           >

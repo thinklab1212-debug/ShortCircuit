@@ -156,7 +156,10 @@ const API_ROUTES = {
   },
 
   // Contact
-  CONTACT: '/contact',
+  CONTACT: {
+    BASE: '/contact',
+    PRODUCT_REQUEST: '/contact/product-request',
+  },
 
   // Vendor Self-Service
   VENDOR: {

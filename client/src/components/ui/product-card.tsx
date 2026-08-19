@@ -55,6 +55,9 @@ export function ProductGridCard({
           />
         </Link>
 
+        {/* Hover shimmer overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+
         {/* Badges */}
         <div className="absolute top-3 left-3 flex flex-col gap-1.5">
           {discount > 0 && <ProductBadge variant="sale">-{discount}%</ProductBadge>}
@@ -65,9 +68,9 @@ export function ProductGridCard({
           )}
         </div>
 
-        {/* Quick Actions Overlay */}
-        <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/0 opacity-0 transition-all duration-300 group-hover:bg-black/10 group-hover:opacity-100">
-          {onQuickView && (
+        {/* Quick View overlay (center) */}
+        {onQuickView && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-all duration-300 group-hover:bg-black/10 group-hover:opacity-100">
             <button
               onClick={() => onQuickView(product)}
               className="flex h-10 w-10 items-center justify-center rounded-full bg-background/90 text-foreground shadow-lg backdrop-blur-sm transition-transform hover:scale-110 active:scale-95"
@@ -75,17 +78,8 @@ export function ProductGridCard({
             >
               <Eye className="h-4 w-4" />
             </button>
-          )}
-          {onAddToCart && !isOutOfStock && (
-            <button
-              onClick={() => onAddToCart(product._id)}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-110 active:scale-95"
-              aria-label="Add to cart"
-            >
-              <ShoppingCart className="h-4 w-4" />
-            </button>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Wishlist Button */}
         {onWishlistToggle && (
@@ -101,6 +95,19 @@ export function ProductGridCard({
           >
             <Heart className={cn('h-4 w-4', isWishlisted && 'fill-current')} />
           </button>
+        )}
+
+        {/* Slide-up Add to Cart button */}
+        {onAddToCart && !isOutOfStock && (
+          <div className="absolute bottom-0 left-0 right-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+            <button
+              onClick={() => onAddToCart(product._id)}
+              className="flex items-center justify-center gap-2 w-full h-10 bg-primary text-primary-foreground text-xs font-semibold uppercase tracking-wider hover:bg-primary/90 transition-colors"
+            >
+              <ShoppingCart className="h-3.5 w-3.5" />
+              Add to Cart
+            </button>
+          </div>
         )}
       </div>
 
@@ -137,7 +144,7 @@ export function ProductGridCard({
         <div className="mt-auto flex items-baseline gap-2 pt-1">
           <span className="text-lg font-bold text-foreground">{formatPrice(price)}</span>
           {hasDiscount && (
-            <span className="text-sm text-muted-foreground line-through">{formatPrice(product.price)}</span>
+            <span className="text-xs text-muted-foreground line-through">{formatPrice(product.price)}</span>
           )}
           {discount > 0 && (
             <span className="text-xs font-semibold text-success-600 dark:text-success-400">

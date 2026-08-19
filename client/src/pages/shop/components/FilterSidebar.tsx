@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
-import { Star, X, RotateCcw } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Star, X, RotateCcw, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -46,9 +46,9 @@ export default function FilterSidebar({
   }
 
   return (
-    <aside className={cn('space-y-6', className)}>
+    <aside className={cn('space-y-1', className)}>
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between pb-4">
         <h3 className="text-lg font-semibold text-foreground font-heading">Filters</h3>
         {activeCount > 0 && (
           <Button variant="ghost" size="sm" onClick={onClear} className="text-xs gap-1.5 h-8">
@@ -59,7 +59,7 @@ export default function FilterSidebar({
       </div>
 
       {/* Categories */}
-      <FilterSection title="Category" loading={catLoading}>
+      <CollapsibleFilterSection title="Category" defaultOpen loading={catLoading}>
         {categories?.filter((c) => c.isActive).map((cat) => (
           <button
             key={cat._id}
@@ -83,10 +83,10 @@ export default function FilterSidebar({
             )}
           </button>
         ))}
-      </FilterSection>
+      </CollapsibleFilterSection>
 
       {/* Brands */}
-      <FilterSection title="Brand" loading={brandLoading}>
+      <CollapsibleFilterSection title="Brand" defaultOpen loading={brandLoading}>
         {brands?.filter((b) => b.isActive).map((brand) => (
           <button
             key={brand._id}
@@ -110,10 +110,10 @@ export default function FilterSidebar({
             )}
           </button>
         ))}
-      </FilterSection>
+      </CollapsibleFilterSection>
 
       {/* Price Range */}
-      <FilterSection title="Price Range">
+      <CollapsibleFilterSection title="Price Range" defaultOpen>
         <div className="flex items-center gap-2">
           <Input
             type="number"
@@ -158,10 +158,10 @@ export default function FilterSidebar({
             </button>
           ))}
         </div>
-      </FilterSection>
+      </CollapsibleFilterSection>
 
       {/* Ratings */}
-      <FilterSection title="Rating">
+      <CollapsibleFilterSection title="Rating">
         {[4, 3, 2, 1].map((rating) => (
           <button
             key={rating}
@@ -193,10 +193,10 @@ export default function FilterSidebar({
             <span>& up</span>
           </button>
         ))}
-      </FilterSection>
+      </CollapsibleFilterSection>
 
       {/* Availability */}
-      <FilterSection title="Availability">
+      <CollapsibleFilterSection title="Availability">
         <Checkbox
           label="In Stock only"
           checked={filters.inStock === true}
@@ -208,34 +208,64 @@ export default function FilterSidebar({
           onChange={() => onFilterChange({ isFeatured: filters.isFeatured ? undefined : true })}
           className="mt-2"
         />
-      </FilterSection>
+      </CollapsibleFilterSection>
     </aside>
   )
 }
 
-// ─── Filter Section Wrapper ─────────────────────────────────────────────────────
+// ─── Collapsible Filter Section ─────────────────────────────────────────────────
 
-function FilterSection({
+function CollapsibleFilterSection({
   title,
   loading,
+  defaultOpen = false,
   children,
 }: {
   title: string
   loading?: boolean
+  defaultOpen?: boolean
   children: React.ReactNode
 }) {
+  const [open, setOpen] = useState(defaultOpen)
+
   return (
-    <div className="space-y-2">
-      <h4 className="text-sm font-semibold text-foreground">{title}</h4>
-      {loading ? (
-        <div className="space-y-2">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-9 skeleton rounded-lg" />
-          ))}
-        </div>
-      ) : (
-        <div className="space-y-0.5">{children}</div>
-      )}
+    <div className="border-b border-border/60 last:border-b-0">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center justify-between w-full py-3.5 text-sm font-semibold text-foreground hover:text-primary transition-colors"
+      >
+        {title}
+        <motion.div
+          animate={{ rotate: open ? 180 : 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+        </motion.div>
+      </button>
+
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+            className="overflow-hidden"
+          >
+            <div className="pb-4 space-y-0.5">
+              {loading ? (
+                <div className="space-y-2">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="h-9 skeleton rounded-lg" />
+                  ))}
+                </div>
+              ) : (
+                children
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

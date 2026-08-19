@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useRef, useCallback } from 'react'
 import { useParams, Link, useNavigate, useLocation } from 'react-router'
 import { motion } from 'framer-motion'
 import { ArrowLeft, RefreshCw, PackageX } from 'lucide-react'
@@ -12,11 +12,12 @@ import {
   ProductGallery,
   ProductInfo,
   AddToCart,
-  Specifications,
+  ProductTabs,
   ReviewsSection,
   RelatedProducts,
   RecentlyViewedProducts,
   DeliveryChecker,
+  StickyCartBar,
 } from './sections'
 import { fadeInUp, staggerContainer } from '@/config/animations'
 import toast from 'react-hot-toast'
@@ -58,6 +59,8 @@ function ProductDetailSkeleton() {
 export default function ProductDetailPage() {
   const { slug } = useParams<{ slug: string }>()
   const { data: product, isLoading, isError, refetch } = useProductBySlug(slug || '')
+  const addToCartRef = useRef<HTMLDivElement>(null)
+  const reviewsRef = useRef<HTMLDivElement>(null)
 
   // Build JSON-LD structured data for Product & BreadcrumbList
   const jsonLdData = useMemo(() => {
@@ -215,6 +218,10 @@ export default function ProductDetailPage() {
     toggleWishlist.mutate(productId)
   }
 
+  const scrollToReviews = useCallback(() => {
+    reviewsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [])
+
   // ── Loading ──
   if (isLoading) return <ProductDetailSkeleton />
 
@@ -288,128 +295,124 @@ export default function ProductDetailPage() {
   } : null
 
   return (
-    <div className="container py-6 lg:py-8">
-      {/* Dynamic SEO & Schema */}
-      {productSchema && (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
-        />
-      )}
-      {/* Breadcrumb */}
-      <div className="flex items-center justify-between mb-6">
-        <Breadcrumb items={breadcrumbItems} />
-        <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
-          <Link to="/shop">
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Back to Shop
-          </Link>
-        </Button>
-      </div>
+    <>
+      <div className="container py-6 lg:py-8">
+        {/* Dynamic SEO & Schema */}
+        {productSchema && (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
+          />
+        )}
 
-      {/* Main Product Layout */}
-      <motion.div
-        variants={staggerContainer}
-        initial="initial"
-        animate="animate"
-        className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12"
-      >
-        {/* Left: Gallery */}
-        <motion.div variants={fadeInUp}>
-          <ProductGallery images={product.images} name={product.name} />
+        {/* Breadcrumb */}
+        <div className="flex items-center justify-between mb-6">
+          <Breadcrumb items={breadcrumbItems} />
+          <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
+            <Link to="/shop">
+              <ArrowLeft className="h-4 w-4 mr-1" />
+              Back to Shop
+            </Link>
+          </Button>
+        </div>
+
+        {/* Main Product Layout */}
+        <motion.div
+          variants={staggerContainer}
+          initial="initial"
+          animate="animate"
+          className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12"
+        >
+          {/* Left: Gallery */}
+          <motion.div variants={fadeInUp}>
+            <ProductGallery images={product.images} name={product.name} />
+          </motion.div>
+
+          {/* Right: Info + Actions */}
+          <motion.div variants={fadeInUp} className="space-y-8">
+            <ProductInfo product={product} onScrollToReviews={scrollToReviews} />
+
+            <div ref={addToCartRef} className="border-t border-border pt-6">
+              <AddToCart
+                product={product}
+                isWishlisted={isInWishlist(product._id)}
+                isAddingToCart={addToCart.isPending}
+                onAddToCart={handleAddToCart}
+                onBuyNow={handleBuyNow}
+                onWishlistToggle={handleWishlistToggle}
+              />
+            </div>
+
+            {/* Delivery Checker */}
+            <div className="border-t border-border pt-6">
+              <DeliveryChecker />
+            </div>
+
+          </motion.div>
         </motion.div>
 
-        {/* Right: Info + Actions */}
-        <motion.div variants={fadeInUp} className="space-y-8">
-          <ProductInfo product={product} />
-
-          <div className="border-t border-border pt-6">
-            <AddToCart
-              product={product}
-              isWishlisted={isInWishlist(product._id)}
-              isAddingToCart={addToCart.isPending}
-              onAddToCart={handleAddToCart}
-              onBuyNow={handleBuyNow}
-              onWishlistToggle={handleWishlistToggle}
-            />
-          </div>
-
-          {/* Delivery Checker */}
-          <div className="border-t border-border pt-6">
-            <DeliveryChecker />
-          </div>
-
-        </motion.div>
-      </motion.div>
-
-      {/* Product Description */}
-      {product.description && (
+        {/* ─── Tabbed Content: Description + Specifications + Package Contents ── */}
         <motion.div
           variants={fadeInUp}
           initial="initial"
           whileInView="animate"
           viewport={{ once: true }}
-          className="mt-12 space-y-4"
+          className="mt-12"
         >
-          <h2 className="text-xl font-bold font-heading text-foreground">Description</h2>
-          <div className="prose prose-sm dark:prose-invert max-w-none text-muted-foreground leading-relaxed">
-            {product.description.split('\n').map((p, i) => (
-              <p key={i}>{p}</p>
-            ))}
-          </div>
+          <ProductTabs
+            description={product.description}
+            specifications={product.specifications || []}
+            features={product.packageContents || []}
+          />
         </motion.div>
-      )}
 
-      {/* Specifications */}
-      <motion.div
-        variants={fadeInUp}
-        initial="initial"
-        whileInView="animate"
-        viewport={{ once: true }}
-        className="mt-12"
-      >
-        <Specifications
-          specifications={product.specifications || []}
-          features={product.packageContents || []}
-        />
-      </motion.div>
+        {/* Reviews */}
+        <motion.div
+          ref={reviewsRef}
+          variants={fadeInUp}
+          initial="initial"
+          whileInView="animate"
+          viewport={{ once: true }}
+          className="mt-12 border-t border-border pt-12 scroll-mt-24"
+        >
+          <ReviewsSection
+            productId={product._id}
+            ratingsAverage={product.ratingsAverage}
+            ratingsQuantity={product.ratingsCount}
+          />
+        </motion.div>
 
-      {/* Reviews */}
-      <motion.div
-        variants={fadeInUp}
-        initial="initial"
-        whileInView="animate"
-        viewport={{ once: true }}
-        className="mt-12 border-t border-border pt-12"
-      >
-        <ReviewsSection
-          productId={product._id}
-          ratingsAverage={product.ratingsAverage}
-          ratingsQuantity={product.ratingsCount}
-        />
-      </motion.div>
+        {/* Related Products */}
+        <motion.div
+          variants={fadeInUp}
+          initial="initial"
+          whileInView="animate"
+          viewport={{ once: true }}
+          className="mt-12 border-t border-border pt-12"
+        >
+          <RelatedProducts categoryId={categoryId} currentProductId={product._id} />
+        </motion.div>
 
-      {/* Related Products */}
-      <motion.div
-        variants={fadeInUp}
-        initial="initial"
-        whileInView="animate"
-        viewport={{ once: true }}
-        className="mt-12 border-t border-border pt-12"
-      >
-        <RelatedProducts categoryId={categoryId} currentProductId={product._id} />
-      </motion.div>
+        {/* Recently Viewed */}
+        <motion.div
+          variants={fadeInUp}
+          initial="initial"
+          whileInView="animate"
+          viewport={{ once: true }}
+          className="mt-12 border-t border-border pt-12"
+        >
+          <RecentlyViewedProducts currentProductId={product._id} />
+        </motion.div>
+      </div>
 
-      {/* Recently Viewed */}
-      <motion.div
-        variants={fadeInUp}
-        initial="initial"
-        whileInView="animate"
-        viewport={{ once: true }}
-        className="mt-12 border-t border-border pt-12"
-      >
-        <RecentlyViewedProducts currentProductId={product._id} />
-      </motion.div>
-    </div>
+      {/* Sticky Cart Bar — lives outside container for full-width positioning */}
+      <StickyCartBar
+        product={product}
+        onAddToCart={handleAddToCart}
+        onBuyNow={handleBuyNow}
+        isAddingToCart={addToCart.isPending}
+        targetRef={addToCartRef}
+      />
+    </>
   )
 }

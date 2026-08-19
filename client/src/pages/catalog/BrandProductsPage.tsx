@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Select } from '@/components/ui/select'
 import { ProductGridCard } from '@/components/ui/product-card'
 import { EmptyState } from '@/components/ui/error'
+import ProductRequestCard from '@/components/common/ProductRequestCard'
 import { staggerContainer, fadeInUp } from '@/config/animations'
 
 const SORT_OPTIONS = [
@@ -190,11 +191,14 @@ export default function BrandProductsPage() {
 
       {/* Empty */}
       {!isLoading && !isError && products.length === 0 && (
-        <EmptyState
-          icon={<PackageSearch className="h-8 w-8 text-muted-foreground" />}
-          title="No products found"
-          description="There are no products from this brand yet. Check back soon."
-        />
+        <div className="space-y-6">
+          <EmptyState
+            icon={<PackageSearch className="h-8 w-8 text-muted-foreground" />}
+            title="No products found"
+            description={`There are currently no products listed under "${title}".`}
+          />
+          <ProductRequestCard searchTerm={brand?.name || ''} />
+        </div>
       )}
 
       {/* Grid */}
@@ -244,6 +248,11 @@ export default function BrandProductsPage() {
               </Button>
             </div>
           )}
+
+          {/* Bottom Request Banner */}
+          <div className="mt-14">
+            <ProductRequestCard variant="banner" searchTerm={brand?.name ? `${brand.name} component` : ''} />
+          </div>
         </>
       )}
     </div>
