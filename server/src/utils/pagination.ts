@@ -142,11 +142,15 @@ export async function paginateQuery<T>(
     dbQuery = dbQuery.select(options.select);
   }
 
-  // Apply sort
+  // Apply sort (with _id: -1 tie-breaker for deterministic pagination)
   if (options.sort) {
-    dbQuery = dbQuery.sort(options.sort);
+    if (typeof options.sort === 'object') {
+      dbQuery = dbQuery.sort({ ...options.sort, _id: -1 });
+    } else {
+      dbQuery = dbQuery.sort(options.sort);
+    }
   } else {
-    dbQuery = dbQuery.sort({ createdAt: -1 }); // Default: newest first
+    dbQuery = dbQuery.sort({ createdAt: -1, _id: -1 }); // Default: newest first with _id tie-breaker
   }
 
   // Apply populate

@@ -306,7 +306,7 @@ export function buildOrderFilters(query: OrderQueryParams): BuiltFilters {
  */
 function parseSortString(sortString?: string): Record<string, 1 | -1> {
   if (!sortString || !sortString.trim()) {
-    return { createdAt: -1 }; // Default: newest first
+    return { createdAt: -1, _id: -1 }; // Default: newest first with _id tie-breaker
   }
 
   const sort: Record<string, 1 | -1> = {};
@@ -332,6 +332,9 @@ function parseSortString(sortString?: string): Record<string, 1 | -1> {
   if (Object.keys(sort).length === 0) {
     sort.price = -1;
   }
+
+  // Always append _id: -1 as secondary tie-breaker for 100% deterministic pagination across pages
+  sort._id = -1;
 
   return sort;
 }
