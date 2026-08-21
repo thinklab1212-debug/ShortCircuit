@@ -7,7 +7,7 @@ import { AdminPageHeader, TablePagination } from '@/components/admin'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ErrorFallback } from '@/components/ui/error'
-import { formatDate, getUserName } from '@/utils'
+import { formatDate, getUserName, formatStatusLabel } from '@/utils'
 import { ORDER_STATUS_LABELS } from '@/constants'
 import { cn } from '@/lib/utils'
 import type { Order, OrderStatus, PaymentStatus, User } from '@/types'
@@ -18,6 +18,7 @@ const LIMIT = 10
 
 const STATUS_TABS: { label: string; value: OrderStatus | '' }[] = [
   { label: 'All', value: '' },
+  { label: 'Pending Payment', value: 'pending_payment' },
   { label: 'Placed', value: 'placed' },
   { label: 'Confirmed', value: 'confirmed' },
   { label: 'Processing', value: 'processing' },
@@ -42,6 +43,7 @@ const paymentVariant: Record<PaymentStatus, 'success' | 'warning' | 'destructive
 }
 
 const statusVariant: Record<string, 'success' | 'warning' | 'destructive' | 'info' | 'secondary'> = {
+  pending_payment: 'warning',
   placed: 'info',
   confirmed: 'info',
   processing: 'warning',
@@ -170,7 +172,7 @@ export default function OrdersAdminPage() {
                       </td>
                       <td className="px-4 py-3 text-sm">
                         <Badge variant={paymentVariant[order.paymentStatus]} size="sm">
-                          {order.paymentStatus}
+                          {formatStatusLabel(order.paymentStatus)}
                         </Badge>
                       </td>
                       <td className="px-4 py-3 text-sm">
@@ -179,7 +181,7 @@ export default function OrdersAdminPage() {
                           size="sm"
                           dot
                         >
-                          {ORDER_STATUS_LABELS[order.orderStatus] ?? order.orderStatus}
+                          {formatStatusLabel(order.orderStatus)}
                         </Badge>
                       </td>
                       <td className="px-4 py-3 text-right">

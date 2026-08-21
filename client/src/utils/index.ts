@@ -1,4 +1,19 @@
+import { ORDER_STATUS_LABELS } from '@/constants'
+
 // ─── Format Utilities ───────────────────────────────────────────────────────────
+
+/**
+ * Format an order or payment status string into a clean, human-readable label.
+ * Checks label map first, falling back to title-casing snake_case identifiers.
+ */
+export function formatStatusLabel(status?: string, labelMap: Record<string, string> = ORDER_STATUS_LABELS): string {
+  if (!status) return ''
+  if (labelMap[status]) return labelMap[status]
+  return status
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ')
+}
 
 /**
  * Format price in Indian Rupees

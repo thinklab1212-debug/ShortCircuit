@@ -67,6 +67,7 @@ export const ORDER_STATUS_PROGRESSION = [
 ] as const;
 
 export const ORDER_STATUS_LABELS: Record<string, string> = {
+  pending_payment: 'Pending Payment',
   placed: 'Order Placed',
   confirmed: 'Confirmed',
   processing: 'Processing',

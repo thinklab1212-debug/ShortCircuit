@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { EmptyState } from '@/components/ui/error'
 import { useMyOrders } from '@/hooks'
-import { formatPrice, formatDate, pluralize } from '@/utils'
+import { formatPrice, formatDate, pluralize, formatStatusLabel } from '@/utils'
 import { ORDER_STATUS_LABELS } from '@/constants'
 import type { Order, OrderStatus } from '@/types'
 import { staggerContainer, fadeInUp } from '@/config/animations'
@@ -26,7 +26,7 @@ function statusVariant(status: OrderStatus): BadgeVariant {
 export function OrderStatusBadge({ status }: { status: OrderStatus }) {
   return (
     <Badge variant={statusVariant(status)} dot>
-      {ORDER_STATUS_LABELS[status] || status}
+      {formatStatusLabel(status)}
     </Badge>
   )
 }

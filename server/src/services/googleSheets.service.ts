@@ -232,6 +232,43 @@ export class GoogleSheetsService {
   }
 
   /**
+   * Updates an existing order row in the Orders tab (or appends if not found).
+   */
+  public static async updateOrderRow(order: any): Promise<void> {
+    if (!this.ordersSheet) {
+      if (this.isConfigured() && !this.doc) {
+        await this.initialize();
+      }
+      if (!this.ordersSheet) return;
+    }
+
+    try {
+      const orderIdStr = order.orderId || order._id?.toString() || '';
+      if (!orderIdStr) return;
+
+      const rows = await this.ordersSheet.getRows();
+      const row = rows.find(
+        (r) => r.get('Order ID') === orderIdStr || r.get('Order ID') === order._id?.toString()
+      );
+
+      const razorpayPaymentId = order.paymentDetails?.razorpayPaymentId || '—';
+      const statusStr = order.orderStatus || '';
+
+      if (row) {
+        row.set('Payment Method', (order.paymentMethod || '').toUpperCase());
+        row.set('Razorpay Payment ID', razorpayPaymentId);
+        row.set('Status', statusStr);
+        await row.save();
+        logger.debug(`📊 Sheet sync: Updated Order ${orderIdStr} in Google Sheets (Status: ${statusStr}, Razorpay ID: ${razorpayPaymentId})`);
+      } else {
+        await this.appendOrderRow(order);
+      }
+    } catch (error) {
+      logger.warn(`⚠️  Sheet sync update failed for order ${order.orderId}:`, error);
+    }
+  }
+
+  /**
    * Appends a new event kit order row to the Event Kit Orders tab.
    */
   public static async appendEventOrderRow(eventOrder: any, event: any): Promise<void> {
@@ -264,6 +301,43 @@ export class GoogleSheetsService {
       logger.debug(`📊 Sheet sync: Event Order ${eventOrder.orderId} appended to Google Sheets`);
     } catch (error) {
       logger.warn(`⚠️  Sheet sync failed for event order ${eventOrder.orderId}:`, error);
+    }
+  }
+
+  /**
+   * Updates an existing event kit order row in the Event Kit Orders tab.
+   */
+  public static async updateEventOrderRow(eventOrder: any, event?: any): Promise<void> {
+    if (!this.eventOrdersSheet) {
+      if (this.isConfigured() && !this.doc) {
+        await this.initialize();
+      }
+      if (!this.eventOrdersSheet) return;
+    }
+
+    try {
+      const orderIdStr = eventOrder.orderId || eventOrder._id?.toString() || '';
+      if (!orderIdStr) return;
+
+      const rows = await this.eventOrdersSheet.getRows();
+      const row = rows.find(
+        (r) => r.get('Order ID') === orderIdStr || r.get('Order ID') === eventOrder._id?.toString()
+      );
+
+      const razorpayPaymentId = eventOrder.paymentDetails?.razorpayPaymentId || '—';
+      const statusStr = eventOrder.deliveryStatus || '';
+
+      if (row) {
+        row.set('Payment', (eventOrder.paymentMethod || '').toUpperCase());
+        row.set('Razorpay ID', razorpayPaymentId);
+        row.set('Status', statusStr);
+        await row.save();
+        logger.debug(`📊 Sheet sync: Updated Event Order ${orderIdStr} in Google Sheets`);
+      } else {
+        await this.appendEventOrderRow(eventOrder, event);
+      }
+    } catch (error) {
+      logger.warn(`⚠️  Sheet sync update failed for event order ${eventOrder.orderId}:`, error);
     }
   }
 

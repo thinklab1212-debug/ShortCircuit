@@ -13,13 +13,14 @@ import { Badge } from '@/components/ui/badge'
 import { FormField } from '@/components/ui/form-field'
 import { Loader } from '@/components/ui/loader'
 import { ErrorFallback } from '@/components/ui/error'
-import { formatPrice, formatDateTime, getUserName } from '@/utils'
+import { formatPrice, formatDateTime, getUserName, formatStatusLabel } from '@/utils'
 import { ORDER_STATUS_LABELS } from '@/constants'
 import type { OrderStatus, User } from '@/types'
 
 // ─── Order Detail (Admin) ───────────────────────────────────────────────────────
 
 const STATUS_OPTIONS: OrderStatus[] = [
+  'pending_payment',
   'placed',
   'confirmed',
   'processing',
@@ -196,7 +197,7 @@ export default function OrderDetailAdminPage() {
                       </div>
                       <div className="pb-1">
                         <p className="text-sm font-medium text-foreground">
-                          {ORDER_STATUS_LABELS[entry.status] ?? entry.status}
+                          {formatStatusLabel(entry.status)}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           {formatDateTime(entry.timestamp)}
@@ -220,7 +221,7 @@ export default function OrderDetailAdminPage() {
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Order status</span>
               <Badge variant="info" size="sm" dot>
-                {ORDER_STATUS_LABELS[order.orderStatus] ?? order.orderStatus}
+                {formatStatusLabel(order.orderStatus)}
               </Badge>
             </div>
             <div className="flex items-center justify-between">
@@ -229,7 +230,7 @@ export default function OrderDetailAdminPage() {
                 variant={order.paymentStatus === 'paid' ? 'success' : 'warning'}
                 size="sm"
               >
-                {order.paymentStatus}
+                {formatStatusLabel(order.paymentStatus)}
               </Badge>
             </div>
             <div className="flex items-center justify-between">
@@ -284,7 +285,7 @@ export default function OrderDetailAdminPage() {
                 >
                   {STATUS_OPTIONS.map((s) => (
                     <option key={s} value={s}>
-                      {ORDER_STATUS_LABELS[s] ?? s}
+                      {formatStatusLabel(s)}
                     </option>
                   ))}
                 </Select>

@@ -15,6 +15,7 @@ export enum UserRole {
 }
 
 export enum OrderStatus {
+  PENDING_PAYMENT = 'pending_payment',
   PLACED = 'placed',
   CONFIRMED = 'confirmed',
   PROCESSING = 'processing',

@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ErrorFallback } from '@/components/ui/error'
 import { Textarea } from '@/components/ui/textarea'
-import { formatDate, formatDateTime, getUserName } from '@/utils'
+import { formatDate, formatDateTime, getUserName, formatStatusLabel } from '@/utils'
 import { ORDER_STATUS_LABELS } from '@/constants'
 import { cn } from '@/lib/utils'
 import type { Order, User } from '@/types'
@@ -135,7 +135,7 @@ function ReviewRequestModal({ order, onClose, refetch }: ReviewModalProps) {
           </div>
           <div className="flex justify-between items-center pt-1 border-t border-border">
             <span className="text-muted-foreground font-semibold">Current Order Status:</span>
-            <span className="capitalize font-semibold text-foreground">{ORDER_STATUS_LABELS[order.orderStatus] || order.orderStatus}</span>
+            <span className="font-semibold text-foreground">{formatStatusLabel(order.orderStatus)}</span>
           </div>
         </div>
 
@@ -246,7 +246,7 @@ function ReviewRequestModal({ order, onClose, refetch }: ReviewModalProps) {
             <div className="rounded bg-muted p-3 text-xs space-y-2">
               <div className="flex justify-between">
                 <span className="text-muted-foreground font-semibold">Review Status:</span>
-                <Badge variant={requestStatusVariant[req.status]}>{req.status}</Badge>
+                <Badge variant={requestStatusVariant[req.status]}>{formatStatusLabel(req.status)}</Badge>
               </div>
               {req.reviewedAt && (
                 <div className="flex justify-between">
@@ -408,7 +408,7 @@ export default function CancellationRequestsAdminPage() {
                       </td>
                       <td className="px-4 py-3 text-sm">
                         <Badge variant={requestStatusVariant[req.status] ?? 'secondary'} size="sm">
-                          {req.status}
+                          {formatStatusLabel(req.status)}
                         </Badge>
                       </td>
                       <td className="px-4 py-3 text-right space-x-1 whitespace-nowrap">

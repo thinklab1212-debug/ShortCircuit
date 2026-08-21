@@ -46,6 +46,7 @@ export type UserRole = 'customer' | 'vendor' | 'admin'
 export type ApprovalStatus = 'draft' | 'pending_review' | 'approved' | 'rejected'
 
 export type OrderStatus =
+  | 'pending_payment'
   | 'placed'
   | 'confirmed'
   | 'processing'

@@ -25,6 +25,7 @@ export const SORT_OPTIONS = [
 
 export const ORDER_STATUS = {
   PENDING: 'pending',
+  PENDING_PAYMENT: 'pending_payment',
   PLACED: 'placed',
   CONFIRMED: 'confirmed',
   PROCESSING: 'processing',
@@ -38,6 +39,7 @@ export const ORDER_STATUS = {
 
 export const ORDER_STATUS_LABELS: Record<string, string> = {
   pending: 'Pending',
+  pending_payment: 'Pending Payment',
   placed: 'Placed',
   confirmed: 'Confirmed',
   processing: 'Processing',

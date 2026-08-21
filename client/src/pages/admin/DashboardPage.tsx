@@ -19,7 +19,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { ErrorFallback } from '@/components/ui/error'
 import { Skeleton } from '@/components/ui/loader'
-import { formatPrice, formatDate, getUserName } from '@/utils'
+import { formatPrice, formatDate, getUserName, formatStatusLabel } from '@/utils'
 import { ORDER_STATUS_LABELS } from '@/constants'
 import { staggerContainer } from '@/config/animations'
 import type { Order, User } from '@/types'
@@ -158,7 +158,7 @@ export default function DashboardPage() {
                       </td>
                       <td className="px-4 py-3 text-sm">
                         <Badge variant="secondary" size="sm">
-                          {ORDER_STATUS_LABELS[order.orderStatus] ?? order.orderStatus}
+                          {formatStatusLabel(order.orderStatus)}
                         </Badge>
                       </td>
                     </tr>

@@ -19,7 +19,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Loader } from '@/components/ui/loader'
 import { useOrder, useRequestCancellation } from '@/hooks'
 import { orderApi } from '@/services'
-import { formatPrice, formatDate, formatDateTime, capitalize } from '@/utils'
+import { formatPrice, formatDate, formatDateTime, capitalize, formatStatusLabel } from '@/utils'
 import { ORDER_STATUS_LABELS } from '@/constants'
 import { cn } from '@/lib/utils'
 import type { OrderStatus } from '@/types'
@@ -163,7 +163,7 @@ function StatusTimeline({
             </div>
             <div>
               <p className="text-sm font-medium text-foreground">
-                {ORDER_STATUS_LABELS[entry.status] || entry.status}
+                {formatStatusLabel(entry.status)}
               </p>
               <p className="text-xs text-muted-foreground">{formatDateTime(entry.timestamp)}</p>
               {entry.note && <p className="mt-0.5 text-xs text-muted-foreground">{entry.note}</p>}
@@ -211,7 +211,7 @@ function StatusTimeline({
                   reached ? 'text-foreground' : 'text-muted-foreground'
                 )}
               >
-                {ORDER_STATUS_LABELS[status] || status}
+                {formatStatusLabel(status)}
               </p>
               {ts && <p className="text-xs text-muted-foreground">{formatDateTime(ts)}</p>}
             </div>
@@ -329,7 +329,7 @@ export default function OrderDetailPage() {
               </p>
               <p className="mt-2 text-xs text-muted-foreground">
                 Payment: {capitalize(order.paymentMethod)} ·{' '}
-                <span className="capitalize">{order.paymentStatus}</span>
+                <span>{formatStatusLabel(order.paymentStatus)}</span>
               </p>
             </div>
             <div className="flex flex-col items-end gap-3">

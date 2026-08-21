@@ -6,7 +6,7 @@
 
 import { Request, Response } from 'express';
 import crypto from 'crypto';
-import { PaymentService, CartService, EmailService } from '../services/index.js';
+import { PaymentService, CartService, EmailService, GoogleSheetsService } from '../services/index.js';
 import { ApiResponse, asyncHandler, ApiError } from '../utils/index.js';
 import Order from '../models/Order.model.js';
 import User from '../models/User.model.js';
@@ -164,6 +164,7 @@ export const verifyPayment = asyncHandler(async (req: Request, res: Response) =>
         updatedOrder.totalPrice
       );
     }
+    GoogleSheetsService.updateOrderRow(updatedOrder).catch(() => {});
     return res.status(200).json(new ApiResponse(200, updatedOrder, 'Payment verified and order confirmed.'));
   }
 
@@ -279,6 +280,7 @@ export const handleWebhook = asyncHandler(async (req: Request, res: Response) =>
           updatedOrder.totalPrice
         );
       }
+      GoogleSheetsService.updateOrderRow(updatedOrder).catch(() => {});
     }
   } else if (event === 'payment.failed') {
     const paymentEntity = payload?.payment?.entity;

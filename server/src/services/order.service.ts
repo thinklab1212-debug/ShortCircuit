@@ -378,6 +378,9 @@ export class OrderService {
       await session.commitTransaction();
       session.endSession();
 
+      // Google Sheets sync (fire-and-forget)
+      GoogleSheetsService.updateOrderRow(order).catch(() => {});
+
       return order;
     } catch (error) {
       await session.abortTransaction();
@@ -567,6 +570,9 @@ export class OrderService {
         }
       }
 
+      // Google Sheets sync (fire-and-forget)
+      GoogleSheetsService.updateOrderRow(order).catch(() => {});
+
       return order;
     } catch (error) {
       await session.abortTransaction();
@@ -669,6 +675,10 @@ export class OrderService {
     });
 
     await order.save();
+
+    // Google Sheets sync (fire-and-forget)
+    GoogleSheetsService.updateOrderRow(order).catch(() => {});
+
     return order;
   }
 

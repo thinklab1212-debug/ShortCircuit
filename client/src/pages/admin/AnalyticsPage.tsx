@@ -4,7 +4,7 @@ import { IndianRupee, ShoppingBag, TrendingUp } from 'lucide-react'
 import { analyticsApi } from '@/services'
 import { StatCard, ChartCard, AdminPageHeader, AdminSection } from '@/components/admin'
 import { Skeleton } from '@/components/ui/loader'
-import { formatPrice, formatCompact, capitalize } from '@/utils'
+import { formatPrice, formatCompact, capitalize, formatStatusLabel } from '@/utils'
 import { ORDER_STATUS_LABELS } from '@/constants'
 import { cn } from '@/lib/utils'
 import { staggerContainer } from '@/config/animations'
@@ -135,7 +135,7 @@ export default function AnalyticsPage() {
             {Object.entries(byStatus).map(([status, count]) => (
               <div key={status} className="flex items-center gap-3">
                 <span className="w-36 shrink-0 text-sm text-muted-foreground">
-                  {ORDER_STATUS_LABELS[status] ?? capitalize(status)}
+                  {formatStatusLabel(status)}
                 </span>
                 <div className="h-6 flex-1 overflow-hidden rounded-md bg-muted">
                   <div
