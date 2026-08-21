@@ -10,6 +10,7 @@ import Order from '../models/Order.model.js';
 import Address from '../models/Address.model.js';
 import Coupon from '../models/Coupon.model.js';
 import User from '../models/User.model.js';
+import ProductVariant from '../models/ProductVariant.model.js';
 import { CartService } from './cart.service.js';
 import { ProductService } from './product.service.js';
 import { EmailService } from './email.service.js';
@@ -74,24 +75,87 @@ export class OrderService {
           throw new ApiError(400, `Product "${product?.name || 'Unknown'}" is no longer available.`);
         }
 
-        // Deduct stock inside the transaction session
-        const variantName = item.variant?.name;
-        const variantValue = item.variant?.value;
-        await ProductService.checkAndDecreaseStock(
-          product._id.toString(),
-          variantName,
-          variantValue,
-          item.quantity,
-          session
-        );
-
+        let variantSnapshotObj: { name: string; value: string } | undefined = undefined;
+        let itemSku = product.sku;
         let liveUnitPrice = product.salePrice || product.price;
-        if (variantName && variantValue) {
-          const variantObj = product.variants?.find((v: any) => v.name === variantName);
-          const optionObj = variantObj?.options?.find((o: any) => o.value === variantValue);
+
+        // Legacy embedded variant
+        if (item.variant?.name && item.variant?.value) {
+          const vName = item.variant.name;
+          const vVal = item.variant.value;
+          variantSnapshotObj = { name: vName, value: vVal };
+          const variantObj = product.variants?.find((v: any) => v.name === vName);
+          const optionObj = variantObj?.options?.find((o: any) => o.value === vVal);
           if (optionObj && optionObj.priceModifier) {
             liveUnitPrice += optionObj.priceModifier;
           }
+          await ProductService.checkAndDecreaseStock(
+            product._id.toString(),
+            vName,
+            vVal,
+            item.quantity,
+            session
+          );
+        }
+        // Linked ProductVariant (high-combination product families like LEDs & Resistors)
+        else if (item.productVariant || item.variantSnapshot) {
+          let pvDoc = item.productVariant as any;
+          if (!pvDoc || typeof pvDoc !== 'object' || !pvDoc.attributes) {
+            if (item.productVariant && mongoose.Types.ObjectId.isValid(item.productVariant.toString())) {
+              pvDoc = await ProductVariant.findById(item.productVariant).session(session);
+            }
+          }
+
+          if (pvDoc) {
+            if (pvDoc.sku) itemSku = pvDoc.sku;
+            liveUnitPrice = pvDoc.salePrice ?? pvDoc.price ?? liveUnitPrice;
+
+            if (pvDoc.attributes) {
+              const attrs = pvDoc.attributes instanceof Map
+                ? Object.fromEntries(pvDoc.attributes)
+                : pvDoc.attributes;
+              const formattedVals = Object.entries(attrs)
+                .map(([k, v]) => `${k}: ${v}`)
+                .join(', ');
+              if (formattedVals) {
+                variantSnapshotObj = { name: 'Variant', value: formattedVals };
+              }
+            }
+
+            if (pvDoc.stock < item.quantity) {
+              throw new ApiError(400, `Insufficient stock for variant "${pvDoc.sku}". Available: ${pvDoc.stock}`);
+            }
+            pvDoc.stock -= item.quantity;
+            await pvDoc.save({ session });
+          } else if (item.variantSnapshot?.attributes) {
+            const attrs = item.variantSnapshot.attributes instanceof Map
+              ? Object.fromEntries(item.variantSnapshot.attributes)
+              : item.variantSnapshot.attributes;
+            const formattedVals = Object.entries(attrs)
+              .map(([k, v]) => `${k}: ${v}`)
+              .join(', ');
+            if (formattedVals) {
+              variantSnapshotObj = { name: 'Variant', value: formattedVals };
+            }
+            if (item.variantSnapshot.sku) itemSku = item.variantSnapshot.sku;
+
+            await ProductService.checkAndDecreaseStock(
+              product._id.toString(),
+              undefined,
+              undefined,
+              item.quantity,
+              session
+            );
+          }
+        } else {
+          // Standard standalone product stock deduction
+          await ProductService.checkAndDecreaseStock(
+            product._id.toString(),
+            undefined,
+            undefined,
+            item.quantity,
+            session
+          );
         }
 
         orderItems.push({
@@ -99,8 +163,8 @@ export class OrderService {
           name: product.name,
           image: product.images.find((img: any) => img.isPrimary)?.url || product.images[0]?.url || '',
           slug: product.slug,
-          sku: product.sku,
-          variant: item.variant ? { name: item.variant.name, value: item.variant.value } : undefined,
+          sku: itemSku,
+          variant: variantSnapshotObj,
           quantity: item.quantity,
           price: liveUnitPrice,
         });

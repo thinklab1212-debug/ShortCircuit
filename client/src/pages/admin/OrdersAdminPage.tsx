@@ -142,7 +142,25 @@ export default function OrdersAdminPage() {
                       <td className="px-4 py-3 text-sm text-muted-foreground">
                         {formatDate(order.createdAt)}
                       </td>
-                      <td className="px-4 py-3 text-sm text-muted-foreground">{itemCount}</td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground max-w-xs">
+                        <div className="space-y-0.5">
+                          {order.items.slice(0, 2).map((it, idx) => {
+                            const variantStr = it.variant
+                              ? ` (${it.variant.name === 'Variant' ? it.variant.value : `${it.variant.name}: ${it.variant.value}`})`
+                              : ''
+                            return (
+                              <div key={idx} className="truncate text-xs font-medium text-foreground" title={`${it.name}${variantStr}`}>
+                                {it.name}{variantStr} <span className="text-muted-foreground">× {it.quantity}</span>
+                              </div>
+                            )
+                          })}
+                          {order.items.length > 2 && (
+                            <div className="text-[11px] text-muted-foreground font-normal">
+                              +{order.items.length - 2} more item{order.items.length - 2 > 1 ? 's' : ''} ({itemCount} total)
+                            </div>
+                          )}
+                        </div>
+                      </td>
                       <td className="px-4 py-3 text-sm font-medium text-foreground">
                         {new Intl.NumberFormat('en-IN', {
                           style: 'currency',

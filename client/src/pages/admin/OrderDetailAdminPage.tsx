@@ -149,7 +149,9 @@ export default function OrderDetailAdminPage() {
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-foreground">{item.name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {item.variant ? `${item.variant.name}: ${item.variant.value} · ` : ''}
+                        {item.variant
+                          ? `${item.variant.name === 'Variant' ? item.variant.value : `${item.variant.name}: ${item.variant.value}`} · `
+                          : ''}
                         Qty {item.quantity} × {formatPrice(item.price)}
                       </p>
                     </div>

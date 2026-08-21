@@ -25,9 +25,11 @@ export const SORT_OPTIONS = [
 
 export const ORDER_STATUS = {
   PENDING: 'pending',
+  PLACED: 'placed',
   CONFIRMED: 'confirmed',
   PROCESSING: 'processing',
   SHIPPED: 'shipped',
+  OUT_FOR_DELIVERY: 'out_for_delivery',
   DELIVERED: 'delivered',
   CANCELLED: 'cancelled',
   RETURNED: 'returned',
@@ -36,9 +38,11 @@ export const ORDER_STATUS = {
 
 export const ORDER_STATUS_LABELS: Record<string, string> = {
   pending: 'Pending',
+  placed: 'Placed',
   confirmed: 'Confirmed',
   processing: 'Processing',
   shipped: 'Shipped',
+  out_for_delivery: 'Out for Delivery',
   delivered: 'Delivered',
   cancelled: 'Cancelled',
   returned: 'Returned',

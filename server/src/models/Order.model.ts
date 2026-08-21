@@ -601,8 +601,11 @@ orderSchema.pre<IOrder>('save', async function (next) {
       (sum, item) => sum + item.price * item.quantity, 0
     );
 
-    // Shipping: free above ₹999
-    this.shippingPrice = this.itemsPrice >= 999 ? 0 : 49;
+    // Shipping: preserve pre-calculated shippingPrice if set, else calculate per store policy (free above ₹1499, else ₹75)
+    if (typeof this.shippingPrice !== 'number') {
+      const netSub = this.itemsPrice - (this.discountAmount || 0);
+      this.shippingPrice = netSub >= 1499 ? 0 : 75;
+    }
 
     // Fetch InvoiceSettings to get dynamic tax values
     const InvoiceSettings = mongoose.model('InvoiceSettings');
@@ -614,12 +617,14 @@ orderSchema.pre<IOrder>('save', async function (next) {
     const gstRate = settings.gstPercentage || 18;
 
     // GST inclusive in items
-    const netSubtotal = this.itemsPrice - this.discountAmount;
+    const netSubtotal = this.itemsPrice - (this.discountAmount || 0);
     const taxableValue = netSubtotal / (1 + gstRate / 100);
     this.taxPrice = Number((netSubtotal - taxableValue).toFixed(2));
 
-    // Total (tax is already included in itemsPrice)
-    this.totalPrice = netSubtotal + this.shippingPrice;
+    // Total price computation
+    if (typeof this.totalPrice !== 'number' || this.totalPrice === 0) {
+      this.totalPrice = netSubtotal + this.shippingPrice;
+    }
 
     // Snapshot the active tax rate in the order
     this.taxRateSnapshot = {
