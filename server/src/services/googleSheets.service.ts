@@ -109,6 +109,11 @@ export class GoogleSheetsService {
       this.productsSheet = await this.ensureSheet('Products', PRODUCT_HEADERS, { red: 0.98, green: 0.73, blue: 0.01 });   // Gold/Orange
 
       logger.info(`📊 Google Sheets sync connected: "${this.doc.title}" (${Object.keys(this.doc.sheetsByTitle).length} tabs)`);
+
+      // Asynchronously trigger sync of existing orders so past order statuses and Razorpay IDs get updated
+      this.syncAllOrders().catch((err) => {
+        logger.warn('⚠️  Google Sheets background order sync warning:', err);
+      });
     } catch (error) {
       logger.warn('⚠️  Google Sheets initialization failed (sync will be disabled):', error);
       this.doc = null;
@@ -504,5 +509,70 @@ export class GoogleSheetsService {
       totalVariants: variants.length,
       totalSynced: rows.length,
     };
+  }
+
+  /**
+   * Syncs/updates all orders from MongoDB to the Orders tab in Google Sheets.
+   * Updates status and Razorpay Payment ID for existing rows, appends missing ones.
+   */
+  public static async syncAllOrders(): Promise<{ totalOrders: number; totalSynced: number }> {
+    if (!this.ordersSheet) {
+      if (this.isConfigured() && !this.doc) {
+        await this.initialize();
+      }
+      if (!this.ordersSheet) {
+        throw new Error('Google Sheets is not configured or failed to initialize credentials.');
+      }
+    }
+
+    const Order = (await import('../models/Order.model.js')).default;
+    const orders = await Order.find({}).sort({ createdAt: 1 }).lean();
+    const rows = await this.ordersSheet.getRows();
+
+    // Map existing rows by Order ID
+    const rowMap = new Map<string, any>();
+    for (const r of rows) {
+      const id = r.get('Order ID');
+      if (id) {
+        rowMap.set(id, r);
+      }
+    }
+
+    let updatedCount = 0;
+
+    for (const order of orders) {
+      const orderIdStr = order.orderId || (order as any)._id?.toString() || '';
+      if (!orderIdStr) continue;
+
+      const existingRow = rowMap.get(orderIdStr) || rowMap.get((order as any)._id?.toString());
+      const razorpayPaymentId = order.paymentDetails?.razorpayPaymentId || '—';
+      const statusStr = order.orderStatus || '';
+
+      if (existingRow) {
+        let changed = false;
+        if (existingRow.get('Status') !== statusStr) {
+          existingRow.set('Status', statusStr);
+          changed = true;
+        }
+        if (existingRow.get('Razorpay Payment ID') !== razorpayPaymentId) {
+          existingRow.set('Razorpay Payment ID', razorpayPaymentId);
+          changed = true;
+        }
+        if (existingRow.get('Payment Method') !== (order.paymentMethod || '').toUpperCase()) {
+          existingRow.set('Payment Method', (order.paymentMethod || '').toUpperCase());
+          changed = true;
+        }
+        if (changed) {
+          await existingRow.save();
+          updatedCount++;
+        }
+      } else {
+        await this.appendOrderRow(order);
+        updatedCount++;
+      }
+    }
+
+    logger.info(`📊 Google Sheets sync: Resynced ${updatedCount} orders to Orders tab (${orders.length} total orders)`);
+    return { totalOrders: orders.length, totalSynced: updatedCount };
   }
 }

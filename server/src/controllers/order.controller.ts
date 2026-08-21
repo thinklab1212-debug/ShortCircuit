@@ -133,3 +133,9 @@ export const getPendingCancellationCount = asyncHandler(async (req: Request, res
   const count = await OrderService.getPendingCancellationCount();
   res.status(200).json(new ApiResponse(200, { count }, 'Pending cancellation count retrieved.'));
 });
+
+export const syncGoogleSheets = asyncHandler(async (_req: Request, res: Response) => {
+  const { GoogleSheetsService } = await import('../services/googleSheets.service.js');
+  const result = await GoogleSheetsService.syncAllOrders();
+  res.status(200).json(new ApiResponse(200, result, 'All orders and statuses synced to Google Sheets successfully.'));
+});

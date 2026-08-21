@@ -271,4 +271,6 @@ router.patch('/admin/:orderId/status', validate({ params: z.object({ orderId: ob
  */
 router.patch('/admin/:orderId/tracking', validate({ params: z.object({ orderId: objectIdSchema }), body: trackingUpdateSchema }), OrderController.updateTrackingInfo);
 
+router.post('/admin/sync-sheets', OrderController.syncGoogleSheets);
+
 export default router;
