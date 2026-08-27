@@ -270,6 +270,7 @@ router.patch('/admin/:orderId/status', validate({ params: z.object({ orderId: ob
  *         description: Tracking information updated
  */
 router.patch('/admin/:orderId/tracking', validate({ params: z.object({ orderId: objectIdSchema }), body: trackingUpdateSchema }), OrderController.updateTrackingInfo);
+router.delete('/admin/:orderId/history/:index', validate({ params: z.object({ orderId: objectIdSchema, index: z.string() }) }), OrderController.deleteStatusHistoryEntry);
 
 router.post('/admin/sync-sheets', OrderController.syncGoogleSheets);
 

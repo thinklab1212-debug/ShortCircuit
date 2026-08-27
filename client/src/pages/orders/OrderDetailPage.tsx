@@ -183,9 +183,22 @@ function StatusTimeline({
         const reached = i <= currentIndex
         const isCurrent = i === currentIndex
         const matchingEntries = entriesFor(status)
-        const latestEntry = matchingEntries[matchingEntries.length - 1]
-        const ts = latestEntry?.timestamp
-        const notes = matchingEntries.map((e) => e.note).filter(Boolean) as string[]
+        const initialEntry = matchingEntries[0]
+        const ts = initialEntry?.timestamp
+        const customNotes = Array.from(
+          new Set(
+            matchingEntries
+              .map((e) => e.note)
+              .filter((note): note is string => {
+                if (!note) return false
+                const lower = note.toLowerCase().trim()
+                return (
+                  !lower.startsWith('status updated to') &&
+                  !lower.startsWith('delivery status updated to')
+                )
+              })
+          )
+        )
         const isLast = i === PROGRESSION.length - 1
         return (
           <li key={status} className="flex gap-3 pb-6 last:pb-0">
@@ -216,7 +229,7 @@ function StatusTimeline({
                 {formatStatusLabel(status)}
               </p>
               {ts && <p className="text-xs text-muted-foreground">{formatDateTime(ts)}</p>}
-              {notes.map((note, idx) => (
+              {customNotes.map((note, idx) => (
                 <div
                   key={idx}
                   className="mt-1.5 rounded-lg border border-border bg-muted/40 p-2.5 text-xs text-muted-foreground"

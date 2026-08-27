@@ -711,6 +711,27 @@ export class OrderService {
   }
 
   /**
+   * Deletes a specific status history entry by index (Admin only).
+   */
+  public static async deleteStatusHistoryEntry(
+    orderId: string,
+    historyIndex: number
+  ): Promise<InstanceType<typeof Order>> {
+    const order = await Order.findById(orderId);
+    if (!order) {
+      throw ApiError.notFound('Order not found.');
+    }
+
+    if (historyIndex < 0 || historyIndex >= order.statusHistory.length) {
+      throw ApiError.badRequest('Invalid status history entry index.');
+    }
+
+    order.statusHistory.splice(historyIndex, 1);
+    await order.save();
+    return order;
+  }
+
+  /**
    * Compiles invoice PDF/HTML data metadata.
    */
   public static async getInvoiceMetadata(orderId: string, userId: string, userRole: string) {

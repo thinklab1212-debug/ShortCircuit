@@ -25,7 +25,7 @@ export default function ShippingPage() {
 
       <LegalSection heading="Shipping charges">
         <p>
-          We offer free standard shipping on orders above ₹1,499. A flat shipping fee of ₹75 applies to
+          We offer free standard shipping on orders above ₹1,499. A flat shipping fee of ₹49 applies to
           orders below this value, which is shown clearly at checkout before you pay.
         </p>
       </LegalSection>

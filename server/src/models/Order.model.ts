@@ -151,7 +151,7 @@ export interface IOrder extends Document {
 
   // Pricing breakdown
   itemsPrice: number;                 // Sum of (item.price * item.quantity)
-  shippingPrice: number;              // ₹0 above ₹1499, else ₹75
+  shippingPrice: number;              // ₹0 above ₹1499, else ₹49
   taxPrice: number;                   // GST 18%
   discountAmount: number;             // Coupon discount
   totalPrice: number;                 // Final payable
@@ -601,10 +601,10 @@ orderSchema.pre<IOrder>('save', async function (next) {
       (sum, item) => sum + item.price * item.quantity, 0
     );
 
-    // Shipping: preserve pre-calculated shippingPrice if set, else calculate per store policy (free above ₹1499, else ₹75)
+    // Shipping: preserve pre-calculated shippingPrice if set, else calculate per store policy (free above ₹1499, else ₹49)
     if (typeof this.shippingPrice !== 'number') {
       const netSub = this.itemsPrice - (this.discountAmount || 0);
-      this.shippingPrice = netSub >= 1499 ? 0 : 75;
+      this.shippingPrice = netSub >= 1499 ? 0 : 49;
     }
 
     // Fetch InvoiceSettings to get dynamic tax values

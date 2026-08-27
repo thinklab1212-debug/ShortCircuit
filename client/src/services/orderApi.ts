@@ -58,6 +58,9 @@ const orderApi = {
 
   reviewCancellationRequest: (id: string, data: { action: 'approve' | 'reject'; adminResponse?: string; internalAdminNote?: string }) =>
     apiClient.patch<ApiResponse<Order>>(API_ROUTES.ORDERS.ADMIN_CANCELLATION_REQUESTS_BY_ID(id), data),
+
+  deleteStatusHistory: (id: string, index: number) =>
+    apiClient.delete<ApiResponse<Order>>(`/orders/admin/${id}/history/${index}`),
 }
 
 export default orderApi

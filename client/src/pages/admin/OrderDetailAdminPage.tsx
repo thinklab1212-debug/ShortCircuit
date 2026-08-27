@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useParams, Link } from 'react-router'
 import toast from 'react-hot-toast'
-import { ArrowLeft, MapPin, Package, Truck, User as UserIcon, Download } from 'lucide-react'
+import { ArrowLeft, MapPin, Package, Truck, User as UserIcon, Download, Trash2 } from 'lucide-react'
 import { orderApi } from '@/services'
 import { AdminPageHeader, AdminSection } from '@/components/admin'
 import { Button } from '@/components/ui/button'
@@ -100,6 +100,15 @@ export default function OrderDetailAdminPage() {
     onError: () => toast.error('Failed to update tracking'),
   })
 
+  const deleteHistoryMutation = useMutation({
+    mutationFn: (index: number) => orderApi.deleteStatusHistory(id, index),
+    onSuccess: () => {
+      toast.success('Timeline entry removed')
+      queryClient.invalidateQueries({ queryKey: ['admin', 'order', id] })
+    },
+    onError: () => toast.error('Failed to remove timeline entry'),
+  })
+
   if (isLoading) return <Loader fullScreen text="Loading order..." />
   if (isError) {
     return <ErrorFallback error={error as Error} resetErrorBoundary={() => void refetch()} />
@@ -187,24 +196,39 @@ export default function OrderDetailAdminPage() {
               ) : (
                 <ol className="space-y-4">
                   {order.statusHistory.map((entry, i) => (
-                    <li key={i} className="flex gap-3">
-                      <div className="flex flex-col items-center">
-                        <span className="mt-1 h-2.5 w-2.5 rounded-full bg-primary" />
-                        {i < order.statusHistory.length - 1 && (
-                          <span className="mt-1 w-px flex-1 bg-border" />
-                        )}
+                    <li key={i} className="flex items-start justify-between gap-3 group">
+                      <div className="flex gap-3">
+                        <div className="flex flex-col items-center">
+                          <span className="mt-1 h-2.5 w-2.5 rounded-full bg-primary" />
+                          {i < order.statusHistory.length - 1 && (
+                            <span className="mt-1 w-px flex-1 bg-border" />
+                          )}
+                        </div>
+                        <div className="pb-1">
+                          <p className="text-sm font-medium text-foreground">
+                            {formatStatusLabel(entry.status)}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {formatDateTime(entry.timestamp)}
+                          </p>
+                          {entry.note && (
+                            <p className="mt-0.5 text-xs text-muted-foreground">{entry.note}</p>
+                          )}
+                        </div>
                       </div>
-                      <div className="pb-1">
-                        <p className="text-sm font-medium text-foreground">
-                          {formatStatusLabel(entry.status)}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatDateTime(entry.timestamp)}
-                        </p>
-                        {entry.note && (
-                          <p className="mt-0.5 text-xs text-muted-foreground">{entry.note}</p>
-                        )}
-                      </div>
+                      {order.statusHistory.length > 1 && (
+                        <button
+                          onClick={() => {
+                            if (window.confirm('Delete this timeline entry?')) {
+                              deleteHistoryMutation.mutate(i)
+                            }
+                          }}
+                          title="Delete this timeline entry"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive p-1 rounded hover:bg-destructive/10"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      )}
                     </li>
                   ))}
                 </ol>

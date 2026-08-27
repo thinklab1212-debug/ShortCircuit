@@ -884,7 +884,7 @@ export class EventService {
     // Pricing calculations
     const itemsPrice = event.totalKitValue;
     const discountAmount = Math.max(0, event.totalKitValue - event.eventKitPrice);
-    const shippingPrice = event.eventKitPrice >= 999 ? 0 : 49;
+    const shippingPrice = event.eventKitPrice >= 1499 ? 0 : 49;
     const totalPrice = event.eventKitPrice + shippingPrice;
     const taxPrice = Math.round(event.eventKitPrice - event.eventKitPrice / 1.18);
 
@@ -976,7 +976,7 @@ export class EventService {
       // 4. Calculate prices
       const itemsPrice = event.totalKitValue;
       const discountAmount = Math.max(0, event.totalKitValue - event.eventKitPrice);
-      const shippingPrice = event.eventKitPrice >= 999 ? 0 : 49;
+      const shippingPrice = event.eventKitPrice >= 1499 ? 0 : 49;
       const totalPrice = event.eventKitPrice + shippingPrice;
       const taxPrice = Math.round(event.eventKitPrice - event.eventKitPrice / 1.18);
 

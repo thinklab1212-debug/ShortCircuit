@@ -88,6 +88,13 @@ export const updateTrackingInfo = asyncHandler(async (req: Request, res: Respons
   res.status(200).json(new ApiResponse(200, order, 'Tracking information updated successfully.'));
 });
 
+export const deleteStatusHistoryEntry = asyncHandler(async (req: Request, res: Response) => {
+  const orderId = req.params.orderId || req.params.id;
+  const index = parseInt(req.params.index, 10);
+  const order = await OrderService.deleteStatusHistoryEntry(orderId, index);
+  res.status(200).json(new ApiResponse(200, order, 'Status history entry deleted successfully.'));
+});
+
 export const downloadInvoice = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user!._id;
   const userRole = req.user!.role;
