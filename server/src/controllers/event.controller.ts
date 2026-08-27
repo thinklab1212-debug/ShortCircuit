@@ -332,11 +332,12 @@ export const downloadEventInvoice = asyncHandler(async (req: Request, res: Respo
 
 export const updateAdminEventOrderStatus = asyncHandler(async (req: Request, res: Response) => {
   const orderId = req.params.id;
-  const { paymentStatus, deliveryStatus } = req.body;
+  const { paymentStatus, deliveryStatus, note } = req.body;
 
   const result = await EventService.updateAdminEventOrderStatus(orderId, {
     paymentStatus,
     deliveryStatus,
+    note,
   });
 
   res.status(200).json(new ApiResponse(200, result, 'Event Order status updated successfully.'));

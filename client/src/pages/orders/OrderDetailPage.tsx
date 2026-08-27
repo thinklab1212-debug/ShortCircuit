@@ -175,15 +175,18 @@ function StatusTimeline({
   }
 
   const currentIndex = PROGRESSION.indexOf(currentStatus)
-  const timestampFor = (status: OrderStatus) =>
-    history.find((h) => h.status === status)?.timestamp
+  const entriesFor = (status: OrderStatus) =>
+    history.filter((h) => h.status === status)
 
   return (
     <ol className="relative">
       {PROGRESSION.map((status, i) => {
         const reached = i <= currentIndex
         const isCurrent = i === currentIndex
-        const ts = timestampFor(status)
+        const matchingEntries = entriesFor(status)
+        const latestEntry = matchingEntries[matchingEntries.length - 1]
+        const ts = latestEntry?.timestamp
+        const notes = matchingEntries.map((e) => e.note).filter(Boolean) as string[]
         const isLast = i === PROGRESSION.length - 1
         return (
           <li key={status} className="flex gap-3 pb-6 last:pb-0">
@@ -204,7 +207,7 @@ function StatusTimeline({
                 />
               )}
             </div>
-            <div className="pb-2">
+            <div className="pb-2 flex-1">
               <p
                 className={cn(
                   'text-sm font-medium',
@@ -214,6 +217,15 @@ function StatusTimeline({
                 {formatStatusLabel(status)}
               </p>
               {ts && <p className="text-xs text-muted-foreground">{formatDateTime(ts)}</p>}
+              {notes.map((note, idx) => (
+                <div
+                  key={idx}
+                  className="mt-1.5 rounded-lg border border-border bg-muted/40 p-2.5 text-xs text-muted-foreground"
+                >
+                  <span className="font-semibold text-foreground">Note: </span>
+                  {note}
+                </div>
+              ))}
             </div>
           </li>
         )

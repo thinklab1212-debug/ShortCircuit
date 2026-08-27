@@ -205,9 +205,21 @@ export default function CustomerEventOrdersPage() {
                         >
                           4
                         </div>
-                        <span>Delivered</span>
-                      </div>
                     </div>
+                    {/* Delivery Status Notes */}
+                    {order.statusHistory && order.statusHistory.filter((h) => Boolean(h.note)).length > 0 && (
+                      <div className="mt-3 space-y-1.5 border-t border-border/50 pt-2.5">
+                        {order.statusHistory
+                          .filter((h) => Boolean(h.note))
+                          .slice(-3)
+                          .map((entry, idx) => (
+                            <div key={idx} className="rounded-md bg-muted/40 border border-border/50 p-2 text-xs text-muted-foreground">
+                              <span className="font-semibold text-foreground">Note ({entry.status}): </span>
+                              {entry.note}
+                            </div>
+                          ))}
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

@@ -141,4 +141,5 @@ export const rejectEventSchema = z.object({
 export const updateEventOrderStatusSchema = z.object({
   paymentStatus: z.enum(['pending', 'paid', 'failed', 'refunded']).optional(),
   deliveryStatus: z.enum(['placed', 'packed', 'shipped', 'delivered', 'cancelled']).optional(),
+  note: z.string().trim().max(500, 'Note cannot exceed 500 characters').optional(),
 });

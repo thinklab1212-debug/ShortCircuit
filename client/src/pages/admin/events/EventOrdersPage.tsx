@@ -21,33 +21,54 @@ export default function EventOrdersPage() {
   const [deliveryStatus, setDeliveryStatus] = useState<string>('')
   const [page, setPage] = useState(1)
 
+  const [selectedOrderForNote, setSelectedOrderForNote] = useState<{
+    orderId: string
+    orderNumber: string
+    field: 'paymentStatus' | 'deliveryStatus'
+    newValue: string
+  } | null>(null)
+  const [statusNote, setStatusNote] = useState('')
+  const [isSubmittingStatus, setIsSubmittingStatus] = useState(false)
+
   const { data, isLoading } = useAdminEventOrders({
     page,
     limit: 10,
     paymentStatus: paymentStatus || undefined,
     deliveryStatus: deliveryStatus || undefined,
-    // Add search mapping if API supports it (verified: verifyTeam/organizerPurchases searches on regex)
   })
 
   const orders = data?.orders || []
   const pagination = data?.pagination
 
-  const handleUpdateStatus = async (
+  const openStatusModal = (
     orderId: string,
+    orderNumber: string,
     field: 'paymentStatus' | 'deliveryStatus',
     newValue: string
   ) => {
+    setSelectedOrderForNote({ orderId, orderNumber, field, newValue })
+    setStatusNote('')
+  }
+
+  const handleConfirmUpdateStatus = async () => {
+    if (!selectedOrderForNote) return
+    setIsSubmittingStatus(true)
     try {
       toast.loading('Updating order status...', { id: 'status-update' })
-      await apiClient.patch(`/admin/events/orders/${orderId}/status`, {
-        [field]: newValue,
+      await apiClient.patch(`/admin/events/orders/${selectedOrderForNote.orderId}/status`, {
+        [selectedOrderForNote.field]: selectedOrderForNote.newValue,
+        note: statusNote.trim() || undefined,
       })
       toast.success('Order status updated successfully', { id: 'status-update' })
+      setSelectedOrderForNote(null)
+      setStatusNote('')
       setTimeout(() => {
         window.location.reload()
       }, 500)
     } catch {
       toast.error('Failed to update status.', { id: 'status-update' })
+    } finally {
+      setIsSubmittingStatus(false)
     }
   }
 
@@ -198,7 +219,7 @@ export default function EventOrdersPage() {
                     <td className="p-3">
                       <select
                         value={order.paymentStatus}
-                        onChange={(e) => handleUpdateStatus(order._id, 'paymentStatus', e.target.value)}
+                        onChange={(e) => openStatusModal(order._id, order.orderId, 'paymentStatus', e.target.value)}
                         className={`bg-card border border-border rounded text-[10px] p-1 font-semibold focus:ring-1 focus:ring-primary outline-none ${
                           order.paymentStatus === 'paid'
                             ? 'text-success border-success/30 bg-success/5'
@@ -216,7 +237,7 @@ export default function EventOrdersPage() {
                     <td className="p-3">
                       <select
                         value={order.deliveryStatus}
-                        onChange={(e) => handleUpdateStatus(order._id, 'deliveryStatus', e.target.value)}
+                        onChange={(e) => openStatusModal(order._id, order.orderId, 'deliveryStatus', e.target.value)}
                         className="bg-card text-foreground border border-border rounded text-[10px] p-1 font-medium focus:ring-1 focus:ring-primary outline-none"
                       >
                         <option value="placed">Placed</option>
@@ -245,6 +266,49 @@ export default function EventOrdersPage() {
               })}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Status Update Note Modal */}
+      {selectedOrderForNote && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl space-y-4">
+            <h3 className="text-base font-bold text-foreground">
+              Update {selectedOrderForNote.field === 'deliveryStatus' ? 'Delivery' : 'Payment'} Status
+            </h3>
+            <p className="text-xs text-muted-foreground">
+              Order: <span className="font-mono font-semibold text-primary">{selectedOrderForNote.orderNumber}</span> · New Status:{' '}
+              <span className="font-semibold capitalize text-foreground">{selectedOrderForNote.newValue}</span>
+            </p>
+            <div>
+              <label className="block text-xs font-semibold text-foreground mb-1.5">
+                Note (optional)
+              </label>
+              <textarea
+                value={statusNote}
+                onChange={(e) => setStatusNote(e.target.value)}
+                placeholder="Add a delivery note or update message visible to user..."
+                className="w-full rounded-lg border border-border bg-background p-2.5 text-xs text-foreground outline-none focus:ring-1 focus:ring-primary min-h-[80px]"
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSelectedOrderForNote(null)}
+                disabled={isSubmittingStatus}
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleConfirmUpdateStatus}
+                loading={isSubmittingStatus}
+              >
+                Save & Update Status
+              </Button>
+            </div>
+          </div>
         </div>
       )}
 

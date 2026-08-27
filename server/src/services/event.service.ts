@@ -1395,7 +1395,7 @@ export class EventService {
    */
   public static async updateAdminEventOrderStatus(
     orderId: string,
-    updateData: { paymentStatus?: string; deliveryStatus?: string }
+    updateData: { paymentStatus?: string; deliveryStatus?: string; note?: string }
   ) {
     const order = await EventOrder.findById(orderId);
     if (!order) {
@@ -1407,7 +1407,7 @@ export class EventService {
       order.statusHistory.push({
         status: updateData.paymentStatus,
         timestamp: new Date(),
-        note: `Payment status updated to ${updateData.paymentStatus} by Admin`,
+        note: updateData.note || `Payment status updated to ${updateData.paymentStatus} by Admin`,
       });
     }
 
@@ -1416,7 +1416,7 @@ export class EventService {
       order.statusHistory.push({
         status: updateData.deliveryStatus,
         timestamp: new Date(),
-        note: `Delivery status updated to ${updateData.deliveryStatus} by Admin`,
+        note: updateData.note || `Delivery status updated to ${updateData.deliveryStatus} by Admin`,
       });
     }
 
