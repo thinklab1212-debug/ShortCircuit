@@ -8,6 +8,14 @@ import {
   Users,
   AlertTriangle,
   ArrowRight,
+  ShieldCheck,
+  Tag,
+  Calendar,
+  Ticket,
+  Receipt,
+  BarChart3,
+  Settings,
+  Layers,
 } from 'lucide-react'
 import { analyticsApi } from '@/services'
 import {
@@ -31,6 +39,20 @@ function customerName(user: Order['user']): string {
   const name = getUserName(user as User)
   return name || (user as User).email || 'Customer'
 }
+
+const quickLinks = [
+  { name: 'Products', path: '/admin/products', icon: Package, color: 'text-blue-500 bg-blue-50 dark:bg-blue-950/40' },
+  { name: 'Orders', path: '/admin/orders', icon: ShoppingBag, color: 'text-emerald-500 bg-emerald-50 dark:bg-emerald-950/40' },
+  { name: 'Users', path: '/admin/users', icon: Users, color: 'text-amber-500 bg-amber-50 dark:bg-amber-950/40' },
+  { name: 'Categories', path: '/admin/categories', icon: Tag, color: 'text-purple-500 bg-purple-50 dark:bg-purple-950/40' },
+  { name: 'Review Queue', path: '/admin/review-queue', icon: ShieldCheck, color: 'text-indigo-500 bg-indigo-50 dark:bg-indigo-950/40' },
+  { name: 'Events', path: '/admin/events', icon: Calendar, color: 'text-rose-500 bg-rose-50 dark:bg-rose-950/40' },
+  { name: 'Project Kits', path: '/admin/project-kits', icon: Layers, color: 'text-cyan-500 bg-cyan-50 dark:bg-cyan-950/40' },
+  { name: 'Coupons', path: '/admin/coupons', icon: Ticket, color: 'text-orange-500 bg-orange-50 dark:bg-orange-950/40' },
+  { name: 'Invoices', path: '/admin/invoices', icon: Receipt, color: 'text-teal-500 bg-teal-50 dark:bg-teal-950/40' },
+  { name: 'Analytics', path: '/admin/analytics', icon: BarChart3, color: 'text-violet-500 bg-violet-50 dark:bg-violet-950/40' },
+  { name: 'Settings', path: '/admin/settings', icon: Settings, color: 'text-slate-500 bg-slate-100 dark:bg-slate-800/40' },
+]
 
 export default function DashboardPage() {
   const { data, isLoading, isError, error, refetch } = useQuery({
@@ -75,32 +97,59 @@ export default function DashboardPage() {
             title="Total Revenue"
             value={formatPrice(data?.totalRevenue ?? 0)}
             change={data?.revenueGrowth}
-            changeLabel="vs last period"
+            changeLabel="vs last month"
             icon={IndianRupee}
             iconColor="success"
+            to="/admin/analytics"
           />
           <StatCard
             title="Total Orders"
             value={(data?.totalOrders ?? 0).toLocaleString('en-IN')}
             change={data?.orderGrowth}
-            changeLabel="vs last period"
+            changeLabel="vs last month"
             icon={ShoppingBag}
             iconColor="primary"
+            to="/admin/orders"
           />
           <StatCard
             title="Products"
             value={(data?.totalProducts ?? 0).toLocaleString('en-IN')}
             icon={Package}
             iconColor="info"
+            to="/admin/products"
           />
           <StatCard
             title="Customers"
-            value={(data?.totalUsers ?? 0).toLocaleString('en-IN')}
+            value={(data?.totalUsers ?? data?.totalCustomers ?? 0).toLocaleString('en-IN')}
             icon={Users}
             iconColor="warning"
+            to="/admin/users"
           />
         </motion.div>
       )}
+
+      {/* Quick Access Navigation */}
+      <AdminSection title="Quick Management">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+          {quickLinks.map((link) => {
+            const Icon = link.icon
+            return (
+              <Link
+                key={link.path}
+                to={link.path}
+                className="group flex flex-col items-center gap-2.5 rounded-2xl border border-border bg-card p-4 transition-all hover:border-primary/50 hover:shadow-card-hover"
+              >
+                <div className={`flex h-11 w-11 items-center justify-center rounded-xl transition-transform group-hover:scale-110 ${link.color}`}>
+                  <Icon className="h-5.5 w-5.5" />
+                </div>
+                <span className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors">
+                  {link.name}
+                </span>
+              </Link>
+            )
+          })}
+        </div>
+      </AdminSection>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Recent orders */}
@@ -143,22 +192,29 @@ export default function DashboardPage() {
                           to={`/admin/orders/${order._id}`}
                           className="font-medium text-primary hover:underline"
                         >
-                          {order.orderId}
+                          {order.orderId || order._id}
                         </Link>
                         <p className="text-xs text-muted-foreground">
                           {formatDate(order.createdAt)}
                         </p>
                       </td>
                       <td className="px-4 py-3 text-sm text-foreground">
-                        {customerName(order.user)}
+                        <Link
+                          to="/admin/users"
+                          className="hover:text-primary font-medium hover:underline"
+                        >
+                          {customerName(order.user)}
+                        </Link>
                       </td>
                       <td className="px-4 py-3 text-sm font-medium text-foreground">
                         {formatPrice(order.totalPrice)}
                       </td>
                       <td className="px-4 py-3 text-sm">
-                        <Badge variant="secondary" size="sm">
-                          {formatStatusLabel(order.orderStatus)}
-                        </Badge>
+                        <Link to={`/admin/orders/${order._id}`}>
+                          <Badge variant="secondary" size="sm" className="hover:opacity-80">
+                            {formatStatusLabel(order.orderStatus)}
+                          </Badge>
+                        </Link>
                       </td>
                     </tr>
                   ))}
@@ -205,11 +261,15 @@ export default function DashboardPage() {
                       {product.name}
                     </Link>
                     {product.stock <= 0 ? (
-                      <StatusIndicator status="error" label="Out of stock" />
+                      <Link to={`/admin/products/${product._id}/edit`}>
+                        <StatusIndicator status="error" label="Out of stock" />
+                      </Link>
                     ) : (
-                      <Badge variant="warning" size="sm">
-                        {product.stock} left
-                      </Badge>
+                      <Link to={`/admin/products/${product._id}/edit`}>
+                        <Badge variant="warning" size="sm">
+                          {product.stock} left
+                        </Badge>
+                      </Link>
                     )}
                   </li>
                 ))}

@@ -1,3 +1,4 @@
+import { Link } from 'react-router'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { countUpVariants, fadeInUp } from '@/config/animations'
@@ -13,6 +14,7 @@ interface StatCardProps {
   icon: LucideIcon
   iconColor?: 'primary' | 'success' | 'warning' | 'error' | 'info'
   className?: string
+  to?: string
 }
 
 const iconColorMap = {
@@ -31,18 +33,22 @@ export function StatCard({
   icon: Icon,
   iconColor = 'primary',
   className,
+  to,
 }: StatCardProps) {
-  return (
+  const cardContent = (
     <motion.div
       variants={fadeInUp}
       className={cn(
-        'rounded-2xl border border-border bg-card p-6 transition-shadow hover:shadow-card-hover',
+        'rounded-2xl border border-border bg-card p-6 transition-all hover:shadow-card-hover',
+        to && 'group cursor-pointer hover:border-primary/50',
         className
       )}
     >
       <div className="flex items-start justify-between">
         <div className="space-y-2">
-          <p className="text-sm font-medium text-muted-foreground">{title}</p>
+          <p className="text-sm font-medium text-muted-foreground transition-colors group-hover:text-foreground">
+            {title}
+          </p>
           <motion.p
             variants={countUpVariants}
             className="text-3xl font-bold text-foreground font-heading tracking-tight"
@@ -67,12 +73,27 @@ export function StatCard({
             </div>
           )}
         </div>
-        <div className={cn('flex h-12 w-12 items-center justify-center rounded-xl', iconColorMap[iconColor])}>
+        <div
+          className={cn(
+            'flex h-12 w-12 items-center justify-center rounded-xl transition-transform group-hover:scale-105',
+            iconColorMap[iconColor]
+          )}
+        >
           <Icon className="h-6 w-6" />
         </div>
       </div>
     </motion.div>
   )
+
+  if (to) {
+    return (
+      <Link to={to} className="block no-underline">
+        {cardContent}
+      </Link>
+    )
+  }
+
+  return cardContent
 }
 
 // ─── Mini Stat Card ─────────────────────────────────────────────────────────────

@@ -17,43 +17,119 @@ export class AnalyticsService {
   public static async getDashboardStats(): Promise<{
     totalRevenue: number;
     totalOrders: number;
+    totalProducts: number;
+    totalUsers: number;
     totalCustomers: number;
+    pendingOrders: number;
     outOfStockCount: number;
+    recentOrders: any[];
+    lowStockProducts: any[];
+    revenueGrowth: number;
+    orderGrowth: number;
   }> {
-    // 1. Calculate total revenue (paid or delivered orders)
-    const revenueAggregation = await Order.aggregate([
-      {
-        $match: {
-          $or: [
-            { paymentStatus: 'paid' },
-            { orderStatus: 'delivered' },
-          ],
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+
+    const [
+      revenueAggregation,
+      totalOrders,
+      totalProducts,
+      totalUsers,
+      totalCustomers,
+      pendingOrders,
+      outOfStockCount,
+      recentOrders,
+      lowStockProducts,
+      recentRevAgg,
+      prevRevAgg,
+      recentOrderCount,
+      prevOrderCount,
+    ] = await Promise.all([
+      Order.aggregate([
+        {
+          $match: {
+            $or: [
+              { paymentStatus: 'paid' },
+              { orderStatus: 'delivered' },
+            ],
+          },
         },
-      },
-      {
-        $group: {
-          _id: null,
-          total: { $sum: '$totalPrice' },
+        {
+          $group: {
+            _id: null,
+            total: { $sum: '$totalPrice' },
+          },
         },
-      },
+      ]),
+      Order.countDocuments(),
+      Product.countDocuments(),
+      User.countDocuments(),
+      User.countDocuments({ role: 'customer' }),
+      Order.countDocuments({ orderStatus: { $in: ['pending', 'processing'] } }),
+      Product.countDocuments({ stock: 0, isActive: true }),
+      Order.find()
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .populate('user', 'name email firstName lastName role')
+        .lean(),
+      Product.find({ stock: { $lte: 10 } })
+        .sort({ stock: 1 })
+        .limit(5)
+        .select('name stock price isActive category images')
+        .lean(),
+      Order.aggregate([
+        {
+          $match: {
+            createdAt: { $gte: thirtyDaysAgo },
+            $or: [{ paymentStatus: 'paid' }, { orderStatus: 'delivered' }],
+          },
+        },
+        { $group: { _id: null, total: { $sum: '$totalPrice' } } },
+      ]),
+      Order.aggregate([
+        {
+          $match: {
+            createdAt: { $gte: sixtyDaysAgo, $lt: thirtyDaysAgo },
+            $or: [{ paymentStatus: 'paid' }, { orderStatus: 'delivered' }],
+          },
+        },
+        { $group: { _id: null, total: { $sum: '$totalPrice' } } },
+      ]),
+      Order.countDocuments({ createdAt: { $gte: thirtyDaysAgo } }),
+      Order.countDocuments({ createdAt: { $gte: sixtyDaysAgo, $lt: thirtyDaysAgo } }),
     ]);
 
     const totalRevenue = revenueAggregation[0]?.total || 0;
 
-    // 2. Count total orders
-    const totalOrders = await Order.countDocuments();
+    const recentRev = recentRevAgg[0]?.total || 0;
+    const prevRev = prevRevAgg[0]?.total || 0;
+    const revenueGrowth =
+      prevRev === 0
+        ? recentRev > 0
+          ? 100
+          : 0
+        : Math.round(((recentRev - prevRev) / prevRev) * 100 * 10) / 10;
 
-    // 3. Count total customers
-    const totalCustomers = await User.countDocuments({ role: 'customer' });
-
-    // 4. Count out-of-stock products
-    const outOfStockCount = await Product.countDocuments({ stock: 0, isActive: true });
+    const orderGrowth =
+      prevOrderCount === 0
+        ? recentOrderCount > 0
+          ? 100
+          : 0
+        : Math.round(((recentOrderCount - prevOrderCount) / prevOrderCount) * 100 * 10) / 10;
 
     return {
       totalRevenue,
       totalOrders,
+      totalProducts,
+      totalUsers,
       totalCustomers,
+      pendingOrders,
       outOfStockCount,
+      recentOrders,
+      lowStockProducts,
+      revenueGrowth,
+      orderGrowth,
     };
   }
 
