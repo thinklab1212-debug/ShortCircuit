@@ -711,6 +711,8 @@ export interface DashboardStats {
   totalOrders: number
   totalProducts: number
   totalUsers: number
+  totalCustomers?: number
+  outOfStockCount?: number
   pendingOrders?: number
   recentOrders?: Order[]
   lowStockProducts?: Product[]
