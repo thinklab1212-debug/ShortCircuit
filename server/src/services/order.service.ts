@@ -638,14 +638,14 @@ export class OrderService {
       throw new ApiError(400, 'Please use the dedicated cancel order endpoint to cancel an order and restore stock.');
     }
 
-    // Enforce valid order status transitions
+    // Enforce valid order status transitions (including self-transitions for adding tracking notes)
     const validTransitions: Record<string, string[]> = {
-      pending_payment: ['confirmed'],
-      placed: ['confirmed', 'processing', 'shipped'],
-      confirmed: ['processing', 'shipped'],
-      processing: ['shipped'],
-      shipped: ['out_for_delivery', 'delivered'],
-      out_for_delivery: ['delivered'],
+      pending_payment: ['pending_payment', 'confirmed'],
+      placed: ['placed', 'confirmed', 'processing', 'shipped'],
+      confirmed: ['confirmed', 'processing', 'shipped'],
+      processing: ['processing', 'shipped'],
+      shipped: ['shipped', 'out_for_delivery', 'delivered'],
+      out_for_delivery: ['out_for_delivery', 'delivered'],
     };
 
     const allowed = validTransitions[order.orderStatus];

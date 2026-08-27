@@ -8,7 +8,6 @@ import { Badge } from '@/components/ui/badge'
 import { EmptyState } from '@/components/ui/error'
 import { useMyOrders } from '@/hooks'
 import { formatPrice, formatDate, pluralize, formatStatusLabel } from '@/utils'
-import { ORDER_STATUS_LABELS } from '@/constants'
 import type { Order, OrderStatus } from '@/types'
 import { staggerContainer, fadeInUp } from '@/config/animations'
 

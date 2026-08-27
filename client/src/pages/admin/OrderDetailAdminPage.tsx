@@ -14,7 +14,6 @@ import { FormField } from '@/components/ui/form-field'
 import { Loader } from '@/components/ui/loader'
 import { ErrorFallback } from '@/components/ui/error'
 import { formatPrice, formatDateTime, getUserName, formatStatusLabel } from '@/utils'
-import { ORDER_STATUS_LABELS } from '@/constants'
 import type { OrderStatus, User } from '@/types'
 
 // ─── Order Detail (Admin) ───────────────────────────────────────────────────────

@@ -205,6 +205,8 @@ export default function CustomerEventOrdersPage() {
                         >
                           4
                         </div>
+                        <span>Delivered</span>
+                      </div>
                     </div>
                     {/* Delivery Status Notes */}
                     {order.statusHistory && order.statusHistory.filter((h) => Boolean(h.note)).length > 0 && (

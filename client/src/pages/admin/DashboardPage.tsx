@@ -20,7 +20,6 @@ import { Badge } from '@/components/ui/badge'
 import { ErrorFallback } from '@/components/ui/error'
 import { Skeleton } from '@/components/ui/loader'
 import { formatPrice, formatDate, getUserName, formatStatusLabel } from '@/utils'
-import { ORDER_STATUS_LABELS } from '@/constants'
 import { staggerContainer } from '@/config/animations'
 import type { Order, User } from '@/types'
 

@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ErrorFallback } from '@/components/ui/error'
 import { formatDate, getUserName, formatStatusLabel } from '@/utils'
-import { ORDER_STATUS_LABELS } from '@/constants'
 import { cn } from '@/lib/utils'
 import type { Order, OrderStatus, PaymentStatus, User } from '@/types'
 
