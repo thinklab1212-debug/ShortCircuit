@@ -21,7 +21,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
-import { useCart, useCartTotals, useAddresses, usePlaceOrder, useCheckPincode } from '@/hooks'
+import { useCart, useCartTotals, useAddresses, usePlaceOrder, useCheckPincode, usePublicSettings } from '@/hooks'
 import queryKeys from '@/api/queryKeys'
 import { useAuthStore } from '@/store'
 import { couponApi, paymentApi } from '@/services'
@@ -165,21 +165,20 @@ export default function CheckoutPage() {
 
   const { data: cart } = useCart()
   const { data: addresses, isLoading: addressesLoading } = useAddresses()
+  const { data: publicSettings } = usePublicSettings()
   const placeOrder = usePlaceOrder()
 
-  const isCodAllowed = (() => {
-    const saved = localStorage.getItem('store-preferences')
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved)
-        return parsed.cod !== false
-      } catch {}
-    }
-    return true
-  })()
+  const isCodAllowed = publicSettings?.codEnabled ?? false
 
   const [selectedAddressId, setSelectedAddressId] = useState<string>('')
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(isCodAllowed ? 'cod' : 'razorpay')
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('razorpay')
+
+  // Auto-switch away from COD if disabled by store settings
+  useEffect(() => {
+    if (!isCodAllowed && paymentMethod === 'cod') {
+      setPaymentMethod('razorpay')
+    }
+  }, [isCodAllowed, paymentMethod])
   const [customerNote, setCustomerNote] = useState('')
   const [orderEmail, setOrderEmail] = useState(user?.email || '')
 
@@ -343,6 +342,11 @@ export default function CheckoutPage() {
     setSubmitting(true)
     try {
       if (paymentMethod === 'cod') {
+        if (!isCodAllowed) {
+          toast.error('Cash on Delivery is currently disabled by store administration.')
+          setSubmitting(false)
+          return
+        }
         const order = await placeOrder.mutateAsync({
           shippingAddressId: resolvedAddressId,
           paymentMethod: 'cod',
@@ -566,10 +570,12 @@ export default function CheckoutPage() {
               <PaymentOption
                 selected={paymentMethod === 'cod'}
                 disabled={!isCodAllowed}
-                onSelect={() => setPaymentMethod('cod')}
+                onSelect={() => {
+                  if (isCodAllowed) setPaymentMethod('cod')
+                }}
                 icon={<Banknote className="h-5 w-5" />}
                 title="Cash on Delivery"
-                description={isCodAllowed ? "Pay with cash when your order arrives" : "Currently disabled"}
+                description={isCodAllowed ? "Pay with cash when your order arrives" : "Currently disabled by store administration"}
               />
               <PaymentOption
                 selected={paymentMethod === 'razorpay'}

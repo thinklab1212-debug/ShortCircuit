@@ -32,6 +32,7 @@ import jwt from 'jsonwebtoken';
 import { env } from '../config/env.js';
 import EventOrder from '../models/EventOrder.model.js';
 import Address from '../models/Address.model.js';
+import SystemSettings from '../models/SystemSettings.model.js';
 import PaymentService from './payment.service.js';
 import InvoiceService from './invoice.service.js';
 import { GoogleSheetsService } from './googleSheets.service.js';
@@ -1013,6 +1014,11 @@ export class EventService {
       });
 
       if (paymentMethod === 'cod') {
+        const systemSettings = await SystemSettings.getSettings();
+        if (!systemSettings.codEnabled) {
+          throw ApiError.badRequest('Cash on Delivery is currently disabled by store administration. Please choose an online payment method.');
+        }
+
         // Direct purchase logic for Cash On Delivery (COD)
         eventOrder.paymentStatus = 'pending';
         eventOrder.deliveryStatus = 'placed';

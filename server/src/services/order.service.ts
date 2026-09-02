@@ -11,6 +11,7 @@ import Address from '../models/Address.model.js';
 import Coupon from '../models/Coupon.model.js';
 import User from '../models/User.model.js';
 import ProductVariant from '../models/ProductVariant.model.js';
+import SystemSettings from '../models/SystemSettings.model.js';
 import { CartService } from './cart.service.js';
 import { ProductService } from './product.service.js';
 import { EmailService } from './email.service.js';
@@ -65,6 +66,23 @@ export class OrderService {
       const totals = await CartService.calculateTotals(userId, couponCode);
       if (couponCode && !totals.couponApplied) {
         throw new ApiError(400, totals.couponError || 'Invalid coupon code.');
+      }
+
+      // 4.5 Validate payment method availability (Admin store setting)
+      if (paymentMethod === 'cod') {
+        const settings = await SystemSettings.getSettings();
+        if (!settings.codEnabled) {
+          throw new ApiError(
+            400,
+            'Cash on Delivery is currently disabled by store administration. Please select an online payment method.'
+          );
+        }
+        if (totals.totalPrice > 10000) {
+          throw new ApiError(
+            400,
+            'Cash on Delivery is only available for orders up to ₹10,000. Please select an online payment method for high-value orders.'
+          );
+        }
       }
 
       // 5. Prepare order items snapshots and deduct stocks atomically

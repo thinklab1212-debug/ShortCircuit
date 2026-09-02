@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useParams, useNavigate, useLocation, Link } from 'react-router'
 import {
   ArrowLeft,
@@ -11,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import { useEventCheckout, useAddresses, usePurchaseEventKit } from '@/hooks'
+import { useEventCheckout, useAddresses, usePurchaseEventKit, usePublicSettings } from '@/hooks'
 import toast from 'react-hot-toast'
 import type { Address } from '@/types'
 
@@ -45,11 +45,21 @@ export default function EventCheckoutPage() {
 
   const { data: checkoutData, isLoading: checkoutLoading, error: checkoutError } = useEventCheckout(id || '', token)
   const { data: addresses, isLoading: addressesLoading } = useAddresses()
+  const { data: publicSettings } = usePublicSettings()
   const purchaseMutation = usePurchaseEventKit()
+
+  const isCodAllowed = publicSettings?.codEnabled ?? false
 
   const [selectedAddressId, setSelectedAddressId] = useState<string>('')
   const [paymentMethod, setPaymentMethod] = useState<'razorpay' | 'cod'>('razorpay')
   const [placing, setPlacing] = useState(false)
+
+  // Auto-switch away from COD if disabled by store administration
+  useEffect(() => {
+    if (!isCodAllowed && paymentMethod === 'cod') {
+      setPaymentMethod('razorpay')
+    }
+  }, [isCodAllowed, paymentMethod])
 
   // Resolve selected address
   const resolvedAddressId = useMemo(() => {
@@ -72,6 +82,11 @@ export default function EventCheckoutPage() {
     setPlacing(true)
     try {
       if (paymentMethod === 'cod') {
+        if (!isCodAllowed) {
+          toast.error('Cash on Delivery is currently disabled by store administration.')
+          setPlacing(false)
+          return
+        }
         await purchaseMutation.mutateAsync({
           eventId: id,
           verificationToken: token,
@@ -304,22 +319,29 @@ export default function EventCheckoutPage() {
 
                 {/* COD */}
                 <label
-                  className={`flex items-center gap-3 rounded-xl border p-4 cursor-pointer transition-all ${
-                    paymentMethod === 'cod'
-                      ? 'border-primary bg-primary/5 ring-1 ring-primary'
-                      : 'border-border hover:bg-muted/10'
+                  className={`flex items-center gap-3 rounded-xl border p-4 transition-all ${
+                    !isCodAllowed
+                      ? 'opacity-50 cursor-not-allowed border-border'
+                      : paymentMethod === 'cod'
+                      ? 'border-primary bg-primary/5 ring-1 ring-primary cursor-pointer'
+                      : 'border-border hover:bg-muted/10 cursor-pointer'
                   }`}
                 >
                   <input
                     type="radio"
                     name="paymentMethod"
+                    disabled={!isCodAllowed}
                     checked={paymentMethod === 'cod'}
-                    onChange={() => setPaymentMethod('cod')}
+                    onChange={() => {
+                      if (isCodAllowed) setPaymentMethod('cod')
+                    }}
                     className="accent-primary"
                   />
                   <div className="text-xs">
                     <p className="font-bold text-foreground">Cash On Delivery (COD)</p>
-                    <p className="text-muted-foreground text-[10px] mt-0.5">Pay on delivery (if eligible)</p>
+                    <p className="text-muted-foreground text-[10px] mt-0.5">
+                      {isCodAllowed ? 'Pay on delivery (if eligible)' : 'Currently disabled by store administration'}
+                    </p>
                   </div>
                 </label>
               </div>
