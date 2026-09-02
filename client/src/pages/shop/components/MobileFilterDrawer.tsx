@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { SlidersHorizontal, X } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import FilterSidebar from './FilterSidebar'
 import { slideInLeft, modalOverlayVariants } from '@/config/animations'
@@ -13,6 +14,7 @@ interface MobileFilterDrawerProps {
   onFilterChange: (updates: Partial<ShopFilters>) => void
   onClear: () => void
   activeCount: number
+  className?: string
 }
 
 export default function MobileFilterDrawer({
@@ -20,6 +22,7 @@ export default function MobileFilterDrawer({
   onFilterChange,
   onClear,
   activeCount,
+  className,
 }: MobileFilterDrawerProps) {
   const [open, setOpen] = useState(false)
 
@@ -30,7 +33,7 @@ export default function MobileFilterDrawer({
         variant="outline"
         size="sm"
         onClick={() => setOpen(true)}
-        className="lg:hidden gap-2"
+        className={cn('lg:hidden gap-2 h-10 w-full rounded-xl justify-center font-medium border-border', className)}
       >
         <SlidersHorizontal className="h-4 w-4" />
         Filters

@@ -161,7 +161,7 @@ export default function ShopPage() {
   }
 
   return (
-    <div>
+    <div className="overflow-x-clip">
       {/* ─── Gradient Hero Banner ──────────────────────────────────────────────── */}
       <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
         {/* Background pattern */}
@@ -228,20 +228,19 @@ export default function ShopPage() {
           {/* Product Area */}
           <div className="flex-1 min-w-0">
             {/* Toolbar: Mobile Filter + Sort + View */}
-            <div className="flex flex-wrap items-center gap-3 mb-4">
-              <MobileFilterDrawer
-                filters={filters}
-                onFilterChange={setFilters}
-                onClear={clearFilters}
-                activeCount={activeFilterCount}
-              />
-              <SortControls
-                filters={filters}
-                onFilterChange={setFilters}
-                total={pagination?.totalResults}
-                className="flex-1"
-              />
-            </div>
+            <SortControls
+              filters={filters}
+              onFilterChange={setFilters}
+              total={pagination?.totalResults}
+              mobileFilterTrigger={
+                <MobileFilterDrawer
+                  filters={filters}
+                  onFilterChange={setFilters}
+                  onClear={clearFilters}
+                  activeCount={activeFilterCount}
+                />
+              }
+            />
 
             {/* Active Filter Tags */}
             {activeFilterCount > 0 && (

@@ -88,40 +88,42 @@ export default function AddToCart({
         </div>
       )}
 
-      {/* Action Buttons */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      {/* Action Buttons: 2-column balanced grid */}
+      <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
         <Button
+          type="button"
+          variant="outline"
           size="lg"
-          className="flex-1 h-12 gap-2"
+          className="h-11 sm:h-12 gap-1.5 sm:gap-2 border-2 border-primary/35 bg-background text-foreground hover:bg-primary/5 hover:border-primary font-semibold text-xs sm:text-sm rounded-xl transition-all shadow-xs"
           disabled={isOutOfStock}
           loading={isAddingToCart}
           loadingText="Adding..."
           onClick={() => onAddToCart?.(product._id, quantity)}
         >
-          <ShoppingCart className="h-4.5 w-4.5" />
-          {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
+          <ShoppingCart className="h-4 w-4 text-primary shrink-0" />
+          <span className="truncate">{isOutOfStock ? 'Out of Stock' : 'Add to Cart'}</span>
         </Button>
         <Button
+          type="button"
           size="lg"
-          variant="gradient"
-          className="flex-1 h-12 gap-2"
+          className="h-11 sm:h-12 gap-1.5 sm:gap-2 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold text-xs sm:text-sm rounded-xl transition-all shadow-md active:scale-[0.98]"
           disabled={isOutOfStock}
           onClick={() => onBuyNow?.(product._id, quantity)}
         >
-          <Zap className="h-4.5 w-4.5" />
-          Buy Now
+          <Zap className="h-4 w-4 fill-current shrink-0" />
+          <span>Buy Now</span>
         </Button>
       </div>
 
       {/* Wishlist */}
       <Button
-        variant="outline"
-        size="lg"
-        className="w-full h-11 gap-2"
+        variant="ghost"
+        size="sm"
+        className="w-full h-9 gap-2 text-muted-foreground hover:text-foreground text-xs sm:text-sm font-medium rounded-xl border border-border/60 hover:bg-muted/50 transition-colors"
         onClick={() => onWishlistToggle?.(product._id)}
       >
         <Heart className={cn('h-4 w-4 transition-all', isWishlisted && 'fill-error-500 text-error-500 scale-110')} />
-        {isWishlisted ? 'Remove from Wishlist' : 'Add to Wishlist'}
+        {isWishlisted ? 'Saved to Wishlist' : 'Add to Wishlist'}
       </Button>
     </div>
   )
