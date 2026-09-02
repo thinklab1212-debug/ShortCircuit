@@ -651,9 +651,14 @@ export class OrderService {
       throw new ApiError(400, `Cannot modify status of a finished order. Current status: ${order.orderStatus}`);
     }
 
-    // Direct cancellation must use cancelOrder to ensure transactional stock restoration
+    // Direct cancellation delegates to cancelOrder to ensure transactional stock restoration
     if (status === 'cancelled') {
-      throw new ApiError(400, 'Please use the dedicated cancel order endpoint to cancel an order and restore stock.');
+      return this.cancelOrder(
+        orderId,
+        adminUserId,
+        'admin',
+        note.trim() || 'Cancelled directly by store administrator'
+      );
     }
 
     // Enforce valid order status transitions (including self-transitions for adding tracking notes)

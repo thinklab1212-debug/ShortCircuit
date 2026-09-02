@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useParams, Link } from 'react-router'
 import toast from 'react-hot-toast'
-import { ArrowLeft, MapPin, Package, Truck, User as UserIcon, Download, Trash2 } from 'lucide-react'
+import { ArrowLeft, MapPin, Package, Truck, User as UserIcon, Download, Trash2, XCircle, AlertTriangle } from 'lucide-react'
 import { orderApi } from '@/services'
 import { AdminPageHeader, AdminSection } from '@/components/admin'
 import { Button } from '@/components/ui/button'
@@ -76,6 +76,9 @@ export default function OrderDetailAdminPage() {
     }
   }, [order])
 
+  const [cancelModalOpen, setCancelModalOpen] = useState(false)
+  const [cancelReason, setCancelReason] = useState('Cancelled by store administrator — wrong / fraudulent order')
+
   const statusMutation = useMutation({
     mutationFn: () =>
       orderApi.updateStatus(id, { status: statusValue, note: note || undefined }),
@@ -83,8 +86,22 @@ export default function OrderDetailAdminPage() {
       toast.success('Order status updated')
       setNote('')
       queryClient.invalidateQueries({ queryKey: ['admin', 'order', id] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'orders'] })
     },
-    onError: () => toast.error('Failed to update status'),
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message || err?.message || 'Failed to update status'),
+  })
+
+  const cancelMutation = useMutation({
+    mutationFn: () => orderApi.cancel(id, cancelReason.trim() || 'Cancelled by store administrator'),
+    onSuccess: () => {
+      toast.success('Order cancelled and stock restored to inventory')
+      setCancelModalOpen(false)
+      queryClient.invalidateQueries({ queryKey: ['admin', 'order', id] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'orders'] })
+    },
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message || err?.message || 'Failed to cancel order'),
   })
 
   const trackingMutation = useMutation({
@@ -125,6 +142,15 @@ export default function OrderDetailAdminPage() {
         description={`Placed on ${formatDateTime(order.createdAt)}`}
         action={
           <div className="flex gap-2">
+            {['pending_payment', 'placed', 'confirmed', 'processing'].includes(order.orderStatus) && (
+              <Button
+                variant="destructive"
+                onClick={() => setCancelModalOpen(true)}
+                leftIcon={<XCircle className="h-4 w-4" />}
+              >
+                Cancel Order
+              </Button>
+            )}
             {(order.invoiceNumber || (order.orderStatus === 'delivered' && order.paymentStatus === 'paid')) && (
               <Button
                 variant="outline"
@@ -363,6 +389,55 @@ export default function OrderDetailAdminPage() {
           </AdminSection>
         </div>
       </div>
+
+      {/* Cancellation Modal */}
+      {cancelModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl">
+            <div className="flex items-center gap-3 text-destructive mb-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-destructive/10">
+                <AlertTriangle className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-foreground">Cancel Order</h3>
+                <p className="text-xs text-muted-foreground">Order ID: {order.orderId}</p>
+              </div>
+            </div>
+
+            <p className="text-sm text-muted-foreground mb-4">
+              Cancelling this order will immediately mark it as cancelled and{' '}
+              <strong className="text-foreground">restore all product item stock back to inventory</strong>.
+            </p>
+
+            <FormField label="Cancellation Reason" className="mb-4">
+              <Textarea
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                placeholder="Enter reason for cancelling this order..."
+                rows={3}
+              />
+            </FormField>
+
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                disabled={cancelMutation.isPending}
+                onClick={() => setCancelModalOpen(false)}
+              >
+                Keep Order
+              </Button>
+              <Button
+                variant="destructive"
+                loading={cancelMutation.isPending}
+                disabled={cancelMutation.isPending || !cancelReason.trim()}
+                onClick={() => cancelMutation.mutate()}
+              >
+                Confirm Cancellation
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
