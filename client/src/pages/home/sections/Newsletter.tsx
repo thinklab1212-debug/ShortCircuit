@@ -26,14 +26,14 @@ export default function Newsletter() {
   }
 
   return (
-    <section className="py-16 lg:py-20">
+    <section className="py-10 lg:py-20">
       <div className="container">
         <motion.div
           variants={staggerContainer}
           initial="initial"
           whileInView="animate"
           viewport={{ once: true }}
-          className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 px-6 py-12 sm:px-12 sm:py-16 lg:px-20"
+          className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 px-5 py-8 sm:px-12 sm:py-16 lg:px-20"
         >
           {/* Decorative elements */}
           <div className="absolute inset-0 bg-grid opacity-10" />

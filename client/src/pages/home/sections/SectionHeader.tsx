@@ -12,7 +12,7 @@ interface SectionHeaderProps {
 
 export function SectionHeader({ title, subtitle, link, linkText = 'View All' }: SectionHeaderProps) {
   return (
-    <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+    <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:gap-4 mb-5 sm:mb-8">
       <div>
         <h2 className="text-display-xs sm:text-display-sm font-heading text-foreground">
           {title}

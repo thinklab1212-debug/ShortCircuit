@@ -28,9 +28,9 @@ import toast from 'react-hot-toast'
 
 function ProductDetailSkeleton() {
   return (
-    <div className="container py-6 lg:py-8 space-y-10">
+    <div className="container py-4 sm:py-6 lg:py-8 space-y-8 sm:space-y-10">
       <div className="h-4 w-48 skeleton rounded" />
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-12">
         {/* Gallery skeleton */}
         <div className="space-y-4">
           <div className="aspect-square skeleton rounded-2xl" />
@@ -302,7 +302,7 @@ export default function ProductDetailPage() {
 
   return (
     <>
-      <div className="container py-6 lg:py-8">
+      <div className="container py-4 sm:py-6 lg:py-8">
         {/* Dynamic SEO & Schema */}
         {productSchema && (
           <script
@@ -312,7 +312,7 @@ export default function ProductDetailPage() {
         )}
 
         {/* Breadcrumb */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
           <Breadcrumb items={breadcrumbItems} />
           <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
             <Link to="/shop">
@@ -327,7 +327,7 @@ export default function ProductDetailPage() {
           variants={staggerContainer}
           initial="initial"
           animate="animate"
-          className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12"
+          className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-12"
         >
           {/* Left: Gallery */}
           <motion.div variants={fadeInUp}>
@@ -335,7 +335,7 @@ export default function ProductDetailPage() {
           </motion.div>
 
           {/* Right: Info + Actions */}
-          <motion.div variants={fadeInUp} className="space-y-8">
+          <motion.div variants={fadeInUp} className="space-y-5 sm:space-y-8">
             <ProductInfo
               product={product}
               activeVariant={activeVariant}
@@ -351,7 +351,7 @@ export default function ProductDetailPage() {
               />
             )}
 
-            <div ref={addToCartRef} className="border-t border-border pt-6">
+            <div ref={addToCartRef} className="border-t border-border pt-4 sm:pt-6">
               <AddToCart
                 product={product}
                 isWishlisted={isInWishlist(product._id)}
@@ -363,7 +363,7 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Delivery Checker */}
-            <div className="border-t border-border pt-6">
+            <div className="border-t border-border pt-4 sm:pt-6">
               <DeliveryChecker />
             </div>
 
@@ -376,7 +376,7 @@ export default function ProductDetailPage() {
           initial="initial"
           whileInView="animate"
           viewport={{ once: true }}
-          className="mt-12"
+          className="mt-8 sm:mt-12"
         >
           <ProductTabs
             description={product.description}
@@ -392,7 +392,7 @@ export default function ProductDetailPage() {
           initial="initial"
           whileInView="animate"
           viewport={{ once: true }}
-          className="mt-12 border-t border-border pt-12 scroll-mt-24"
+          className="mt-8 sm:mt-12 border-t border-border pt-8 sm:pt-12 scroll-mt-24"
         >
           <ReviewsSection
             productId={product._id}
@@ -407,7 +407,7 @@ export default function ProductDetailPage() {
           initial="initial"
           whileInView="animate"
           viewport={{ once: true }}
-          className="mt-12 border-t border-border pt-12"
+          className="mt-8 sm:mt-12 border-t border-border pt-8 sm:pt-12"
         >
           <RelatedProducts categoryId={categoryId} currentProductId={product._id} />
         </motion.div>
@@ -418,7 +418,7 @@ export default function ProductDetailPage() {
           initial="initial"
           whileInView="animate"
           viewport={{ once: true }}
-          className="mt-12 border-t border-border pt-12"
+          className="mt-8 sm:mt-12 border-t border-border pt-8 sm:pt-12"
         >
           <RecentlyViewedProducts currentProductId={product._id} />
         </motion.div>

@@ -45,9 +45,9 @@ const features = [
 
 export default function WhyChooseUs() {
   return (
-    <section className="py-16 lg:py-20 bg-muted/30">
+    <section className="py-10 lg:py-20 bg-muted/30">
       <div className="container">
-        <div className="text-center mb-12">
+        <div className="text-center mb-8 sm:mb-12">
           <h2 className="text-display-xs sm:text-display-sm font-heading text-foreground">
             Why Choose Short Circuit?
           </h2>
@@ -69,7 +69,7 @@ export default function WhyChooseUs() {
               <motion.div
                 key={feature.title}
                 variants={fadeInUp}
-                className="group rounded-2xl border border-border bg-card p-6 transition-all duration-300 hover:shadow-card-hover hover:-translate-y-1"
+                className="group rounded-2xl border border-border bg-card p-4 sm:p-6 transition-all duration-300 hover:shadow-card-hover hover:-translate-y-1"
               >
                 <div className={`inline-flex h-12 w-12 items-center justify-center rounded-xl ${feature.color} mb-4 transition-transform group-hover:scale-110`}>
                   <Icon className="h-6 w-6" />

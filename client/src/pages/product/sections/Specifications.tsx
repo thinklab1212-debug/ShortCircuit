@@ -38,7 +38,7 @@ export default function ProductTabs({ description, specifications, features }: P
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
               className={cn(
-                'relative px-5 py-3 text-sm font-medium whitespace-nowrap transition-colors',
+                'relative px-3 sm:px-5 py-2.5 sm:py-3 text-sm font-medium whitespace-nowrap transition-colors',
                 activeTab === tab.key
                   ? 'text-primary'
                   : 'text-muted-foreground hover:text-foreground'

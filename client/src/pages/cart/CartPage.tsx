@@ -187,7 +187,7 @@ export default function CartPage() {
   const totalPrice = totals?.totalPrice ?? cart?.totalPrice ?? 0
 
   return (
-    <div className="container py-6 lg:py-8">
+    <div className="container py-4 sm:py-6 lg:py-8 pb-24 lg:pb-8">
       {/* Header */}
       <div className="mb-6 flex items-center justify-between gap-4">
         <div>
@@ -252,7 +252,7 @@ export default function CartPage() {
             variants={staggerContainer}
             initial="initial"
             animate="animate"
-            className="space-y-4 lg:col-span-2"
+            className="space-y-3 lg:col-span-2"
           >
             {items.map((item) => (
               <CartLineItem key={item._id} item={item} />
@@ -261,7 +261,7 @@ export default function CartPage() {
 
           {/* Summary sidebar */}
           <div className="lg:col-span-1">
-            <div className="sticky top-24 rounded-2xl border border-border bg-card p-6">
+            <div className="sticky top-24 rounded-2xl border border-border bg-card p-4 sm:p-6">
               <h2 className="text-lg font-semibold text-foreground">Order Summary</h2>
 
               {/* Free Delivery Progress Nudge */}
@@ -342,6 +342,27 @@ export default function CartPage() {
                 <Link to="/shop">Continue Shopping</Link>
               </Button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Mobile Sticky Bottom Bar ─────────────────────────────────────── */}
+      {!isLoading && items.length > 0 && (
+        <div className="fixed bottom-0 inset-x-0 z-30 border-t border-border bg-background/95 backdrop-blur-lg p-3 sm:p-4 lg:hidden">
+          <div className="container flex items-center justify-between gap-3">
+            <div className="flex flex-col">
+              <span className="text-[10px] text-muted-foreground leading-tight">Total</span>
+              <span className="text-lg font-bold text-foreground">{formatPrice(totalPrice)}</span>
+            </div>
+            <Button
+              size="lg"
+              disabled={items.length === 0}
+              onClick={() => navigate('/checkout')}
+              className="flex-1 max-w-[200px]"
+            >
+              Checkout
+              <ArrowRight className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       )}

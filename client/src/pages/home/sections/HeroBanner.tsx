@@ -52,7 +52,7 @@ export default function HeroBanner() {
 
   return (
     <section className="relative w-full overflow-hidden">
-      <div className="relative h-[340px] sm:h-[480px] lg:h-[560px] bg-slate-950">
+      <div className="relative h-[280px] sm:h-[480px] lg:h-[560px] bg-slate-950">
         <AnimatePresence mode="popLayout">
           <motion.div
             key={current}
@@ -89,12 +89,12 @@ export default function HeroBanner() {
                 <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
                 <div className="absolute inset-0 flex items-center">
                   <div className="container">
-                    <div className="max-w-xl space-y-3 sm:space-y-6">
+                    <div className="max-w-xl space-y-2 sm:space-y-6">
                       <motion.div
                         initial={{ y: 20, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
                         transition={{ delay: 0.1, duration: 0.5 }}
-                        className="inline-flex items-center rounded-full bg-white/8 px-4 py-1.5 text-sm font-medium text-white/85 backdrop-blur-sm border border-white/20"
+                        className="inline-flex items-center rounded-full bg-white/8 px-3 py-1 sm:px-4 sm:py-1.5 text-xs sm:text-sm font-medium text-white/85 backdrop-blur-sm border border-white/20"
                       >
                         ⚡ Short Circuit Exclusive
                       </motion.div>
@@ -120,9 +120,9 @@ export default function HeroBanner() {
                         initial={{ y: 20, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
                         transition={{ delay: 0.5, duration: 0.5 }}
-                        className="flex flex-wrap gap-3"
+                        className="flex flex-col xs:flex-row flex-wrap gap-2 sm:gap-3"
                       >
-                        <Button asChild size="lg" className="group bg-white text-slate-900 hover:bg-white/90">
+                        <Button asChild size="default" className="group bg-white text-slate-900 hover:bg-white/90 sm:!h-11 sm:!px-6">
                           <Link to={slides[current].link || '/shop'}>
                             {slides[current].linkText || 'Shop Now'}
                             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
@@ -143,12 +143,12 @@ export default function HeroBanner() {
                 <div className="absolute inset-0 bg-gradient-mesh" />
                 <div className="absolute inset-0 flex items-center">
                   <div className="container">
-                    <div className="max-w-xl space-y-3 sm:space-y-6">
+                    <div className="max-w-xl space-y-2 sm:space-y-6">
                       <motion.div
                         initial={{ y: 20, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
                         transition={{ delay: 0.1, duration: 0.5 }}
-                        className="inline-flex items-center rounded-full bg-white/8 px-4 py-1.5 text-sm font-medium text-white/85 backdrop-blur-sm border border-white/20"
+                        className="inline-flex items-center rounded-full bg-white/8 px-3 py-1 sm:px-4 sm:py-1.5 text-xs sm:text-sm font-medium text-white/85 backdrop-blur-sm border border-white/20"
                       >
                         ⚡ Short Circuit Exclusive
                       </motion.div>
@@ -172,15 +172,15 @@ export default function HeroBanner() {
                         initial={{ y: 20, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
                         transition={{ delay: 0.5, duration: 0.5 }}
-                        className="flex flex-wrap gap-3"
+                        className="flex flex-col xs:flex-row flex-wrap gap-2 sm:gap-3"
                       >
-                        <Button asChild size="lg" className="group bg-white text-slate-900 hover:bg-white/90">
+                        <Button asChild size="default" className="group bg-white text-slate-900 hover:bg-white/90 sm:!h-11 sm:!px-6">
                           <Link to={fallbackBanners[current].link}>
                             Shop Now
                             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                           </Link>
                         </Button>
-                        <Button asChild size="lg" variant="outline" className="border-white/35 bg-black/10 text-white hover:bg-white/10 hover:text-white">
+                        <Button asChild size="default" variant="outline" className="border-white/35 bg-black/10 text-white hover:bg-white/10 hover:text-white sm:!h-11 sm:!px-6">
                           <Link to="/categories">Browse Categories</Link>
                         </Button>
                       </motion.div>
@@ -215,7 +215,7 @@ export default function HeroBanner() {
 
       {/* Dots */}
       {total > 1 && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+        <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 flex gap-1.5 sm:gap-2 z-10">
           {items.map((_, i) => (
             <button
               key={i}

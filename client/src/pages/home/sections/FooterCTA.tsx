@@ -8,7 +8,7 @@ import { fadeInUp, staggerContainer } from '@/config/animations'
 
 export default function FooterCTA() {
   return (
-    <section className="py-16 lg:py-20 bg-muted/30">
+    <section className="py-10 lg:py-20 bg-muted/30">
       <div className="container">
         <motion.div
           variants={staggerContainer}
@@ -42,24 +42,24 @@ export default function FooterCTA() {
           </motion.div>
 
           {/* Trust indicators */}
-          <motion.div variants={fadeInUp} className="flex flex-wrap items-center justify-center gap-8 mt-12 text-muted-foreground">
+          <motion.div variants={fadeInUp} className="flex flex-wrap items-center justify-center gap-5 sm:gap-8 mt-8 sm:mt-12 text-muted-foreground">
             <div className="text-center">
-              <div className="text-2xl font-bold text-foreground font-heading">50K+</div>
+              <div className="text-xl sm:text-2xl font-bold text-foreground font-heading">50K+</div>
               <div className="text-xs">Happy Customers</div>
             </div>
             <div className="h-8 w-px bg-border" />
             <div className="text-center">
-              <div className="text-2xl font-bold text-foreground font-heading">10K+</div>
+              <div className="text-xl sm:text-2xl font-bold text-foreground font-heading">10K+</div>
               <div className="text-xs">Products</div>
             </div>
             <div className="h-8 w-px bg-border" />
             <div className="text-center">
-              <div className="text-2xl font-bold text-foreground font-heading">500+</div>
+              <div className="text-xl sm:text-2xl font-bold text-foreground font-heading">500+</div>
               <div className="text-xs">Brands</div>
             </div>
             <div className="h-8 w-px bg-border" />
             <div className="text-center">
-              <div className="text-2xl font-bold text-foreground font-heading">4.8★</div>
+              <div className="text-xl sm:text-2xl font-bold text-foreground font-heading">4.8★</div>
               <div className="text-xs">Avg Rating</div>
             </div>
           </motion.div>

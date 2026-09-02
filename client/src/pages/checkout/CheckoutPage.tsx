@@ -423,12 +423,12 @@ export default function CheckoutPage() {
   const placing = submitting || placeOrder.isPending
 
   return (
-    <div className="container py-6 lg:py-8">
+    <div className="container py-4 sm:py-6 lg:py-8 pb-28 lg:pb-8">
       <h1 className="mb-6 text-display-xs sm:text-display-sm font-heading text-foreground">
         Checkout
       </h1>
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-5 sm:gap-8 lg:grid-cols-3">
         {/* Left: steps */}
         <motion.div
           variants={staggerContainer}
@@ -439,7 +439,7 @@ export default function CheckoutPage() {
           {/* Shipping address */}
           <motion.section
             variants={fadeInUp}
-            className="rounded-2xl border border-border bg-card p-6"
+            className="rounded-2xl border border-border bg-card p-4 sm:p-6"
           >
             <div className="mb-4 flex items-center gap-2">
               <MapPin className="h-5 w-5 text-primary" />
@@ -560,7 +560,7 @@ export default function CheckoutPage() {
           {/* Payment method */}
           <motion.section
             variants={fadeInUp}
-            className="rounded-2xl border border-border bg-card p-6"
+            className="rounded-2xl border border-border bg-card p-4 sm:p-6"
           >
             <div className="mb-4 flex items-center gap-2">
               <CreditCard className="h-5 w-5 text-primary" />
@@ -590,7 +590,7 @@ export default function CheckoutPage() {
           {/* Order note */}
           <motion.section
             variants={fadeInUp}
-            className="rounded-2xl border border-border bg-card p-6"
+            className="rounded-2xl border border-border bg-card p-4 sm:p-6"
           >
             <h2 className="mb-3 text-lg font-semibold text-foreground">
               Order Note <span className="text-sm font-normal text-muted-foreground">(optional)</span>
@@ -606,11 +606,11 @@ export default function CheckoutPage() {
 
         {/* Right: summary */}
         <div className="lg:col-span-1">
-          <div className="sticky top-24 space-y-4 rounded-2xl border border-border bg-card p-6">
+          <div className="sticky top-24 space-y-4 rounded-2xl border border-border bg-card p-4 sm:p-6">
             <h2 className="text-lg font-semibold text-foreground">Order Summary</h2>
 
             {/* Items */}
-            <div className="max-h-64 space-y-3 overflow-y-auto pr-1">
+            <div className="max-h-40 sm:max-h-64 space-y-3 overflow-y-auto pr-1">
               {items.map((item) => (
                 <div key={item._id} className="flex items-center gap-3">
                   <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-muted/30">
@@ -734,6 +734,33 @@ export default function CheckoutPage() {
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Placing order...
+                </>
+              ) : paymentMethod === 'cod' ? (
+                'Place Order'
+              ) : (
+                `Pay ${formatPrice(totalPrice)}`
+              )}
+            </Button>
+          </div>
+        </div>
+
+        {/* ─── Mobile Sticky Bottom Bar ─────────────────────────────────────── */}
+        <div className="fixed bottom-0 inset-x-0 z-30 border-t border-border bg-background/95 backdrop-blur-lg p-3 sm:p-4 lg:hidden">
+          <div className="container flex items-center justify-between gap-3">
+            <div className="flex flex-col">
+              <span className="text-[10px] text-muted-foreground leading-tight">Total</span>
+              <span className="text-lg font-bold text-foreground">{formatPrice(totalPrice)}</span>
+            </div>
+            <Button
+              size="lg"
+              onClick={handlePlaceOrder}
+              disabled={placing || !resolvedAddressId || !isDeliverable || deliveryChecking}
+              className="flex-1 max-w-[200px]"
+            >
+              {placing ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Placing...
                 </>
               ) : paymentMethod === 'cod' ? (
                 'Place Order'

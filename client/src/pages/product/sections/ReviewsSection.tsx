@@ -17,7 +17,7 @@ function RatingSummary({ average, count }: { average: number; count: number }) {
   const bars = [5, 4, 3, 2, 1]
 
   return (
-    <div className="flex flex-col sm:flex-row gap-8 items-start rounded-2xl border border-border bg-muted/20 p-6">
+    <div className="flex flex-col sm:flex-row gap-5 sm:gap-8 items-start rounded-2xl border border-border bg-muted/20 p-4 sm:p-6">
       {/* Big Score */}
       <div className="text-center space-y-2">
         <div className="text-5xl font-bold font-heading text-foreground">{average.toFixed(1)}</div>

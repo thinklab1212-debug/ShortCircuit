@@ -56,12 +56,12 @@ export default function ProductSection({
   }[columns] || 'sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
 
   return (
-    <section className="py-16 lg:py-20">
+    <section className="py-10 lg:py-20">
       <div className="container">
         <SectionHeader title={title} subtitle={subtitle} link={link} linkText={linkText} />
 
         {isLoading && (
-          <div className={`grid grid-cols-2 ${gridCols} gap-4 lg:gap-6`}>
+          <div className={`grid grid-cols-2 ${gridCols} gap-3 lg:gap-6`}>
             {Array.from({ length: columns * 2 }).map((_, i) => (
               <ProductSkeleton key={i} />
             ))}
@@ -80,7 +80,7 @@ export default function ProductSection({
             initial="initial"
             whileInView="animate"
             viewport={{ once: true, margin: '-50px' }}
-            className={`grid grid-cols-2 ${gridCols} gap-4 lg:gap-6`}
+            className={`grid grid-cols-2 ${gridCols} gap-3 lg:gap-6`}
           >
             {products.map((product) => (
               <motion.div key={product._id} variants={fadeInUp}>

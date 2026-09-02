@@ -55,7 +55,7 @@ export default function ProductGallery({ images, name }: ProductGalleryProps) {
 
   return (
     <>
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         {/* Main Image */}
         <div
           className="group relative aspect-square overflow-hidden rounded-2xl border border-border bg-muted/30 cursor-zoom-in"
@@ -109,17 +109,17 @@ export default function ProductGallery({ images, name }: ProductGalleryProps) {
             <>
               <button
                 onClick={(e) => { e.stopPropagation(); goPrev() }}
-                className="absolute left-2 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-background/80 backdrop-blur-sm shadow-lg text-foreground opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-background hover:scale-110"
+                className="absolute left-2 top-1/2 -translate-y-1/2 flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-background/80 backdrop-blur-sm shadow-lg text-foreground opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 hover:bg-background hover:scale-110"
                 aria-label="Previous image"
               >
-                <ChevronLeft className="h-5 w-5" />
+                <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); goNext() }}
-                className="absolute right-2 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-background/80 backdrop-blur-sm shadow-lg text-foreground opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-background hover:scale-110"
+                className="absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-background/80 backdrop-blur-sm shadow-lg text-foreground opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 hover:bg-background hover:scale-110"
                 aria-label="Next image"
               >
-                <ChevronRight className="h-5 w-5" />
+                <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
               </button>
             </>
           )}
@@ -203,14 +203,14 @@ export default function ProductGallery({ images, name }: ProductGalleryProps) {
               <>
                 <button
                   onClick={(e) => { e.stopPropagation(); goPrev() }}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-all hover:scale-110 z-10"
+                  className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-all hover:scale-110 z-10"
                   aria-label="Previous image"
                 >
                   <ChevronLeft className="h-6 w-6" />
                 </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); goNext() }}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-all hover:scale-110 z-10"
+                  className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-all hover:scale-110 z-10"
                   aria-label="Next image"
                 >
                   <ChevronRight className="h-6 w-6" />

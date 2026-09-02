@@ -172,7 +172,7 @@ export default function ShopPage() {
         <div className="absolute top-0 left-1/4 w-72 h-72 bg-primary/20 rounded-full blur-[100px]" />
         <div className="absolute bottom-0 right-1/4 w-96 h-48 bg-primary/10 rounded-full blur-[80px]" />
 
-        <div className="container relative py-10 sm:py-14">
+        <div className="container relative py-6 sm:py-14">
           <Breadcrumb items={breadcrumbItems} className="mb-5 [&_*]:text-white/60 [&_a]:hover:text-white/80" />
 
           <motion.div
@@ -210,7 +210,7 @@ export default function ShopPage() {
       </div>
 
       {/* ─── Main Content ──────────────────────────────────────────────────────── */}
-      <div className="container py-6 lg:py-8">
+      <div className="container py-4 sm:py-6 lg:py-8">
         {/* Main Layout */}
         <div className="flex gap-8">
           {/* Desktop Filter Sidebar */}
@@ -269,7 +269,7 @@ export default function ShopPage() {
               <div className={
                 isListView
                   ? 'space-y-4'
-                  : 'grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6'
+                  : 'grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-4 lg:gap-6'
               }>
                 {Array.from({ length: 6 }).map((_, i) =>
                   isListView ? <ListSkeleton key={i} /> : <ProductSkeleton key={i} />
@@ -331,7 +331,7 @@ export default function ShopPage() {
                   className={
                     isListView
                       ? 'space-y-4'
-                      : 'grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6'
+                      : 'grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-4 lg:gap-6'
                   }
                 >
                   {products.map((product) => (
@@ -371,13 +371,13 @@ export default function ShopPage() {
         </div>
 
         {/* Product Request Banner */}
-        <div className="mt-14">
+        <div className="mt-8 sm:mt-14">
           <ProductRequestCard variant="banner" searchTerm={filters.search || ''} />
         </div>
 
         {/* ─── Rich SEO Information & Electronics Guide Section ────────────────────── */}
-        <section className="mt-12 pt-12 border-t border-border space-y-10">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <section className="mt-8 sm:mt-12 pt-8 sm:pt-12 border-t border-border space-y-6 sm:space-y-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
             <div className="flex gap-4 p-5 rounded-2xl bg-card border border-border hover:shadow-card-hover transition-shadow">
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
                 <Cpu className="h-6 w-6" />
@@ -416,7 +416,7 @@ export default function ShopPage() {
           </div>
 
           {/* Informative Catalog Text & Category Links */}
-          <div className="rounded-2xl bg-muted/40 border border-border p-6 sm:p-8 space-y-6 text-sm text-muted-foreground leading-relaxed">
+          <div className="rounded-2xl bg-muted/40 border border-border p-4 sm:p-6 md:p-8 space-y-4 sm:space-y-6 text-sm text-muted-foreground leading-relaxed">
             <div>
               <h2 className="text-lg sm:text-xl font-heading font-semibold text-foreground mb-2">
                 Buy Genuine Electronic Components, Microcontrollers & DIY Kits Online in India

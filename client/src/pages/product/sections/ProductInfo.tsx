@@ -54,7 +54,7 @@ export default function ProductInfo({ product, activeVariant, onScrollToReviews 
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-3 sm:space-y-5">
       {/* Badges */}
       <div className="flex flex-wrap gap-2">
         {discount > 0 && <ProductBadge variant="sale">-{discount}% OFF</ProductBadge>}
@@ -102,11 +102,11 @@ export default function ProductInfo({ product, activeVariant, onScrollToReviews 
       {/* Price */}
       <div className="space-y-1.5">
         <div className="flex items-baseline gap-3">
-          <span className="text-3xl sm:text-4xl font-bold text-foreground">
+          <span className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
             {formatPrice(price)}
           </span>
           {hasDiscount && (
-            <span className="text-lg text-muted-foreground line-through">
+            <span className="text-base sm:text-lg text-muted-foreground line-through">
               {formatPrice(product.price)}
             </span>
           )}
@@ -172,7 +172,7 @@ export default function ProductInfo({ product, activeVariant, onScrollToReviews 
       </div>
 
       {/* Meta Info */}
-      <div className="grid grid-cols-2 gap-3 text-sm">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-sm">
         {category && (
           <div>
             <span className="text-muted-foreground">Category: </span>
@@ -205,7 +205,7 @@ export default function ProductInfo({ product, activeVariant, onScrollToReviews 
           <div
             key={label}
             className={cn(
-              'flex items-center gap-1.5 rounded-full bg-gradient-to-r px-3 py-1.5 text-xs font-medium text-foreground/80 transition-all hover:scale-[1.02]',
+              'flex items-center gap-1.5 rounded-full bg-gradient-to-r px-2.5 py-1 sm:px-3 sm:py-1.5 text-[11px] sm:text-xs font-medium text-foreground/80 transition-all hover:scale-[1.02]',
               color
             )}
           >

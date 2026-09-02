@@ -8,7 +8,7 @@ import { fadeInUp } from '@/config/animations'
 
 export default function PromoBanners() {
   return (
-    <section className="py-16 lg:py-20">
+    <section className="py-10 lg:py-20">
       <div className="container">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Left Banner — Flash Sale */}
@@ -17,7 +17,7 @@ export default function PromoBanners() {
             initial="initial"
             whileInView="animate"
             viewport={{ once: true }}
-            className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8 lg:p-10 min-h-[280px] flex flex-col justify-between"
+            className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-5 sm:p-8 lg:p-10 min-h-[220px] sm:min-h-[280px] flex flex-col justify-between"
           >
             <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
             <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
@@ -49,7 +49,7 @@ export default function PromoBanners() {
             initial="initial"
             whileInView="animate"
             viewport={{ once: true }}
-            className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-800 via-slate-700 to-slate-900 p-8 lg:p-10 min-h-[280px] flex flex-col justify-between"
+            className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-800 via-slate-700 to-slate-900 p-5 sm:p-8 lg:p-10 min-h-[220px] sm:min-h-[280px] flex flex-col justify-between"
           >
             <div className="absolute top-0 right-0 w-40 h-40 bg-white/5 rounded-full -translate-y-1/3 translate-x-1/3" />
             <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-1/3 -translate-x-1/3" />

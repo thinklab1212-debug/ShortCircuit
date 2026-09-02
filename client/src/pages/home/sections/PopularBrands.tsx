@@ -24,7 +24,7 @@ export default function PopularBrands() {
   const brands = apiBrands && apiBrands.length > 0 ? apiBrands.slice(0, 10) : null
 
   return (
-    <section className="py-16 lg:py-20">
+    <section className="py-10 lg:py-20">
       <div className="container">
         <SectionHeader
           title="Popular Brands"
@@ -38,14 +38,14 @@ export default function PopularBrands() {
           initial="initial"
           whileInView="animate"
           viewport={{ once: true, margin: '-50px' }}
-          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
+          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4"
         >
           {brands
             ? brands.map((brand) => (
                 <motion.div key={brand._id} variants={fadeInUp}>
                   <Link
                     to={`/brand/${brand.slug}`}
-                    className="group flex flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-card p-6 h-32 transition-all duration-300 hover:shadow-card-hover hover:border-primary/30 hover:-translate-y-1"
+                    className="group flex flex-col items-center justify-center gap-2 sm:gap-3 rounded-2xl border border-border bg-card p-4 sm:p-6 h-24 sm:h-32 transition-all duration-300 hover:shadow-card-hover hover:border-primary/30 hover:-translate-y-1"
                   >
                     {brand.logo?.url ? (
                       <img
@@ -70,7 +70,7 @@ export default function PopularBrands() {
                 <motion.div key={brand.slug} variants={fadeInUp}>
                   <Link
                     to={`/brand/${brand.slug}`}
-                    className="group flex items-center justify-center rounded-2xl border border-border bg-card p-6 h-32 transition-all duration-300 hover:shadow-card-hover hover:border-primary/30 hover:-translate-y-1"
+                    className="group flex items-center justify-center rounded-2xl border border-border bg-card p-4 sm:p-6 h-24 sm:h-32 transition-all duration-300 hover:shadow-card-hover hover:border-primary/30 hover:-translate-y-1"
                   >
                     <span className="text-xl font-bold font-heading text-muted-foreground/60 group-hover:text-foreground transition-colors">
                       {brand.name}
