@@ -6,6 +6,9 @@ import {
   ChevronRight,
   ShoppingBag,
   SlidersHorizontal,
+  Copy,
+  Check,
+  FileSpreadsheet,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -20,6 +23,7 @@ export default function EventOrdersPage() {
   const [paymentStatus, setPaymentStatus] = useState<string>('')
   const [deliveryStatus, setDeliveryStatus] = useState<string>('')
   const [page, setPage] = useState(1)
+  const [copiedUtr, setCopiedUtr] = useState<string | null>(null)
 
   const [selectedOrderForNote, setSelectedOrderForNote] = useState<{
     orderId: string
@@ -32,7 +36,7 @@ export default function EventOrdersPage() {
 
   const { data, isLoading } = useAdminEventOrders({
     page,
-    limit: 10,
+    limit: 50,
     paymentStatus: paymentStatus || undefined,
     deliveryStatus: deliveryStatus || undefined,
   })
@@ -79,7 +83,8 @@ export default function EventOrdersPage() {
     return (
       order.orderId.toLowerCase().includes(term) ||
       order.teamId.toLowerCase().includes(term) ||
-      order.leaderName.toLowerCase().includes(term)
+      order.leaderName.toLowerCase().includes(term) ||
+      (order.upiDetails?.utrNumber && order.upiDetails.utrNumber.toLowerCase().includes(term))
     );
   })
 
@@ -100,11 +105,96 @@ export default function EventOrdersPage() {
     }
   }
 
+  const handleExportCSV = () => {
+    if (!filteredOrders || filteredOrders.length === 0) {
+      toast.error('No event orders available to export.')
+      return
+    }
+
+    const headers = [
+      'Order ID',
+      'Date',
+      'Event Name',
+      'Organizer',
+      'Team ID',
+      'Leader Name',
+      'Customer Name',
+      'Customer Email',
+      'Phone',
+      'Payment Method',
+      'UTR / Transaction ID',
+      'Payment Status',
+      'Delivery Status',
+      'Total Amount (INR)',
+    ]
+
+    const rows = filteredOrders.map((order: any) => {
+      const eventName = order.event && typeof order.event === 'object' ? (order.event as any).eventName : 'Event'
+      const organizerName = order.organizer && typeof order.organizer === 'object'
+        ? `${(order.organizer as any).firstName} ${(order.organizer as any).lastName}`
+        : 'Organizer'
+      const customerName = order.customer && typeof order.customer === 'object'
+        ? `${(order.customer as any).firstName} ${(order.customer as any).lastName}`
+        : order.addressSnapshot?.fullName || 'Customer'
+      const customerEmail = (order.customer as any)?.email || order.addressSnapshot?.email || ''
+      const phone = order.addressSnapshot?.phone || ''
+      const utr = order.upiDetails?.utrNumber || (order.paymentDetails?.razorpayPaymentId ? `RZP: ${order.paymentDetails.razorpayPaymentId}` : '—')
+      const total = order.priceBreakdown?.totalPrice || 0
+      const date = order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-IN') : ''
+
+      return [
+        `"${order.orderId}"`,
+        `"${date}"`,
+        `"${(eventName || '').replace(/"/g, '""')}"`,
+        `"${(organizerName || '').replace(/"/g, '""')}"`,
+        `"${order.teamId}"`,
+        `"${(order.leaderName || '').replace(/"/g, '""')}"`,
+        `"${(customerName || '').replace(/"/g, '""')}"`,
+        `"${customerEmail}"`,
+        `"${phone}"`,
+        `"${(order.paymentMethod || '').toUpperCase()}"`,
+        `"${utr}"`,
+        `"${(order.paymentStatus || '').toUpperCase()}"`,
+        `"${(order.deliveryStatus || '').toUpperCase()}"`,
+        `"${total}"`,
+      ].join(',')
+    })
+
+    const csvContent = [headers.join(','), ...rows].join('\n')
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', `ShortCircuit_Event_Orders_${new Date().toISOString().slice(0, 10)}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    link.parentNode?.removeChild(link)
+    toast.success('Event Orders exported to CSV!')
+  }
+
+  const handleCopyUtr = (utr: string) => {
+    navigator.clipboard.writeText(utr)
+    setCopiedUtr(utr)
+    toast.success('UTR copied to clipboard!')
+    setTimeout(() => setCopiedUtr(null), 2000)
+  }
+
   return (
     <div className="space-y-6">
       <AdminPageHeader
         title="Event orders"
         description="Global read-only dashboard for all student hardware kit purchases across college events."
+        action={
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportCSV}
+            className="text-xs gap-1.5 bg-card hover:bg-muted/30"
+          >
+            <FileSpreadsheet className="h-4 w-4 text-success" />
+            Export to Excel (.csv)
+          </Button>
+        }
       />
 
       {/* Control filters */}
@@ -181,6 +271,7 @@ export default function EventOrdersPage() {
                 <th className="p-3 text-xs">Team Info</th>
                 <th className="p-3 text-xs">Customer</th>
                 <th className="p-3 text-xs">Purchase Date</th>
+                <th className="p-3 text-xs">Method & UTR</th>
                 <th className="p-3 text-xs">Payment</th>
                 <th className="p-3 text-xs">Delivery</th>
                 <th className="p-3 text-xs text-right">Invoice</th>
@@ -215,6 +306,51 @@ export default function EventOrdersPage() {
                     </td>
                     <td className="p-3">
                       {order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-IN') : 'N/A'}
+                    </td>
+                    <td className="p-3">
+                      {order.paymentMethod === 'upi' ? (
+                        <div className="space-y-1">
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-primary/10 text-primary border border-primary/20">
+                            Direct UPI
+                          </span>
+                          {order.upiDetails?.utrNumber ? (
+                            <div className="flex items-center gap-1">
+                              <span className="font-mono text-[11px] font-semibold text-foreground">
+                                {order.upiDetails.utrNumber}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleCopyUtr(order.upiDetails!.utrNumber!)}
+                                title="Copy UTR Number"
+                                className="text-muted-foreground hover:text-foreground transition-colors"
+                              >
+                                {copiedUtr === order.upiDetails.utrNumber ? (
+                                  <Check className="h-3 w-3 text-success" />
+                                ) : (
+                                  <Copy className="h-3 w-3" />
+                                )}
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="text-[10px] text-muted-foreground block">—</span>
+                          )}
+                        </div>
+                      ) : order.paymentMethod === 'razorpay' ? (
+                        <div>
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-500/10 text-blue-500 border border-blue-500/20">
+                            Razorpay
+                          </span>
+                          {order.paymentDetails?.razorpayPaymentId && (
+                            <p className="font-mono text-[9px] text-muted-foreground mt-0.5 truncate max-w-[90px]" title={order.paymentDetails.razorpayPaymentId}>
+                              {order.paymentDetails.razorpayPaymentId}
+                            </p>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-muted text-muted-foreground border border-border">
+                          COD
+                        </span>
+                      )}
                     </td>
                     <td className="p-3">
                       <select

@@ -115,12 +115,15 @@ const eventApi = {
     data: {
       verificationToken: string
       addressId: string
-      paymentMethod: 'razorpay' | 'cod'
+      paymentMethod: 'razorpay' | 'cod' | 'upi'
       orderId?: string
       paymentDetails?: {
         razorpayOrderId?: string
         razorpayPaymentId?: string
         razorpaySignature?: string
+      }
+      upiDetails?: {
+        utrNumber: string
       }
     }
   ) =>

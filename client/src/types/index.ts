@@ -1091,7 +1091,7 @@ export interface EventOrder {
     country: string
     email?: string
   }
-  paymentMethod: 'razorpay' | 'cod'
+  paymentMethod: 'razorpay' | 'cod' | 'upi'
   paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded'
   deliveryStatus: 'placed' | 'packed' | 'shipped' | 'delivered' | 'cancelled'
   statusHistory: {
@@ -1110,6 +1110,13 @@ export interface EventOrder {
     razorpayOrderId?: string
     razorpayPaymentId?: string
     razorpaySignature?: string
+  }
+  upiDetails?: {
+    upiId?: string
+    utrNumber?: string
+    submittedAt?: string
+    verifiedBy?: string
+    verifiedAt?: string
   }
   invoiceId?: string
   invoiceUrl?: string

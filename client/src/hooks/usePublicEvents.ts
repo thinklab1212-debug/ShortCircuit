@@ -56,16 +56,18 @@ export function usePurchaseEventKit() {
       paymentMethod,
       orderId,
       paymentDetails,
+      upiDetails,
     }: {
       eventId: string
       verificationToken: string
       addressId: string
-      paymentMethod: 'razorpay' | 'cod'
+      paymentMethod: 'razorpay' | 'cod' | 'upi'
       orderId?: string
       paymentDetails?: any
+      upiDetails?: { utrNumber: string }
     }) =>
       eventApi
-        .purchaseEventKit(eventId, { verificationToken, addressId, paymentMethod, orderId, paymentDetails })
+        .purchaseEventKit(eventId, { verificationToken, addressId, paymentMethod, orderId, paymentDetails, upiDetails })
         .then((res) => res.data.data),
   })
 }

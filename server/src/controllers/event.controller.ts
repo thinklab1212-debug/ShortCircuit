@@ -248,7 +248,7 @@ export const verifyTeam = asyncHandler(async (req: Request, res: Response) => {
 
 export const purchaseEventKit = asyncHandler(async (req: Request, res: Response) => {
   const eventId = req.params.id;
-  const { verificationToken, addressId, paymentMethod, paymentDetails, orderId } = req.body;
+  const { verificationToken, addressId, paymentMethod, paymentDetails, upiDetails, orderId } = req.body;
   const userId = req.user!._id.toString();
 
   if (paymentDetails && orderId) {
@@ -268,7 +268,8 @@ export const purchaseEventKit = asyncHandler(async (req: Request, res: Response)
     verificationToken,
     userId,
     addressId,
-    paymentMethod
+    paymentMethod,
+    upiDetails
   );
 
   res.status(201).json(new ApiResponse(201, result, 'Event Order placed successfully.'));

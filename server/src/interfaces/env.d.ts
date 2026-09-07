@@ -58,5 +58,11 @@ declare namespace NodeJS {
     // -----------------------------------------------------------------------
     RATE_LIMIT_WINDOW_MS: string;
     RATE_LIMIT_MAX_REQUESTS: string;
+
+    // Event Direct UPI & Dedicated Google Sheet
+    EVENT_UPI_ID?: string;
+    EVENT_UPI_NAME?: string;
+    EVENT_UPI_BANK_NAME?: string;
+    GOOGLE_EVENT_SHEETS_ID?: string;
   }
 }

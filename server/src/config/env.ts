@@ -224,6 +224,29 @@ const envSchema = z.object({
     .string()
     .optional()
     .describe('Google Service Account private key (from JSON key file)'),
+
+  // -----------------------------------------------------------------------
+  // Event Direct UPI Configuration
+  // -----------------------------------------------------------------------
+  EVENT_UPI_ID: z
+    .string()
+    .default('')
+    .describe('UPI VPA for direct event kit payments (e.g. yourname@okaxis)'),
+
+  EVENT_UPI_NAME: z
+    .string()
+    .default('ShortCircuit')
+    .describe('Payee Name displayed in UPI app for event orders'),
+
+  EVENT_UPI_BANK_NAME: z
+    .string()
+    .default('')
+    .describe('Registered banking account name for buyer transparency'),
+
+  GOOGLE_EVENT_SHEETS_ID: z
+    .string()
+    .optional()
+    .describe('Optional dedicated Google Spreadsheet ID exclusively for event kit orders'),
 });
 
 // ---------------------------------------------------------------------------

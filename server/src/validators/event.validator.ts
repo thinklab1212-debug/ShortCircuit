@@ -109,22 +109,41 @@ export const verifyTeamSchema = z.object({
 // Student: Purchase Event Kit
 // ---------------------------------------------------------------------------
 
-export const purchaseEventKitSchema = z.object({
-  verificationToken: z
-    .string({ required_error: 'Verification token is required' })
-    .trim(),
-  addressId: objectIdSchema,
-  paymentMethod: z.enum(['razorpay', 'cod'], {
-    required_error: 'Payment method is required',
-  }),
-  paymentDetails: z
-    .object({
-      razorpayOrderId: z.string().optional(),
-      razorpayPaymentId: z.string().optional(),
-      razorpaySignature: z.string().optional(),
-    })
-    .optional(),
-});
+export const purchaseEventKitSchema = z
+  .object({
+    verificationToken: z
+      .string({ required_error: 'Verification token is required' })
+      .trim(),
+    addressId: objectIdSchema,
+    paymentMethod: z.enum(['razorpay', 'cod', 'upi'], {
+      required_error: 'Payment method is required',
+    }),
+    paymentDetails: z
+      .object({
+        razorpayOrderId: z.string().optional(),
+        razorpayPaymentId: z.string().optional(),
+        razorpaySignature: z.string().optional(),
+      })
+      .optional(),
+    upiDetails: z
+      .object({
+        utrNumber: z
+          .string()
+          .trim()
+          .min(6, 'UTR / Reference Number must be at least 6 characters')
+          .max(30, 'UTR / Reference Number cannot exceed 30 characters'),
+      })
+      .optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.paymentMethod === 'upi' && !data.upiDetails?.utrNumber) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: '12-digit UPI Reference / UTR number is required for UPI payment',
+        path: ['upiDetails', 'utrNumber'],
+      });
+    }
+  });
 
 // ---------------------------------------------------------------------------
 // Admin: Reject Event

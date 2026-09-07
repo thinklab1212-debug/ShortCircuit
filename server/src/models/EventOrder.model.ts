@@ -49,7 +49,7 @@ export interface IEventOrder extends Document {
   leaderName: string;
   kitSnapshot: IEventKitProductSnapshot[];
   addressSnapshot: IEventShippingAddress;
-  paymentMethod: 'razorpay' | 'cod';
+  paymentMethod: 'razorpay' | 'cod' | 'upi';
   paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded';
   deliveryStatus: 'placed' | 'packed' | 'shipped' | 'delivered' | 'cancelled';
   statusHistory: IEventStatusHistoryEntry[];
@@ -64,6 +64,13 @@ export interface IEventOrder extends Document {
     razorpayOrderId?: string;
     razorpayPaymentId?: string;
     razorpaySignature?: string;
+  };
+  upiDetails?: {
+    upiId?: string;
+    utrNumber?: string;
+    submittedAt?: Date;
+    verifiedBy?: mongoose.Types.ObjectId;
+    verifiedAt?: Date;
   };
   invoiceId?: string;
   invoiceUrl?: string;
@@ -145,7 +152,7 @@ const eventOrderSchema = new Schema<IEventOrder, IEventOrderModel>(
     },
     paymentMethod: {
       type: String,
-      enum: ['razorpay', 'cod'],
+      enum: ['razorpay', 'cod', 'upi'],
       required: true,
     },
     paymentStatus: {
@@ -172,6 +179,13 @@ const eventOrderSchema = new Schema<IEventOrder, IEventOrderModel>(
       razorpayOrderId: { type: String },
       razorpayPaymentId: { type: String },
       razorpaySignature: { type: String },
+    },
+    upiDetails: {
+      upiId: { type: String },
+      utrNumber: { type: String, trim: true },
+      submittedAt: { type: Date },
+      verifiedBy: { type: Schema.Types.ObjectId, ref: 'User' },
+      verifiedAt: { type: Date },
     },
     invoiceId: {
       type: String,
@@ -204,6 +218,8 @@ eventOrderSchema.statics.generateOrderId = async function (): Promise<string> {
 
 // Index for query sorting by creation date
 eventOrderSchema.index({ createdAt: -1 });
+// Sparse index on UTR number to prevent duplicate UPI submissions
+eventOrderSchema.index({ 'upiDetails.utrNumber': 1 }, { sparse: true });
 
 // pre-save middleware to assign OrderId
 eventOrderSchema.pre<IEventOrder>('save', async function (next) {

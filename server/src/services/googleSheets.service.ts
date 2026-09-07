@@ -103,7 +103,22 @@ export class GoogleSheetsService {
 
       // Ensure all tabs exist with headers and styling
       this.ordersSheet = await this.ensureSheet('Orders', ORDER_HEADERS, { red: 0.2, green: 0.66, blue: 0.33 });           // Green
-      this.eventOrdersSheet = await this.ensureSheet('Event Kit Orders', EVENT_ORDER_HEADERS, { red: 0.25, green: 0.52, blue: 0.96 }); // Blue
+
+      // If a dedicated GOOGLE_EVENT_SHEETS_ID is provided, use separate workbook for events
+      if (env.GOOGLE_EVENT_SHEETS_ID) {
+        try {
+          const eventDoc = new GoogleSpreadsheet(env.GOOGLE_EVENT_SHEETS_ID, auth);
+          await eventDoc.loadInfo();
+          this.eventOrdersSheet = await this.ensureSheet('Event Kit Orders', EVENT_ORDER_HEADERS, { red: 0.25, green: 0.52, blue: 0.96 }, eventDoc);
+          logger.info(`📊 Dedicated Event Google Sheet connected: "${eventDoc.title}"`);
+        } catch (eventErr) {
+          logger.warn('⚠️ Dedicated Event Google Sheet connection failed, falling back to main sheet:', eventErr);
+          this.eventOrdersSheet = await this.ensureSheet('Event Kit Orders', EVENT_ORDER_HEADERS, { red: 0.25, green: 0.52, blue: 0.96 });
+        }
+      } else {
+        this.eventOrdersSheet = await this.ensureSheet('Event Kit Orders', EVENT_ORDER_HEADERS, { red: 0.25, green: 0.52, blue: 0.96 }); // Blue
+      }
+
       this.cancellationsSheet = await this.ensureSheet('Cancellation Requests', CANCELLATION_HEADERS, { red: 0.92, green: 0.26, blue: 0.21 }); // Red
       this.newUsersSheet = await this.ensureSheet('New Users', NEW_USER_HEADERS, { red: 0.61, green: 0.35, blue: 0.71 });  // Purple
       this.productsSheet = await this.ensureSheet('Products', PRODUCT_HEADERS, { red: 0.98, green: 0.73, blue: 0.01 });   // Gold/Orange
@@ -127,17 +142,19 @@ export class GoogleSheetsService {
   private static async ensureSheet(
     title: string,
     headers: string[],
-    tabColor?: { red: number; green: number; blue: number }
+    tabColor?: { red: number; green: number; blue: number },
+    targetDoc?: GoogleSpreadsheet | null
   ): Promise<GoogleSpreadsheetWorksheet | null> {
-    if (!this.doc) return null;
+    const doc = targetDoc || this.doc;
+    if (!doc) return null;
 
     try {
-      let sheet = this.doc.sheetsByTitle[title];
+      let sheet = doc.sheetsByTitle[title];
       const isNew = !sheet;
 
       if (!sheet) {
-        sheet = await this.doc.addSheet({ title, headerValues: headers });
-        logger.info(`  ✅ Created sheet tab: "${title}"`);
+        sheet = await doc.addSheet({ title, headerValues: headers });
+        logger.info(`  ✅ Created sheet tab: "${title}" in "${doc.title}"`);
       }
 
       // Apply formatting (on new sheets or first run)
@@ -284,10 +301,18 @@ export class GoogleSheetsService {
       const kitItems = (eventOrder.kitSnapshot || []).map((k: any) => `${k.productName} x${k.quantity}`).join(', ');
       const adminLink = `${env.CLIENT_URL}/admin/events/orders`;
 
+      const paymentMethodStr = (eventOrder.paymentMethod || '').toUpperCase();
+      const paymentStatusStr = (eventOrder.paymentStatus || 'pending').toUpperCase();
+      const deliveryStatusStr = (eventOrder.deliveryStatus || 'placed').toUpperCase();
+
+      const refId = eventOrder.paymentMethod === 'upi'
+        ? (eventOrder.upiDetails?.utrNumber ? `UTR: ${eventOrder.upiDetails.utrNumber}` : 'UPI (Pending)')
+        : (eventOrder.paymentDetails?.razorpayPaymentId || '—');
+
       await this.eventOrdersSheet.addRow({
         'Order ID': eventOrder.orderId || eventOrder._id?.toString() || '',
         'Date': new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
-        'Event Name': event?.title || event?.name || '',
+        'Event Name': event?.title || event?.eventName || event?.name || '',
         'Organizer': event?.organizerName || '',
         'Team ID': eventOrder.teamId || '',
         'Leader': eventOrder.leaderName || '',
@@ -297,9 +322,9 @@ export class GoogleSheetsService {
         'City': addr.city || '',
         'Kit Items': kitItems,
         'Total': `₹${eventOrder.priceBreakdown?.totalPrice || 0}`,
-        'Payment': (eventOrder.paymentMethod || '').toUpperCase(),
-        'Razorpay ID': eventOrder.paymentDetails?.razorpayPaymentId || '—',
-        'Status': eventOrder.deliveryStatus || '',
+        'Payment': `${paymentMethodStr} (${paymentStatusStr})`,
+        'Razorpay ID': refId,
+        'Status': `${deliveryStatusStr} [${paymentStatusStr}]`,
         'Admin Link': adminLink,
       });
 
@@ -329,13 +354,18 @@ export class GoogleSheetsService {
         (r) => r.get('Order ID') === orderIdStr || r.get('Order ID') === eventOrder._id?.toString()
       );
 
-      const razorpayPaymentId = eventOrder.paymentDetails?.razorpayPaymentId || '—';
-      const statusStr = eventOrder.deliveryStatus || '';
+      const paymentMethodStr = (eventOrder.paymentMethod || '').toUpperCase();
+      const paymentStatusStr = (eventOrder.paymentStatus || 'pending').toUpperCase();
+      const deliveryStatusStr = (eventOrder.deliveryStatus || 'placed').toUpperCase();
+
+      const refId = eventOrder.paymentMethod === 'upi'
+        ? (eventOrder.upiDetails?.utrNumber ? `UTR: ${eventOrder.upiDetails.utrNumber}` : 'UPI (Pending)')
+        : (eventOrder.paymentDetails?.razorpayPaymentId || '—');
 
       if (row) {
-        row.set('Payment', (eventOrder.paymentMethod || '').toUpperCase());
-        row.set('Razorpay ID', razorpayPaymentId);
-        row.set('Status', statusStr);
+        row.set('Payment', `${paymentMethodStr} (${paymentStatusStr})`);
+        row.set('Razorpay ID', refId);
+        row.set('Status', `${deliveryStatusStr} [${paymentStatusStr}]`);
         await row.save();
         logger.debug(`📊 Sheet sync: Updated Event Order ${orderIdStr} in Google Sheets`);
       } else {

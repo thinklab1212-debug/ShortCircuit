@@ -908,18 +908,24 @@ export class EventService {
         totalPrice,
       },
       kitProducts: event.kitProducts,
+      upiConfig: {
+        upiId: env.EVENT_UPI_ID || '',
+        payeeName: env.EVENT_UPI_NAME || 'ShortCircuit',
+        bankingName: env.EVENT_UPI_BANK_NAME || '',
+      },
     };
   }
 
   /**
-   * Places an event kit order. Initiates Razorpay token generation or handles COD purchases.
+   * Places an event kit order. Handles UPI, COD purchases, or initiates Razorpay token generation.
    */
   public static async purchaseEventKit(
     eventId: string,
     token: string,
     userId: string,
     addressId: string,
-    paymentMethod: 'razorpay' | 'cod'
+    paymentMethod: 'razorpay' | 'cod' | 'upi',
+    upiDetails?: { utrNumber: string }
   ) {
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -1013,7 +1019,74 @@ export class EventService {
         },
       });
 
-      if (paymentMethod === 'cod') {
+      if (paymentMethod === 'upi') {
+        const utr = upiDetails?.utrNumber?.trim();
+        if (!utr) {
+          throw ApiError.badRequest('12-digit UPI Reference / UTR number is required for UPI payment.');
+        }
+
+        // Check for duplicate UTR across existing event orders
+        const existingUtr = await EventOrder.findOne({ 'upiDetails.utrNumber': utr }).session(session);
+        if (existingUtr) {
+          throw ApiError.badRequest(
+            `This UPI Transaction Reference (UTR) has already been submitted for Order ${existingUtr.orderId}. If you believe this is an error, please contact support.`
+          );
+        }
+
+        eventOrder.paymentStatus = 'pending';
+        eventOrder.deliveryStatus = 'placed';
+        eventOrder.upiDetails = {
+          upiId: env.EVENT_UPI_ID || '',
+          utrNumber: utr,
+          submittedAt: new Date(),
+        };
+        eventOrder.statusHistory.push({
+          status: 'placed',
+          timestamp: new Date(),
+          note: `Order placed via UPI. UTR: ${utr}. Awaiting admin payment verification.`,
+        });
+
+        // Update team purchased status on the Event document
+        event.teams[teamIndex].purchased = true;
+        event.teams[teamIndex].purchasedAt = new Date();
+        await event.save({ session });
+
+        // Generate Invoice details
+        const InvoiceSettings = mongoose.model('InvoiceSettings');
+        let settings = await InvoiceSettings.findOne().session(session);
+        if (!settings) {
+          settings = await InvoiceSettings.create([{}], { session }).then((res) => res[0]);
+        }
+
+        // Concurrency-safe increment
+        const incrementedSettings = await InvoiceSettings.findOneAndUpdate(
+          {},
+          { $inc: { nextInvoiceNumber: 1 } },
+          { new: true, session }
+        );
+        const invNum = incrementedSettings ? incrementedSettings.nextInvoiceNumber : 1;
+        const year = new Date().getFullYear();
+        const sequence = String(invNum).padStart(6, '0');
+        const invoiceId = `EV-INV-${year}-${sequence}`;
+
+        eventOrder.invoiceId = invoiceId;
+        eventOrder.invoiceUrl = `/api/v1/events/orders/${eventOrder._id}/invoice`;
+
+        await eventOrder.save({ session });
+        await session.commitTransaction();
+        session.endSession();
+
+        logger.info(`🛒 Event Kit Purchase submitted via UPI: Order ID ${eventOrder.orderId}, Team: ${team.teamId}, Event ID: ${eventId}, UTR: ${utr}`);
+        logger.info(`📄 Invoice generated: Invoice ID ${invoiceId} for Order ID ${eventOrder.orderId}`);
+
+        // Google Sheets sync (fire-and-forget)
+        GoogleSheetsService.appendEventOrderRow(eventOrder, event).catch(() => {});
+
+        return {
+          order: eventOrder,
+          paymentRequired: false,
+        };
+      } else if (paymentMethod === 'cod') {
         const systemSettings = await SystemSettings.getSettings();
         if (!systemSettings.codEnabled) {
           throw ApiError.badRequest('Cash on Delivery is currently disabled by store administration. Please choose an online payment method.');
@@ -1415,6 +1488,28 @@ export class EventService {
         timestamp: new Date(),
         note: updateData.note || `Payment status updated to ${updateData.paymentStatus} by Admin`,
       });
+
+      if (updateData.paymentStatus === 'paid' && order.paymentMethod === 'upi') {
+        if (!order.upiDetails) {
+          order.upiDetails = {};
+        }
+        order.upiDetails.verifiedAt = new Date();
+      }
+
+      if (updateData.paymentStatus === 'failed') {
+        // Unlock team's purchased flag so team can re-attempt purchase
+        if (order.event && order.teamId) {
+          const event = await Event.findById(order.event);
+          if (event) {
+            const teamIndex = event.teams.findIndex((t) => t.teamId.toUpperCase() === order.teamId.toUpperCase());
+            if (teamIndex !== -1) {
+              event.teams[teamIndex].purchased = false;
+              event.teams[teamIndex].purchasedAt = undefined;
+              await event.save();
+            }
+          }
+        }
+      }
     }
 
     if (updateData.deliveryStatus) {
@@ -1424,9 +1519,27 @@ export class EventService {
         timestamp: new Date(),
         note: updateData.note || `Delivery status updated to ${updateData.deliveryStatus} by Admin`,
       });
+
+      if (updateData.deliveryStatus === 'cancelled') {
+        if (order.event && order.teamId) {
+          const event = await Event.findById(order.event);
+          if (event) {
+            const teamIndex = event.teams.findIndex((t) => t.teamId.toUpperCase() === order.teamId.toUpperCase());
+            if (teamIndex !== -1) {
+              event.teams[teamIndex].purchased = false;
+              event.teams[teamIndex].purchasedAt = undefined;
+              await event.save();
+            }
+          }
+        }
+      }
     }
 
     await order.save();
+
+    // Sync updated status to Google Sheets (fire-and-forget)
+    GoogleSheetsService.updateEventOrderRow(order).catch(() => {});
+
     return order;
   }
 }
