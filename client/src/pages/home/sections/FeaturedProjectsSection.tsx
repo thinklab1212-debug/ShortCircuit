@@ -1,9 +1,9 @@
 import { Link } from 'react-router'
 import { motion } from 'framer-motion'
-import { Clock, Layers, ArrowRight, Cpu } from 'lucide-react'
+import { Clock, Layers, ArrowRight } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { PriceDisplay } from '@/components/ui/price-display'
-import { Button } from '@/components/ui/button'
+
 import { staggerContainer, fadeInUp } from '@/config/animations'
 import { useFeaturedProjectKits } from '@/hooks/useProjectKits'
 import { SectionHeader } from './SectionHeader'
