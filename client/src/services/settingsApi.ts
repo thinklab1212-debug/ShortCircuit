@@ -9,6 +9,9 @@ export interface PublicSettings {
   maintenanceETA?: string
   codEnabled: boolean
   guestCheckoutEnabled: boolean
+  eventUpiId?: string
+  eventUpiName?: string
+  eventUpiBankName?: string
 }
 
 export interface SystemSettingsData {
@@ -20,6 +23,9 @@ export interface SystemSettingsData {
   codEnabled: boolean
   guestCheckoutEnabled: boolean
   emailNotificationsEnabled: boolean
+  eventUpiId?: string
+  eventUpiName?: string
+  eventUpiBankName?: string
   createdAt: string
   updatedAt: string
 }

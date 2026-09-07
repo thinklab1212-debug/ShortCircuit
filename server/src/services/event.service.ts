@@ -889,6 +889,11 @@ export class EventService {
     const totalPrice = event.eventKitPrice + shippingPrice;
     const taxPrice = Math.round(event.eventKitPrice - event.eventKitPrice / 1.18);
 
+    const systemSettings = await SystemSettings.getSettings();
+    const activeUpiId = systemSettings.eventUpiId || env.EVENT_UPI_ID || '';
+    const activePayeeName = systemSettings.eventUpiName || env.EVENT_UPI_NAME || 'ShortCircuit';
+    const activeBankingName = systemSettings.eventUpiBankName || env.EVENT_UPI_BANK_NAME || '';
+
     return {
       event: {
         _id: event._id,
@@ -909,9 +914,9 @@ export class EventService {
       },
       kitProducts: event.kitProducts,
       upiConfig: {
-        upiId: env.EVENT_UPI_ID || '',
-        payeeName: env.EVENT_UPI_NAME || 'ShortCircuit',
-        bankingName: env.EVENT_UPI_BANK_NAME || '',
+        upiId: activeUpiId,
+        payeeName: activePayeeName,
+        bankingName: activeBankingName,
       },
     };
   }
@@ -1033,10 +1038,13 @@ export class EventService {
           );
         }
 
+        const systemSettings = await SystemSettings.getSettings();
+        const activeUpiId = systemSettings.eventUpiId || env.EVENT_UPI_ID || '';
+
         eventOrder.paymentStatus = 'pending';
         eventOrder.deliveryStatus = 'placed';
         eventOrder.upiDetails = {
-          upiId: env.EVENT_UPI_ID || '',
+          upiId: activeUpiId,
           utrNumber: utr,
           submittedAt: new Date(),
         };

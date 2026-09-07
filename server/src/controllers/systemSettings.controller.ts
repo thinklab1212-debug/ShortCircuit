@@ -24,6 +24,9 @@ export const getPublicSettings = asyncHandler(async (_req: Request, res: Respons
     maintenanceETA: settings.maintenanceETA || '',
     codEnabled: settings.codEnabled,
     guestCheckoutEnabled: settings.guestCheckoutEnabled,
+    eventUpiId: settings.eventUpiId || '',
+    eventUpiName: settings.eventUpiName || 'ShortCircuit',
+    eventUpiBankName: settings.eventUpiBankName || '',
   };
 
   res.status(200).json(
@@ -60,6 +63,9 @@ export const updateAdminSettings = asyncHandler(async (req: Request, res: Respon
     codEnabled,
     guestCheckoutEnabled,
     emailNotificationsEnabled,
+    eventUpiId,
+    eventUpiName,
+    eventUpiBankName,
   } = req.body;
 
   if (typeof isMaintenanceMode === 'boolean') {
@@ -82,6 +88,15 @@ export const updateAdminSettings = asyncHandler(async (req: Request, res: Respon
   }
   if (typeof emailNotificationsEnabled === 'boolean') {
     settings.emailNotificationsEnabled = emailNotificationsEnabled;
+  }
+  if (typeof eventUpiId === 'string') {
+    settings.eventUpiId = eventUpiId.trim();
+  }
+  if (typeof eventUpiName === 'string') {
+    settings.eventUpiName = eventUpiName.trim();
+  }
+  if (typeof eventUpiBankName === 'string') {
+    settings.eventUpiBankName = eventUpiBankName.trim();
   }
 
   await settings.save();

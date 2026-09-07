@@ -15,6 +15,9 @@ export interface ISystemSettings extends Document {
   codEnabled: boolean;
   guestCheckoutEnabled: boolean;
   emailNotificationsEnabled: boolean;
+  eventUpiId?: string;
+  eventUpiName?: string;
+  eventUpiBankName?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -54,6 +57,21 @@ const systemSettingsSchema = new Schema<ISystemSettings>(
       type: Boolean,
       required: true,
       default: true,
+    },
+    eventUpiId: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    eventUpiName: {
+      type: String,
+      default: 'ShortCircuit',
+      trim: true,
+    },
+    eventUpiBankName: {
+      type: String,
+      default: '',
+      trim: true,
     },
   },
   {
