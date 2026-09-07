@@ -8,6 +8,7 @@ import {
   WhyChooseUs,
   Newsletter,
   FooterCTA,
+  FeaturedProjectsSection,
 } from './sections'
 
 // ─── Home Page ──────────────────────────────────────────────────────────────────
@@ -36,10 +37,13 @@ export default function HomePage() {
         isError={featured.isError}
       />
 
-      {/* 4. Promotional Banners */}
+      {/* 4. Featured Smart Projects (Project Kits) */}
+      <FeaturedProjectsSection />
+
+      {/* 5. Promotional Banners */}
       <PromoBanners />
 
-      {/* 5. Best Sellers */}
+      {/* 6. Best Sellers */}
       <ProductSection
         title="Best Sellers"
         subtitle="Our most popular products this month"
@@ -50,10 +54,10 @@ export default function HomePage() {
         isError={bestSellers.isError}
       />
 
-      {/* 6. Popular Brands */}
+      {/* 7. Popular Brands */}
       <PopularBrands />
 
-      {/* 7. New Arrivals */}
+      {/* 8. New Arrivals */}
       <ProductSection
         title="New Arrivals"
         subtitle="The latest additions to our collection"
@@ -64,13 +68,13 @@ export default function HomePage() {
         isError={newArrivals.isError}
       />
 
-      {/* 8. Why Choose Short Circuit */}
+      {/* 9. Why Choose Short Circuit */}
       <WhyChooseUs />
 
-      {/* 9. Newsletter */}
+      {/* 10. Newsletter */}
       <Newsletter />
 
-      {/* 10. Footer CTA */}
+      {/* 11. Footer CTA */}
       <FooterCTA />
     </>
   )
