@@ -800,15 +800,18 @@ export class EventService {
       page,
       limit,
       sort,
-      select: '-teams',
+      select: '-teams -kitProducts -eventKitPrice -totalKitValue',
     });
   }
 
   /**
    * Retrieves detail of an approved event by its slug.
+   * Excludes confidential kit items and pricing until team verification.
    */
   public static async getPublicEventBySlug(slug: string) {
-    const event = await Event.findOne({ slug, status: 'approved' }).select('-teams').lean();
+    const event = await Event.findOne({ slug, status: 'approved' })
+      .select('-teams -kitProducts -eventKitPrice -totalKitValue')
+      .lean();
     if (!event) {
       throw ApiError.notFound('Event not found or is currently not available.');
     }
@@ -816,7 +819,8 @@ export class EventService {
   }
 
   /**
-   * Verifies a Team ID, checks if they've already purchased, and returns a secure JWT verification token.
+   * Verifies a Team ID, checks if they've already purchased, and returns a secure JWT verification token
+   * along with unlocked hardware kit products and exclusive partner pricing.
    */
   public static async verifyTeam(eventId: string, teamId: string) {
     const event = await Event.findOne({ _id: eventId, status: 'approved' }).lean();
@@ -849,6 +853,14 @@ export class EventService {
       teamId: team.teamId,
       leaderName: team.leaderName,
       token,
+      kitProducts: event.kitProducts,
+      eventKitPrice: event.eventKitPrice,
+      totalKitValue: event.totalKitValue,
+      discount: Math.max(0, event.totalKitValue - event.eventKitPrice),
+      discountPercentage:
+        event.totalKitValue > 0
+          ? Math.round(((event.totalKitValue - event.eventKitPrice) / event.totalKitValue) * 100)
+          : 0,
     };
   }
 
