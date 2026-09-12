@@ -24,6 +24,8 @@ import {
   Cpu,
   Award,
   MapPin,
+  GraduationCap,
+  MailQuestion,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { APP } from '@/constants'
@@ -114,6 +116,16 @@ const getSidebarNav = (pendingCancellationCount: number): SidebarEntry[] => [
     items: [
       { label: 'Coupons', href: '/admin/coupons', icon: Ticket },
       { label: 'Banners', href: '/admin/banners', icon: Image },
+    ],
+  },
+  {
+    id: 'workshops-group',
+    label: 'Workshops & Training',
+    icon: GraduationCap,
+    items: [
+      { label: 'Workshops', href: '/admin/workshops', icon: GraduationCap },
+      { label: 'Our Experience', href: '/admin/workshop-experience', icon: Building2 },
+      { label: 'Inquiries', href: '/admin/workshop-inquiries', icon: MailQuestion },
     ],
   },
   {

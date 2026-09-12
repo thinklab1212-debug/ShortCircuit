@@ -43,6 +43,8 @@ export function Footer() {
             <h3 className="text-sm font-semibold text-foreground mb-4">Quick Links</h3>
             <ul className="space-y-2.5">
               <FooterLink href="/shop">All Products</FooterLink>
+              <FooterLink href="/projects">Projects</FooterLink>
+              <FooterLink href="/workshops">Workshops & Training</FooterLink>
               <FooterLink href="/categories">Categories</FooterLink>
               <FooterLink href="/brands">Brands</FooterLink>
               <FooterLink href="/deals">Deals & Offers</FooterLink>

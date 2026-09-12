@@ -82,6 +82,7 @@ export function Navbar() {
             <NavLink href="/">Home</NavLink>
             <NavLink href="/shop">Shop</NavLink>
             <NavLink href="/projects">Projects</NavLink>
+            <NavLink href="/workshops">Workshops & Training</NavLink>
             <NavLink href="/categories">Categories</NavLink>
             <NavLink href="/brands">Brands</NavLink>
             {/* <NavLink href="/deals">Deals</NavLink> */}
@@ -287,6 +288,7 @@ export function Navbar() {
                 <MobileNavLink href="/" onClick={() => setMobileMenuOpen(false)}>Home</MobileNavLink>
                 <MobileNavLink href="/shop" onClick={() => setMobileMenuOpen(false)}>Shop</MobileNavLink>
                 <MobileNavLink href="/projects" onClick={() => setMobileMenuOpen(false)}>Projects</MobileNavLink>
+                <MobileNavLink href="/workshops" onClick={() => setMobileMenuOpen(false)}>Workshops & Training</MobileNavLink>
                 <MobileNavLink href="/categories" onClick={() => setMobileMenuOpen(false)}>Categories</MobileNavLink>
                 <MobileNavLink href="/brands" onClick={() => setMobileMenuOpen(false)}>Brands</MobileNavLink>
                 <MobileNavLink href="/deals" onClick={() => setMobileMenuOpen(false)}>Deals</MobileNavLink>

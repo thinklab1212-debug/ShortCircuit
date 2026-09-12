@@ -34,6 +34,7 @@ import adminEventRoutes from './adminEvent.routes.js';
 import eventRoutes from './event.routes.js';
 import deliveryPincodeRoutes from './deliveryPincode.routes.js';
 import systemSettingsRoutes from './systemSettings.routes.js';
+import workshopRoutes from './workshop.routes.js';
 
 const router = Router();
 
@@ -73,6 +74,9 @@ router.use('/delivery-pincodes', deliveryPincodeRoutes);
 
 // System & Store Settings
 router.use('/settings', systemSettingsRoutes);
+
+// Workshops & Training Module
+router.use('/workshops', workshopRoutes);
 
 export default router;
 

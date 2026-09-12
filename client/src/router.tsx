@@ -57,6 +57,10 @@ const ProjectKitsPage = lazy(() => import('@/pages/projects/ProjectKitsPage'))
 const ProjectKitDetailPage = lazy(() => import('@/pages/projects/ProjectKitDetailPage'))
 const PublicEventsPage = lazy(() => import('@/pages/events/PublicEventsPage'))
 const PublicEventDetailPage = lazy(() => import('@/pages/events/PublicEventDetailPage'))
+const WorkshopsPage = lazy(() => import('@/pages/workshops/WorkshopsPage'))
+const AdminWorkshopsPage = lazy(() => import('@/pages/admin/workshops/AdminWorkshopsPage'))
+const AdminWorkshopExperiencePage = lazy(() => import('@/pages/admin/workshops/AdminWorkshopExperiencePage'))
+const AdminWorkshopInquiriesPage = lazy(() => import('@/pages/admin/workshops/AdminWorkshopInquiriesPage'))
 
 // Vendor (lazy loaded for SEO performance)
 const VendorDashboardPage = lazy(() => import('@/pages/vendor/DashboardPage'))
@@ -104,6 +108,7 @@ export const router = createBrowserRouter([
       { path: 'events/:slug', element: <PublicEventDetailPage /> },
       { path: 'projects', element: <ProjectKitsPage /> },
       { path: 'projects/:slug', element: <ProjectKitDetailPage /> },
+      { path: 'workshops', element: <WorkshopsPage /> },
 
       // ── Protected Customer Routes ──
       { path: 'cart', element: <ProtectedRoute><CartPage /></ProtectedRoute> },
@@ -159,6 +164,9 @@ export const router = createBrowserRouter([
       { path: 'events/:id', element: <AdminEventDetailPage /> },
       { path: 'events/orders', element: <AdminEventOrdersPage /> },
       { path: 'delivery-pincodes', element: <AdminDeliveryPincodesPage /> },
+      { path: 'workshops', element: <AdminWorkshopsPage /> },
+      { path: 'workshop-experience', element: <AdminWorkshopExperiencePage /> },
+      { path: 'workshop-inquiries', element: <AdminWorkshopInquiriesPage /> },
     ],
   },
 

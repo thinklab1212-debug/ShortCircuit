@@ -1192,4 +1192,85 @@ export interface BulkImportPreviewResult {
   items: BulkPreviewItem[]
 }
 
+// ─── Workshops & Training ───────────────────────────────────────────────────
+
+export interface Workshop {
+  _id: string
+  title: string
+  description: string
+  category: string
+  displayOrder: number
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface WorkshopFormData {
+  title: string
+  description: string
+  category: string
+  displayOrder?: number
+  isActive?: boolean
+}
+
+export interface WorkshopExperience {
+  _id: string
+  name: string
+  logo: {
+    url: string
+    publicId: string
+  }
+  displayOrder: number
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface WorkshopExperienceFormData {
+  name: string
+  logo: {
+    url: string
+    publicId: string
+  }
+  displayOrder?: number
+  isActive?: boolean
+}
+
+export type WorkshopInquiryStatus =
+  | 'New'
+  | 'Contacted'
+  | 'Confirmed'
+  | 'Completed'
+  | 'Cancelled'
+
+export interface WorkshopInquiry {
+  _id: string
+  institutionName: string
+  institutionType: 'School' | 'College' | 'University' | 'Other'
+  contactPerson: string
+  email: string
+  phone: string
+  workshopArea: string
+  expectedStudents: 'Less than 30' | '30–50' | '50–100' | '100–200' | '200+'
+  location: string
+  preferredDate?: string
+  message?: string
+  status: WorkshopInquiryStatus
+  createdAt: string
+  updatedAt: string
+}
+
+export interface WorkshopInquiryFormData {
+  institutionName: string
+  institutionType: 'School' | 'College' | 'University' | 'Other'
+  contactPerson: string
+  email: string
+  phone: string
+  workshopArea: string
+  expectedStudents: 'Less than 30' | '30–50' | '50–100' | '100–200' | '200+'
+  location: string
+  preferredDate?: string
+  message?: string
+}
+
 

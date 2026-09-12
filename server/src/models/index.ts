@@ -26,4 +26,7 @@ export { default as OrganizerApplication, type IOrganizerApplication } from './O
 export { default as Event, type IEvent, type IEventKitProduct, type IEventTeam } from './Event.model.js';
 export { default as DeliveryPincode, type IDeliveryPincode } from './DeliveryPincode.model.js';
 export { default as SystemSettings, type ISystemSettings, type ISystemSettingsModel } from './SystemSettings.model.js';
+export { default as Workshop, type IWorkshop } from './Workshop.model.js';
+export { default as WorkshopExperience, type IWorkshopExperience } from './WorkshopExperience.model.js';
+export { default as WorkshopInquiry, type IWorkshopInquiry, type WorkshopInquiryStatus } from './WorkshopInquiry.model.js';
 

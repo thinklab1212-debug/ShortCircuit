@@ -245,6 +245,22 @@ const API_ROUTES = {
     PUBLIC: '/settings/public',
     ADMIN: '/settings/admin',
   },
+
+  // Workshops & Training
+  WORKSHOPS: {
+    PUBLIC: '/workshops',
+    PUBLIC_EXPERIENCE: '/workshops/experience',
+    INQUIRE: '/workshops/inquire',
+    ADMIN_ALL: '/workshops/admin/all',
+    ADMIN_CREATE: '/workshops/admin',
+    ADMIN_BY_ID: (id: string) => `/workshops/admin/${id}`,
+    ADMIN_EXPERIENCE_ALL: '/workshops/admin/experience/all',
+    ADMIN_EXPERIENCE_CREATE: '/workshops/admin/experience',
+    ADMIN_EXPERIENCE_BY_ID: (id: string) => `/workshops/admin/experience/${id}`,
+    ADMIN_INQUIRIES: '/workshops/admin/inquiries',
+    ADMIN_INQUIRY_STATUS: (id: string) => `/workshops/admin/inquiries/${id}/status`,
+    ADMIN_INQUIRY_BY_ID: (id: string) => `/workshops/admin/inquiries/${id}`,
+  },
 } as const
 
 

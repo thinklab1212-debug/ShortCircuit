@@ -28,6 +28,33 @@ export class CartService {
 
     if (!cart) {
       cart = await Cart.create({ user: userId, items: [] });
+      return cart;
+    }
+
+    // Automatically synchronize item.price snapshot if product or variant price was updated
+    let hasPriceChanges = false;
+    for (const item of cart.items) {
+      const product = item.product as any;
+      const productVariant = item.productVariant as any;
+
+      if (!product) continue;
+
+      let liveUnitPrice = 0;
+      if (productVariant) {
+        liveUnitPrice = productVariant.salePrice ?? productVariant.price;
+      } else {
+        const priceModifier = item.variant?.priceModifier ?? 0;
+        liveUnitPrice = (product.salePrice || product.price) + priceModifier;
+      }
+
+      if (item.price !== liveUnitPrice) {
+        item.price = liveUnitPrice;
+        hasPriceChanges = true;
+      }
+    }
+
+    if (hasPriceChanges) {
+      await cart.save();
     }
 
     return cart;

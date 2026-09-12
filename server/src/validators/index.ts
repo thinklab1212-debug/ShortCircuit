@@ -25,3 +25,4 @@ export * from './projectKit.validator.js';
 export * from './organizer.validator.js';
 export * from './event.validator.js';
 export * from './deliveryPincode.validator.js';
+export * from './workshop.validator.js';
