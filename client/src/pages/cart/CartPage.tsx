@@ -180,11 +180,17 @@ export default function CartPage() {
   const items = cart?.items ?? []
   const isEmpty = !isLoading && items.length === 0
 
-  // Use accurate server totals; fall back to cart.totalPrice while loading.
-  const itemsPrice = totals?.itemsPrice ?? cart?.totalPrice ?? 0
-  const shippingPrice = totals?.shippingPrice ?? 0
+  // Use live subtotal computed directly from items for instant reactivity; fall back to server totals
+  const liveItemsPrice = items.reduce((sum, item) => {
+    const modifier = item.variant?.priceModifier ?? 0
+    return sum + (item.price + modifier) * item.quantity
+  }, 0)
+
+  const itemsPrice = items.length > 0 ? liveItemsPrice : (totals?.itemsPrice ?? cart?.totalPrice ?? 0)
   const discountAmount = totals?.discountAmount ?? 0
-  const totalPrice = totals?.totalPrice ?? cart?.totalPrice ?? 0
+  const netSubtotal = Math.max(0, itemsPrice - discountAmount)
+  const shippingPrice = netSubtotal >= 1499 || netSubtotal === 0 ? 0 : (totals?.shippingPrice || 49)
+  const totalPrice = Math.max(0, netSubtotal + shippingPrice)
 
   return (
     <div className="container py-4 sm:py-6 lg:py-8 pb-24 lg:pb-8">

@@ -279,10 +279,15 @@ export default function CheckoutPage() {
     )
   }
 
-  const itemsPrice = totals?.itemsPrice ?? cart?.totalPrice ?? 0
-  const shippingPrice = totals?.shippingPrice ?? 0
+  const liveItemsPrice = items.reduce((sum, item) => {
+    const modifier = item.variant?.priceModifier ?? 0
+    return sum + (item.price + modifier) * item.quantity
+  }, 0)
+  const itemsPrice = totals?.itemsPrice ?? (items.length > 0 ? liveItemsPrice : (cart?.totalPrice ?? 0))
   const discountAmount = totals?.discountAmount ?? 0
-  const totalPrice = totals?.totalPrice ?? cart?.totalPrice ?? 0
+  const netSubtotal = Math.max(0, itemsPrice - discountAmount)
+  const shippingPrice = totals?.shippingPrice ?? (netSubtotal >= 1499 || netSubtotal === 0 ? 0 : 49)
+  const totalPrice = totals?.totalPrice ?? Math.max(0, netSubtotal + shippingPrice)
 
   // ── Coupon ──
   const handleApplyCoupon = async () => {

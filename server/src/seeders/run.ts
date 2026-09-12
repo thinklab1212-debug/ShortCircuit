@@ -10,6 +10,7 @@ import { seedAdminUser } from './admin.seeder.js';
 import { seedCategories } from './categories.seeder.js';
 import { seedBrands } from './brands.seeder.js';
 import { seedCoupons } from './coupon.seeder.js';
+import { seedWorkshops } from './workshops.seeder.js';
 
 async function runSeeders() {
   console.log('🌱 Starting Short Circuit Database Seeding...');
@@ -23,6 +24,7 @@ async function runSeeders() {
     await seedCategories();
     await seedBrands();
     await seedCoupons();
+    await seedWorkshops();
 
     console.log('🌱 Database Seeding Completed Successfully!');
     

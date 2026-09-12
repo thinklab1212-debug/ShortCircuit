@@ -6,15 +6,24 @@
 
 import { Workshop, WorkshopExperience, WorkshopInquiry } from '../models/index.js';
 import { ApiError } from '../utils/index.js';
+import { INITIAL_WORKSHOPS } from '../seeders/workshops.seeder.js';
 
 export class WorkshopService {
   // ── Workshop Cards ─────────────────────────────────────────────────────────
 
   static async getActiveWorkshops() {
+    const count = await Workshop.countDocuments();
+    if (count === 0) {
+      await Workshop.insertMany(INITIAL_WORKSHOPS);
+    }
     return Workshop.find({ isActive: true }).sort({ displayOrder: 1, createdAt: -1 });
   }
 
   static async getAllWorkshopsAdmin() {
+    const count = await Workshop.countDocuments();
+    if (count === 0) {
+      await Workshop.insertMany(INITIAL_WORKSHOPS);
+    }
     return Workshop.find().sort({ displayOrder: 1, createdAt: -1 });
   }
 

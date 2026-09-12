@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react'
-import { motion } from 'framer-motion'
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import {
   ArrowRight,
@@ -10,14 +10,20 @@ import {
   Send,
   Loader2,
   AlertCircle,
+  X,
 } from 'lucide-react'
 import { workshopApi } from '@/services'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
-import { fadeInUp, staggerContainer } from '@/config/animations'
-import type { WorkshopInquiryFormData } from '@/types'
+import {
+  fadeInUp,
+  staggerContainer,
+  modalOverlayVariants,
+  modalContentVariants,
+} from '@/config/animations'
+import type { Workshop, WorkshopInquiryFormData } from '@/types'
 
 // Controlled list of Workshop / Training Areas
 const WORKSHOP_AREAS = [
@@ -33,6 +39,65 @@ const WORKSHOP_AREAS = [
 const INSTITUTION_TYPES = ['School', 'College', 'University', 'Other'] as const
 const STUDENT_COUNTS = ['Less than 30', '30–50', '50–100', '100–200', '200+'] as const
 
+// Initial default workshops shown if database has not returned yet or is being initialized
+const DEFAULT_WORKSHOPS: Workshop[] = [
+  {
+    _id: 'default-1',
+    title: 'Robotics: Line Follower, Obstacle Avoidance & Bluetooth Robot',
+    description:
+      'Comprehensive hands-on robotics workshop covering autonomous chassis assembly, infrared sensor arrays for line following, ultrasonic obstacle detection, and wireless Bluetooth smartphone motor control.',
+    category: 'Robotics',
+    displayOrder: 1,
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    _id: 'default-2',
+    title: 'Internet of Things (IoT) & Smart Automation',
+    description:
+      'Hands-on workshop using ESP32/NodeMCU microcontrollers, environmental sensor integration, cloud telemetry, MQTT protocols, and real-time remote monitoring dashboards.',
+    category: 'IoT',
+    displayOrder: 2,
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    _id: 'default-3',
+    title: 'Drone Technology & UAV Flight Dynamics',
+    description:
+      'Practical engineering workshop on quadcopter aerodynamics, frame assembly, brushless DC motors, electronic speed controllers (ESC), flight controller calibration, and safe piloting.',
+    category: 'Drone Technology',
+    displayOrder: 3,
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    _id: 'default-4',
+    title: 'Embedded Systems & Microcontroller Firmware',
+    description:
+      'Low-level firmware development, GPIO registers, hardware timers, interrupts, and communication protocols (UART, SPI, I2C) for engineering students.',
+    category: 'Embedded Systems',
+    displayOrder: 4,
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    _id: 'default-5',
+    title: 'Arduino & Basic Electronics Prototyping',
+    description:
+      'Fundamental electronics and breadboard circuit design, active/passive components, sensor interfacing, relay modules, and Arduino C++ programming designed for schools and early college students.',
+    category: 'Arduino / Electronics',
+    displayOrder: 5,
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+]
+
 const initialFormData: WorkshopInquiryFormData = {
   institutionName: '',
   institutionType: 'College',
@@ -47,30 +112,30 @@ const initialFormData: WorkshopInquiryFormData = {
 }
 
 export default function WorkshopsPage() {
-  const inquirySectionRef = useRef<HTMLDivElement>(null)
+  const [modalOpen, setModalOpen] = useState(false)
   const [formData, setFormData] = useState<WorkshopInquiryFormData>(initialFormData)
   const [formErrors, setFormErrors] = useState<Partial<Record<keyof WorkshopInquiryFormData, string>>>({})
   const [isSubmitted, setIsSubmitted] = useState(false)
 
-  // Fetch active workshops
+  // Fetch active workshops from API
   const { data: workshopsData, isLoading: isLoadingWorkshops } = useQuery({
     queryKey: ['workshops', 'active'],
     queryFn: async () => (await workshopApi.getActive()).data.data,
   })
 
-  // Fetch active experience (institutions)
+  // Fetch active experience (institutions) from API
   const { data: experienceData, isLoading: isLoadingExperience } = useQuery({
     queryKey: ['workshops', 'experience'],
     queryFn: async () => (await workshopApi.getActiveExperience()).data.data,
   })
 
-  const workshops = workshopsData || []
+  // Use database workshops if available, otherwise fallback to initial default workshops
+  const workshops = (workshopsData && workshopsData.length > 0) ? workshopsData : DEFAULT_WORKSHOPS
   const organizations = experienceData || []
 
-  // Smooth scroll and pre-select workshop area
-  const handleInquireClick = (areaName?: string) => {
+  // Open modal and optionally pre-select workshop area
+  const openInquiryModal = (areaName?: string) => {
     if (areaName) {
-      // Find matching controlled option or default to Customized
       const matched = WORKSHOP_AREAS.find(
         (a) => a.toLowerCase() === areaName.toLowerCase() || areaName.toLowerCase().includes(a.toLowerCase())
       )
@@ -79,7 +144,13 @@ export default function WorkshopsPage() {
         workshopArea: matched || areaName,
       }))
     }
-    inquirySectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    setIsSubmitted(false)
+    setFormErrors({})
+    setModalOpen(true)
+  }
+
+  const closeInquiryModal = () => {
+    setModalOpen(false)
   }
 
   // Form Validation
@@ -173,7 +244,7 @@ export default function WorkshopsPage() {
           >
             <Button
               size="lg"
-              onClick={() => handleInquireClick()}
+              onClick={() => openInquiryModal()}
               className="gap-2 shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all font-semibold"
             >
               Organize a Workshop
@@ -207,7 +278,7 @@ export default function WorkshopsPage() {
           </p>
         </div>
 
-        {isLoadingWorkshops ? (
+        {isLoadingWorkshops && !workshops.length ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <div key={i} className="h-64 rounded-2xl bg-card border border-border animate-pulse p-6 space-y-4" />
@@ -252,7 +323,7 @@ export default function WorkshopsPage() {
                 {/* Contextual CTA: Inquire About Workshop */}
                 <div className="pt-6 border-t border-border/50 mt-6">
                   <button
-                    onClick={() => handleInquireClick(workshop.title)}
+                    onClick={() => openInquiryModal(workshop.title)}
                     className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary/80 transition-colors group-hover:translate-x-1 duration-200"
                   >
                     <span>Inquire About Workshop</span>
@@ -267,9 +338,9 @@ export default function WorkshopsPage() {
             <GraduationCap className="h-10 w-10 text-muted-foreground mx-auto" />
             <h3 className="font-semibold text-foreground text-lg">Workshops In Preparation</h3>
             <p className="text-sm text-muted-foreground">
-              We customize technical programs for schools and colleges. Reach out below to organize a tailored workshop for your institution.
+              We customize technical programs for schools and colleges. Reach out to organize a tailored workshop for your institution.
             </p>
-            <Button variant="outline" size="sm" onClick={() => handleInquireClick()}>
+            <Button variant="outline" size="sm" onClick={() => openInquiryModal()}>
               Request Customized Program
             </Button>
           </div>
@@ -328,298 +399,348 @@ export default function WorkshopsPage() {
         </div>
       </section>
 
-      {/* ─── SECTION 3: Organize a Workshop (Primary Conversion) ───────────────── */}
-      <section
-        ref={inquirySectionRef}
-        id="organize-workshop"
-        className="py-16 sm:py-24 container mx-auto px-4 max-w-5xl"
-      >
-        <div className="relative rounded-3xl border border-primary/20 bg-card p-6 sm:p-10 lg:p-12 shadow-2xl shadow-primary/5 overflow-hidden">
-          {/* Subtle decorative background accent */}
+      {/* ─── SECTION 3: Organize a Workshop (Clean Conversion Banner) ──────────── */}
+      <section className="py-16 sm:py-24 container mx-auto px-4 max-w-5xl">
+        <div className="relative rounded-3xl border border-primary/20 bg-card p-8 sm:p-12 lg:p-16 shadow-2xl shadow-primary/5 overflow-hidden text-center space-y-6">
           <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
           <div className="absolute -left-20 -bottom-20 h-64 w-64 rounded-full bg-primary/5 blur-3xl pointer-events-none" />
 
-          {/* Section Header */}
-          <div className="relative text-center max-w-2xl mx-auto space-y-3 mb-10">
-            <Badge variant="outline" className="text-primary border-primary/30 px-3 py-1 text-xs">
-              Organize a Workshop
-            </Badge>
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground font-heading">
-              Let&apos;s Build Something Together
-            </h2>
-            <p className="text-muted-foreground text-sm sm:text-base leading-relaxed">
-              Interested in organizing a workshop or training program for your students? Tell us what you are looking for and our team will get in touch.
-            </p>
+          <Badge variant="outline" className="text-primary border-primary/30 px-3 py-1 text-xs">
+            Organize a Workshop
+          </Badge>
+
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-foreground font-heading max-w-2xl mx-auto">
+            Let&apos;s Build Something Together
+          </h2>
+
+          <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
+            Interested in organizing a workshop or training program for your students? Tell us what you are looking for and our team will get in touch.
+          </p>
+
+          <div className="pt-2">
+            <Button
+              size="lg"
+              onClick={() => openInquiryModal()}
+              className="gap-2 font-semibold shadow-lg shadow-primary/25 px-8 py-6 text-base"
+            >
+              <Send className="h-5 w-5" />
+              Submit Workshop Inquiry
+            </Button>
           </div>
 
-          {/* Success State */}
-          {isSubmitted ? (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.96 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="rounded-2xl border border-primary/30 bg-primary/5 p-8 sm:p-12 text-center space-y-5 max-w-lg mx-auto my-8"
-            >
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/15 text-primary">
-                <CheckCircle2 className="h-8 w-8" />
-              </div>
-              <div className="space-y-2">
-                <h3 className="text-2xl font-bold font-heading text-foreground">Inquiry Received</h3>
-                <p className="text-muted-foreground text-sm leading-relaxed">
-                  Thank you for your inquiry. Our team will review your requirements and contact you shortly.
-                </p>
-              </div>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setIsSubmitted(false)
-                  setFormData(initialFormData)
-                }}
-              >
-                Submit Another Inquiry
-              </Button>
-            </motion.div>
-          ) : (
-            /* Inquiry Form */
-            <form onSubmit={handleSubmit} className="relative space-y-8">
-              {/* Part 1: Institution Details */}
-              <div className="space-y-4">
-                <h3 className="text-base font-semibold text-foreground flex items-center gap-2 border-b border-border pb-2">
-                  <Building2 className="h-4 w-4 text-primary" />
-                  Institution Information
-                </h3>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs font-semibold text-foreground mb-1.5 block">
-                      Institution Name <span className="text-destructive">*</span>
-                    </label>
-                    <Input
-                      placeholder="e.g. ABC College of Engineering"
-                      value={formData.institutionName}
-                      onChange={(e) => {
-                        setFormData((p) => ({ ...p, institutionName: e.target.value }))
-                        if (formErrors.institutionName) setFormErrors((p) => ({ ...p, institutionName: undefined }))
-                      }}
-                      className={formErrors.institutionName ? 'border-destructive' : ''}
-                    />
-                    {formErrors.institutionName && (
-                      <p className="text-xs text-destructive mt-1">{formErrors.institutionName}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="text-xs font-semibold text-foreground mb-1.5 block">
-                      Institution Type <span className="text-destructive">*</span>
-                    </label>
-                    <select
-                      value={formData.institutionType}
-                      onChange={(e) =>
-                        setFormData((p) => ({
-                          ...p,
-                          institutionType: e.target.value as WorkshopInquiryFormData['institutionType'],
-                        }))
-                      }
-                      className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 text-foreground"
-                    >
-                      {INSTITUTION_TYPES.map((type) => (
-                        <option key={type} value={type}>
-                          {type}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className="text-xs font-semibold text-foreground mb-1.5 block">
-                      Contact Person Name <span className="text-destructive">*</span>
-                    </label>
-                    <Input
-                      placeholder="e.g. Dr. John Doe / Prof. Smith"
-                      value={formData.contactPerson}
-                      onChange={(e) => {
-                        setFormData((p) => ({ ...p, contactPerson: e.target.value }))
-                        if (formErrors.contactPerson) setFormErrors((p) => ({ ...p, contactPerson: undefined }))
-                      }}
-                      className={formErrors.contactPerson ? 'border-destructive' : ''}
-                    />
-                    {formErrors.contactPerson && (
-                      <p className="text-xs text-destructive mt-1">{formErrors.contactPerson}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="text-xs font-semibold text-foreground mb-1.5 block">
-                      Email Address <span className="text-destructive">*</span>
-                    </label>
-                    <Input
-                      type="email"
-                      placeholder="contact@institution.edu"
-                      value={formData.email}
-                      onChange={(e) => {
-                        setFormData((p) => ({ ...p, email: e.target.value }))
-                        if (formErrors.email) setFormErrors((p) => ({ ...p, email: undefined }))
-                      }}
-                      className={formErrors.email ? 'border-destructive' : ''}
-                    />
-                    {formErrors.email && (
-                      <p className="text-xs text-destructive mt-1">{formErrors.email}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="text-xs font-semibold text-foreground mb-1.5 block">
-                      Phone Number <span className="text-destructive">*</span>
-                    </label>
-                    <Input
-                      type="tel"
-                      placeholder="+91 98765 43210"
-                      value={formData.phone}
-                      onChange={(e) => {
-                        setFormData((p) => ({ ...p, phone: e.target.value }))
-                        if (formErrors.phone) setFormErrors((p) => ({ ...p, phone: undefined }))
-                      }}
-                      className={formErrors.phone ? 'border-destructive' : ''}
-                    />
-                    {formErrors.phone && (
-                      <p className="text-xs text-destructive mt-1">{formErrors.phone}</p>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Part 2: Workshop Requirements */}
-              <div className="space-y-4">
-                <h3 className="text-base font-semibold text-foreground flex items-center gap-2 border-b border-border pb-2">
-                  <GraduationCap className="h-4 w-4 text-primary" />
-                  Workshop Requirements
-                </h3>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs font-semibold text-foreground mb-1.5 block">
-                      Workshop / Training Area <span className="text-destructive">*</span>
-                    </label>
-                    <select
-                      value={formData.workshopArea}
-                      onChange={(e) => setFormData((p) => ({ ...p, workshopArea: e.target.value }))}
-                      className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 text-foreground font-medium"
-                    >
-                      {WORKSHOP_AREAS.map((area) => (
-                        <option key={area} value={area}>
-                          {area}
-                        </option>
-                      ))}
-                    </select>
-                    <span className="text-[11px] text-muted-foreground mt-1 block">
-                      You can select an area or choose Customized Workshop.
-                    </span>
-                  </div>
-
-                  <div>
-                    <label className="text-xs font-semibold text-foreground mb-1.5 block">
-                      Expected Number of Students <span className="text-destructive">*</span>
-                    </label>
-                    <select
-                      value={formData.expectedStudents}
-                      onChange={(e) =>
-                        setFormData((p) => ({
-                          ...p,
-                          expectedStudents: e.target.value as WorkshopInquiryFormData['expectedStudents'],
-                        }))
-                      }
-                      className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 text-foreground"
-                    >
-                      {STUDENT_COUNTS.map((count) => (
-                        <option key={count} value={count}>
-                          {count}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs font-semibold text-foreground mb-1.5 block">
-                      Location / City <span className="text-destructive">*</span>
-                    </label>
-                    <Input
-                      placeholder="e.g. Bengaluru, Karnataka"
-                      value={formData.location}
-                      onChange={(e) => {
-                        setFormData((p) => ({ ...p, location: e.target.value }))
-                        if (formErrors.location) setFormErrors((p) => ({ ...p, location: undefined }))
-                      }}
-                      className={formErrors.location ? 'border-destructive' : ''}
-                    />
-                    {formErrors.location && (
-                      <p className="text-xs text-destructive mt-1">{formErrors.location}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="text-xs font-semibold text-foreground mb-1.5 block">
-                      Preferred Date <span className="text-muted-foreground font-normal">(optional)</span>
-                    </label>
-                    <Input
-                      type="date"
-                      value={formData.preferredDate || ''}
-                      onChange={(e) => setFormData((p) => ({ ...p, preferredDate: e.target.value }))}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-xs font-semibold text-foreground mb-1.5 block">
-                    Additional Requirements / Message <span className="text-muted-foreground font-normal">(optional)</span>
-                  </label>
-                  <Textarea
-                    placeholder="Tell us about specific topics, lab setup, or schedule preferences..."
-                    rows={4}
-                    value={formData.message || ''}
-                    onChange={(e) => setFormData((p) => ({ ...p, message: e.target.value }))}
-                  />
-                </div>
-              </div>
-
-              {/* Error Banner if mutation fails */}
-              {inquiryMutation.isError && (
-                <div className="flex items-center gap-2 rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
-                  <AlertCircle className="h-4 w-4 shrink-0" />
-                  <span>Failed to submit inquiry. Please check your information and try again.</span>
-                </div>
-              )}
-
-              {/* Submit CTA */}
-              <div className="pt-2 text-center">
-                <Button
-                  type="submit"
-                  size="lg"
-                  disabled={inquiryMutation.isPending}
-                  className="w-full sm:w-auto min-w-[240px] font-semibold gap-2 shadow-lg shadow-primary/25"
-                >
-                  {inquiryMutation.isPending ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Submitting...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="h-4 w-4" />
-                      Submit Inquiry
-                    </>
-                  )}
-                </Button>
-                <p className="text-xs text-muted-foreground mt-3">
-                  Our team reviews inquiries and reaches out directly to finalize curriculum and coordination.
-                </p>
-              </div>
-            </form>
-          )}
+          <p className="text-xs text-muted-foreground">
+            Our team reviews requirements and contacts the institution directly to coordinate curriculum and schedule.
+          </p>
         </div>
       </section>
+
+      {/* ─── INQUIRY DIALOG / MODAL ────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {modalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+            {/* Backdrop */}
+            <motion.div
+              variants={modalOverlayVariants}
+              initial="closed"
+              animate="open"
+              exit="closed"
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={closeInquiryModal}
+            />
+
+            {/* Modal Dialog Content */}
+            <motion.div
+              variants={modalContentVariants}
+              initial="closed"
+              animate="open"
+              exit="closed"
+              className="relative w-full max-w-2xl rounded-2xl sm:rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-2xl z-10 my-8 max-h-[90vh] overflow-y-auto"
+            >
+              {/* Close Button */}
+              <button
+                onClick={closeInquiryModal}
+                className="absolute top-5 right-5 h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                aria-label="Close modal"
+              >
+                <X className="h-5 w-5" />
+              </button>
+
+              {/* Modal Header */}
+              <div className="space-y-1 mb-6 pr-8">
+                <Badge variant="outline" className="text-primary border-primary/30 text-[11px] mb-1">
+                  Workshop Inquiry
+                </Badge>
+                <h3 className="text-2xl font-bold font-heading text-foreground">
+                  Organize a Workshop
+                </h3>
+                <p className="text-xs sm:text-sm text-muted-foreground">
+                  Fill in your institution details and requirements. Our team will review and contact you directly.
+                </p>
+              </div>
+
+              {/* Success State */}
+              {isSubmitted ? (
+                <div className="rounded-2xl border border-primary/30 bg-primary/5 p-8 text-center space-y-4 my-4">
+                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/15 text-primary">
+                    <CheckCircle2 className="h-7 w-7" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <h4 className="text-xl font-bold font-heading text-foreground">Inquiry Received</h4>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      Thank you for your inquiry. Our team will review your requirements and contact you shortly.
+                    </p>
+                  </div>
+                  <div className="pt-2">
+                    <Button variant="outline" size="sm" onClick={closeInquiryModal}>
+                      Close
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                /* Inquiry Form inside Dialog */
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  {/* Part 1: Institution Details */}
+                  <div className="space-y-3.5">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                      <Building2 className="h-3.5 w-3.5 text-primary" />
+                      Institution Information
+                    </h4>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                      <div>
+                        <label className="text-xs font-semibold text-foreground mb-1 block">
+                          Institution Name <span className="text-destructive">*</span>
+                        </label>
+                        <Input
+                          placeholder="e.g. ABC College of Engineering"
+                          value={formData.institutionName}
+                          onChange={(e) => {
+                            setFormData((p) => ({ ...p, institutionName: e.target.value }))
+                            if (formErrors.institutionName) setFormErrors((p) => ({ ...p, institutionName: undefined }))
+                          }}
+                          className={formErrors.institutionName ? 'border-destructive' : ''}
+                        />
+                        {formErrors.institutionName && (
+                          <p className="text-[11px] text-destructive mt-1">{formErrors.institutionName}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-foreground mb-1 block">
+                          Institution Type <span className="text-destructive">*</span>
+                        </label>
+                        <select
+                          value={formData.institutionType}
+                          onChange={(e) =>
+                            setFormData((p) => ({
+                              ...p,
+                              institutionType: e.target.value as WorkshopInquiryFormData['institutionType'],
+                            }))
+                          }
+                          className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        >
+                          {INSTITUTION_TYPES.map((type) => (
+                            <option key={type} value={type}>
+                              {type}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                      <div>
+                        <label className="text-xs font-semibold text-foreground mb-1 block">
+                          Contact Person <span className="text-destructive">*</span>
+                        </label>
+                        <Input
+                          placeholder="e.g. Dr. John Doe"
+                          value={formData.contactPerson}
+                          onChange={(e) => {
+                            setFormData((p) => ({ ...p, contactPerson: e.target.value }))
+                            if (formErrors.contactPerson) setFormErrors((p) => ({ ...p, contactPerson: undefined }))
+                          }}
+                          className={formErrors.contactPerson ? 'border-destructive' : ''}
+                        />
+                        {formErrors.contactPerson && (
+                          <p className="text-[11px] text-destructive mt-1">{formErrors.contactPerson}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-foreground mb-1 block">
+                          Email <span className="text-destructive">*</span>
+                        </label>
+                        <Input
+                          type="email"
+                          placeholder="contact@college.edu"
+                          value={formData.email}
+                          onChange={(e) => {
+                            setFormData((p) => ({ ...p, email: e.target.value }))
+                            if (formErrors.email) setFormErrors((p) => ({ ...p, email: undefined }))
+                          }}
+                          className={formErrors.email ? 'border-destructive' : ''}
+                        />
+                        {formErrors.email && (
+                          <p className="text-[11px] text-destructive mt-1">{formErrors.email}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-foreground mb-1 block">
+                          Phone <span className="text-destructive">*</span>
+                        </label>
+                        <Input
+                          type="tel"
+                          placeholder="+91 98765 43210"
+                          value={formData.phone}
+                          onChange={(e) => {
+                            setFormData((p) => ({ ...p, phone: e.target.value }))
+                            if (formErrors.phone) setFormErrors((p) => ({ ...p, phone: undefined }))
+                          }}
+                          className={formErrors.phone ? 'border-destructive' : ''}
+                        />
+                        {formErrors.phone && (
+                          <p className="text-[11px] text-destructive mt-1">{formErrors.phone}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Part 2: Workshop Requirements */}
+                  <div className="space-y-3.5 pt-2 border-t border-border">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                      <GraduationCap className="h-3.5 w-3.5 text-primary" />
+                      Workshop Requirements
+                    </h4>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                      <div>
+                        <label className="text-xs font-semibold text-foreground mb-1 block">
+                          Workshop / Training Area <span className="text-destructive">*</span>
+                        </label>
+                        <select
+                          value={formData.workshopArea}
+                          onChange={(e) => setFormData((p) => ({ ...p, workshopArea: e.target.value }))}
+                          className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        >
+                          {WORKSHOP_AREAS.map((area) => (
+                            <option key={area} value={area}>
+                              {area}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-foreground mb-1 block">
+                          Expected Number of Students <span className="text-destructive">*</span>
+                        </label>
+                        <select
+                          value={formData.expectedStudents}
+                          onChange={(e) =>
+                            setFormData((p) => ({
+                              ...p,
+                              expectedStudents: e.target.value as WorkshopInquiryFormData['expectedStudents'],
+                            }))
+                          }
+                          className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        >
+                          {STUDENT_COUNTS.map((count) => (
+                            <option key={count} value={count}>
+                              {count}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                      <div>
+                        <label className="text-xs font-semibold text-foreground mb-1 block">
+                          Location / City <span className="text-destructive">*</span>
+                        </label>
+                        <Input
+                          placeholder="e.g. Bengaluru, Karnataka"
+                          value={formData.location}
+                          onChange={(e) => {
+                            setFormData((p) => ({ ...p, location: e.target.value }))
+                            if (formErrors.location) setFormErrors((p) => ({ ...p, location: undefined }))
+                          }}
+                          className={formErrors.location ? 'border-destructive' : ''}
+                        />
+                        {formErrors.location && (
+                          <p className="text-[11px] text-destructive mt-1">{formErrors.location}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-foreground mb-1 block">
+                          Preferred Date <span className="text-muted-foreground font-normal">(optional)</span>
+                        </label>
+                        <Input
+                          type="date"
+                          value={formData.preferredDate || ''}
+                          onChange={(e) => setFormData((p) => ({ ...p, preferredDate: e.target.value }))}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-semibold text-foreground mb-1 block">
+                        Additional Requirements / Message <span className="text-muted-foreground font-normal">(optional)</span>
+                      </label>
+                      <Textarea
+                        placeholder="Any specific topics, student year/semester, lab equipment preferences..."
+                        rows={3}
+                        value={formData.message || ''}
+                        onChange={(e) => setFormData((p) => ({ ...p, message: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Error Banner */}
+                  {inquiryMutation.isError && (
+                    <div className="flex items-center gap-2 rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-xs text-destructive">
+                      <AlertCircle className="h-4 w-4 shrink-0" />
+                      <span>Failed to submit inquiry. Please check your information and try again.</span>
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  <div className="pt-2 flex flex-col sm:flex-row items-center justify-end gap-3 border-t border-border">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={closeInquiryModal}
+                      disabled={inquiryMutation.isPending}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={inquiryMutation.isPending}
+                      className="gap-2 font-semibold min-w-[170px]"
+                    >
+                      {inquiryMutation.isPending ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Submitting...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="h-4 w-4" />
+                          Submit Inquiry
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

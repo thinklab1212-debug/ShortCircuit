@@ -41,6 +41,7 @@ export function useAddToCart() {
     onSuccess: (cart) => {
       setCart(cart)
       queryClient.setQueryData(queryKeys.cart.detail(), cart)
+      queryClient.invalidateQueries({ queryKey: [...queryKeys.cart.all, 'totals'] })
       toast.success('Added to cart')
     },
     onError: (error: AxiosErrorLike) => toast.error(errMsg(error, 'Could not add to cart')),
@@ -57,6 +58,7 @@ export function useUpdateCartItem() {
     onSuccess: (cart) => {
       setCart(cart)
       queryClient.setQueryData(queryKeys.cart.detail(), cart)
+      queryClient.invalidateQueries({ queryKey: [...queryKeys.cart.all, 'totals'] })
     },
     onError: (error: AxiosErrorLike) => toast.error(errMsg(error, 'Could not update item')),
   })
@@ -71,6 +73,7 @@ export function useRemoveCartItem() {
     onSuccess: (cart) => {
       setCart(cart)
       queryClient.setQueryData(queryKeys.cart.detail(), cart)
+      queryClient.invalidateQueries({ queryKey: [...queryKeys.cart.all, 'totals'] })
       toast.success('Removed from cart')
     },
     onError: (error: AxiosErrorLike) => toast.error(errMsg(error, 'Could not remove item')),
@@ -95,7 +98,7 @@ export function useClearCart() {
 export function useCartTotals(couponCode?: string, enabled = true) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   return useQuery({
-    queryKey: [...queryKeys.cart.all, 'totals', couponCode ?? null],
+    queryKey: queryKeys.cart.totals(couponCode),
     queryFn: () => cartApi.getTotals(couponCode).then((res) => res.data.data),
     enabled: isAuthenticated && enabled,
     staleTime: 15 * 1000,

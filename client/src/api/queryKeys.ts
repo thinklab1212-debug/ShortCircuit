@@ -57,6 +57,7 @@ const queryKeys = {
   cart: {
     all: ['cart'] as const,
     detail: () => [...queryKeys.cart.all, 'detail'] as const,
+    totals: (couponCode?: string) => [...queryKeys.cart.all, 'totals', couponCode ?? null] as const,
   },
 
   // Wishlist
