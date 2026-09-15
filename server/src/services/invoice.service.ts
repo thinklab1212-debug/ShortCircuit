@@ -244,11 +244,10 @@ export class InvoiceService {
            .font('Helvetica-Bold')
            .fontSize(8)
            .text('Product Description', 45, tableY + 6)
-           .text('Qty', 210, tableY + 6, { width: 30, align: 'center' })
-           .text('Incl. Unit Price', 250, tableY + 6, { width: 70, align: 'right' })
-           .text('Taxable Value', 330, tableY + 6, { width: 70, align: 'right' })
-           .text('GST Amount', 410, tableY + 6, { width: 70, align: 'right' })
-           .text('Line Total', 490, tableY + 6, { width: 60, align: 'right' });
+           .text('Qty', 260, tableY + 6, { width: 35, align: 'center' })
+           .text('Incl. Unit Price', 305, tableY + 6, { width: 75, align: 'right' })
+           .text('Taxable Value', 390, tableY + 6, { width: 75, align: 'right' })
+           .text('Line Total', 475, tableY + 6, { width: 75, align: 'right' });
 
         let currentY = tableY + 20;
 
@@ -309,12 +308,11 @@ export class InvoiceService {
              .stroke();
 
           // Render columns
-          doc.text(line.name, 45, currentY + 8, { width: 160, height: 16, ellipsis: true })
-             .text(line.quantity.toString(), 210, currentY + 8, { width: 30, align: 'center' })
-             .text(`${currencySymbol}${line.price.toFixed(2)}`, 250, currentY + 8, { width: 70, align: 'right' })
-             .text(`${currencySymbol}${line.taxableValue.toFixed(2)}`, 330, currentY + 8, { width: 70, align: 'right' })
-             .text(`${currencySymbol}${line.gstAmount.toFixed(2)}`, 410, currentY + 8, { width: 70, align: 'right' })
-             .text(`${currencySymbol}${line.lineTotal.toFixed(2)}`, 490, currentY + 8, { width: 60, align: 'right' });
+          doc.text(line.name, 45, currentY + 8, { width: 205, height: 16, ellipsis: true })
+             .text(line.quantity.toString(), 260, currentY + 8, { width: 35, align: 'center' })
+             .text(`${currencySymbol}${line.price.toFixed(2)}`, 305, currentY + 8, { width: 75, align: 'right' })
+             .text(`${currencySymbol}${line.taxableValue.toFixed(2)}`, 390, currentY + 8, { width: 75, align: 'right' })
+             .text(`${currencySymbol}${line.lineTotal.toFixed(2)}`, 475, currentY + 8, { width: 75, align: 'right' });
 
           currentY += 25;
         }
