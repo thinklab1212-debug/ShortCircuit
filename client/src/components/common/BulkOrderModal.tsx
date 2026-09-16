@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Send, Plus, Trash2, Boxes, CheckCircle2, Building2, Phone, Mail, User, MapPin } from 'lucide-react'
+import { X, Send, Plus, Trash2, Boxes, CheckCircle2, Mail, User } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -363,7 +363,7 @@ export default function BulkOrderModal({
                         </div>
                       </FormField>
 
-                      <FormField label="Organization / College / Lab" optional>
+                      <FormField label="Organization / College / Lab">
                         <Input
                           placeholder="e.g. IIT Delhi Robotics Club / XYZ Tech"
                           value={form.organization || ''}
@@ -371,7 +371,7 @@ export default function BulkOrderModal({
                         />
                       </FormField>
 
-                      <FormField label="Delivery City" optional>
+                      <FormField label="Delivery City">
                         <Input
                           placeholder="e.g. Bengaluru, Pune, Delhi"
                           value={form.city || ''}
@@ -379,7 +379,7 @@ export default function BulkOrderModal({
                         />
                       </FormField>
 
-                      <FormField label="Pincode" optional>
+                      <FormField label="Pincode">
                         <Input
                           placeholder="e.g. 560001"
                           maxLength={10}
@@ -536,7 +536,7 @@ export default function BulkOrderModal({
                   <Button
                     type="submit"
                     form="bulk-order-form"
-                    isLoading={loading}
+                    loading={loading}
                     leftIcon={<Send className="h-4 w-4" />}
                     className="flex-1 sm:flex-initial"
                   >

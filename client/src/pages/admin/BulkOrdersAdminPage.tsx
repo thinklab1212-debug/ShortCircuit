@@ -9,14 +9,8 @@ import {
   Boxes,
   Mail,
   Phone,
-  Building2,
   Calendar,
-  DollarSign,
-  Clock,
-  CheckCircle,
-  FileText,
   Send,
-  ExternalLink,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { bulkOrderApi } from '@/services'
@@ -639,7 +633,7 @@ export default function BulkOrdersAdminPage() {
                     <Button
                       size="sm"
                       onClick={handleSaveModal}
-                      isLoading={updateStatusMutation.isPending}
+                      loading={updateStatusMutation.isPending}
                     >
                       Save Status & Notes
                     </Button>
