@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { PackageSearch, RefreshCw, Cpu, ShieldCheck, Truck, ArrowUp, Boxes, Sparkles, ArrowRight } from 'lucide-react'
+import { PackageSearch, RefreshCw, Cpu, ShieldCheck, Truck, ArrowUp } from 'lucide-react'
 
 import { Link } from 'react-router'
 import { Breadcrumb } from '@/components/ui/breadcrumb'
@@ -175,103 +175,40 @@ export default function ShopPage() {
         <div className="absolute top-0 left-1/4 w-72 h-72 bg-primary/20 rounded-full blur-[100px]" />
         <div className="absolute bottom-0 right-1/4 w-96 h-48 bg-primary/10 rounded-full blur-[80px]" />
 
-        <div className="container relative py-6 sm:py-12">
+        <div className="container relative py-6 sm:py-14">
           <Breadcrumb items={breadcrumbItems} className="mb-5 [&_*]:text-white/60 [&_a]:hover:text-white/80" />
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-            {/* Left Column: Title, Subtitle, Search */}
-            <div className="lg:col-span-7 xl:col-span-8">
-              <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4 }}
-                className="max-w-2xl"
-              >
-                <h1 className="text-display-xs sm:text-display-sm lg:text-display-md font-heading text-white leading-tight">
-                  {filters.search ? (
-                    <>Results for <span className="text-primary-foreground/80">"{filters.search}"</span></>
-                  ) : (
-                    <>Electronics Components <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">Catalog</span></>
-                  )}
-                </h1>
-                <p className="mt-3 text-base text-white/60 max-w-lg leading-relaxed">
-                  Discover high-quality development boards, sensors, actuators, and robotics modules curated for students, engineers, and makers.
-                </p>
-              </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="max-w-2xl"
+          >
+            <h1 className="text-display-xs sm:text-display-sm lg:text-display-md font-heading text-white leading-tight">
+              {filters.search ? (
+                <>Results for <span className="text-primary-foreground/80">"{filters.search}"</span></>
+              ) : (
+                <>Electronics Components <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">Catalog</span></>
+              )}
+            </h1>
+            <p className="mt-3 text-base text-white/60 max-w-lg leading-relaxed">
+              Discover high-quality development boards, sensors, actuators, and robotics modules curated for students, engineers, and makers.
+            </p>
+          </motion.div>
 
-              {/* Search Bar — integrated into hero */}
-              <motion.div
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.15 }}
-                className="mt-6 max-w-xl"
-              >
-                <ShopSearch
-                  value={filters.search || ''}
-                  onChange={(search) => setFilters({ search })}
-                  isSearching={isFetching && !isLoading}
-                />
-              </motion.div>
-            </div>
-
-            {/* Right Column: Modern & Highly Visible Bulk Order Hero Card */}
-            <div className="lg:col-span-5 xl:col-span-4">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 15 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                transition={{ duration: 0.45, delay: 0.15 }}
-                className="relative overflow-hidden rounded-3xl border border-white/20 bg-gradient-to-b from-white/[0.12] to-white/[0.04] backdrop-blur-xl p-5 sm:p-6 shadow-2xl hover:border-blue-400/50 transition-all duration-300 group"
-              >
-                {/* Background glow effects */}
-                <div className="absolute -top-12 -right-12 w-32 h-32 bg-blue-500/25 rounded-full blur-2xl pointer-events-none group-hover:bg-blue-500/35 transition-all" />
-                <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-cyan-500/20 rounded-full blur-2xl pointer-events-none" />
-
-                <div className="relative space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-500/20 border border-blue-400/30 px-3 py-1 text-xs font-semibold text-blue-300">
-                      <Sparkles className="h-3.5 w-3.5 text-blue-400" />
-                      Bulk & Institutional Orders
-                    </span>
-                    <span className="flex h-2 w-2 rounded-full bg-emerald-400 ring-4 ring-emerald-400/20" />
-                  </div>
-
-                  <div>
-                    <h3 className="text-lg sm:text-xl font-heading font-bold text-white leading-snug">
-                      Need Parts in Bulk?
-                    </h3>
-                    <p className="text-xs sm:text-sm text-white/70 mt-1 leading-relaxed">
-                      Purchasing for a college lab, team, or production? Get custom wholesale quotations with GST invoicing.
-                    </p>
-                  </div>
-
-                  <ul className="space-y-1.5 text-xs text-white/85">
-                    <li className="flex items-center gap-2">
-                      <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-bold">✓</span>
-                      <span>Discounted volume quotation</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-bold">✓</span>
-                      <span>Paste directly from Excel / BOM list</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-bold">✓</span>
-                      <span>Manual review & quick email turnaround</span>
-                    </li>
-                  </ul>
-
-                  <button
-                    type="button"
-                    onClick={() => setIsBulkModalOpen(true)}
-                    className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold py-3 px-4 shadow-lg shadow-blue-500/30 transition-all hover:scale-[1.02] active:scale-[0.98] text-sm cursor-pointer"
-                  >
-                    <Boxes className="h-4 w-4" />
-                    <span>Request Bulk Quotation</span>
-                    <ArrowRight className="h-4 w-4 ml-0.5" />
-                  </button>
-                </div>
-              </motion.div>
-            </div>
-          </div>
+          {/* Search Bar — integrated into hero */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.15 }}
+            className="mt-6 max-w-xl"
+          >
+            <ShopSearch
+              value={filters.search || ''}
+              onChange={(search) => setFilters({ search })}
+              isSearching={isFetching && !isLoading}
+            />
+          </motion.div>
         </div>
       </div>
 
@@ -298,6 +235,7 @@ export default function ShopPage() {
               filters={filters}
               onFilterChange={setFilters}
               total={pagination?.totalResults}
+              onOpenBulkOrder={() => setIsBulkModalOpen(true)}
               mobileFilterTrigger={
                 <MobileFilterDrawer
                   filters={filters}

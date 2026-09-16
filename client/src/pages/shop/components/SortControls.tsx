@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils'
-import { ArrowDownUp, LayoutGrid, List } from 'lucide-react'
+import { ArrowDownUp, LayoutGrid, List, Boxes } from 'lucide-react'
 import { Select } from '@/components/ui/select'
 import type { ShopFilters } from '@/hooks/useShopFilters'
 
@@ -22,6 +22,7 @@ interface SortControlsProps {
   total?: number
   className?: string
   mobileFilterTrigger?: React.ReactNode
+  onOpenBulkOrder?: () => void
 }
 
 export default function SortControls({
@@ -30,6 +31,7 @@ export default function SortControls({
   total,
   className,
   mobileFilterTrigger,
+  onOpenBulkOrder,
 }: SortControlsProps) {
   return (
     <div className={cn('space-y-2.5 mb-4', className)}>
@@ -49,6 +51,18 @@ export default function SortControls({
 
         {/* Desktop Controls (hidden on mobile, shown on lg screens) */}
         <div className="hidden lg:flex items-center gap-3">
+          {onOpenBulkOrder && (
+            <button
+              type="button"
+              onClick={onOpenBulkOrder}
+              className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-blue-500/30 bg-blue-500/10 hover:bg-blue-500/15 text-blue-600 dark:text-blue-400 text-xs font-semibold transition-colors cursor-pointer"
+              title="Request bulk discount quotation for multiple components"
+            >
+              <Boxes className="h-3.5 w-3.5" />
+              <span>Bulk Order / RFQ</span>
+            </button>
+          )}
+
           <div className="flex items-center gap-2">
             <ArrowDownUp className="h-4 w-4 text-muted-foreground" />
             <Select
@@ -108,6 +122,18 @@ export default function SortControls({
           ))}
         </Select>
       </div>
+
+      {/* Mobile Bulk Order button */}
+      {onOpenBulkOrder && (
+        <button
+          type="button"
+          onClick={onOpenBulkOrder}
+          className="flex lg:hidden items-center justify-center gap-1.5 w-full h-8 text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-500/10 hover:bg-blue-500/15 border border-blue-500/25 rounded-lg transition-colors cursor-pointer"
+        >
+          <Boxes className="h-3.5 w-3.5" />
+          <span>Ordering in Bulk? Request Quotation</span>
+        </button>
+      )}
     </div>
   )
 }
