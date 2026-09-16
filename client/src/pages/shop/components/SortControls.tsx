@@ -55,10 +55,10 @@ export default function SortControls({
             <button
               type="button"
               onClick={onOpenBulkOrder}
-              className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-blue-500/30 bg-blue-500/10 hover:bg-blue-500/15 text-blue-600 dark:text-blue-400 text-xs font-semibold transition-colors cursor-pointer"
-              title="Request bulk discount quotation for multiple components"
+              className="inline-flex items-center gap-2 h-9 px-3.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-semibold shadow-sm shadow-blue-500/25 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+              title="Request bulk wholesale quotation for multiple components"
             >
-              <Boxes className="h-3.5 w-3.5" />
+              <Boxes className="h-4 w-4" />
               <span>Bulk Order / RFQ</span>
             </button>
           )}
@@ -128,9 +128,9 @@ export default function SortControls({
         <button
           type="button"
           onClick={onOpenBulkOrder}
-          className="flex lg:hidden items-center justify-center gap-1.5 w-full h-8 text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-500/10 hover:bg-blue-500/15 border border-blue-500/25 rounded-lg transition-colors cursor-pointer"
+          className="flex lg:hidden items-center justify-center gap-2 w-full h-9 text-xs font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-xl shadow-sm shadow-blue-500/20 transition-all active:scale-[0.98] cursor-pointer"
         >
-          <Boxes className="h-3.5 w-3.5" />
+          <Boxes className="h-4 w-4" />
           <span>Ordering in Bulk? Request Quotation</span>
         </button>
       )}
