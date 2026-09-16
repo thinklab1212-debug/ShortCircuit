@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Send, Plus, Trash2, Boxes, CheckCircle2, Mail, User } from 'lucide-react'
+import { X, Send, Plus, Trash2, Boxes, CheckCircle2, Mail, User, FileSpreadsheet } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -38,6 +38,80 @@ const modalVariants = {
   },
 }
 
+function parseExcelClipboard(text: string): BulkOrderItem[] {
+  if (!text || !text.trim()) return []
+
+  const lines = text.trim().split(/\r?\n/)
+  const result: BulkOrderItem[] = []
+
+  let startIndex = 0
+  if (lines.length > 1) {
+    const firstLineLower = lines[0].toLowerCase()
+    if (
+      firstLineLower.includes('product') ||
+      firstLineLower.includes('item') ||
+      firstLineLower.includes('description') ||
+      firstLineLower.includes('qty') ||
+      firstLineLower.includes('quantity') ||
+      firstLineLower.includes('part')
+    ) {
+      startIndex = 1
+    }
+  }
+
+  for (let i = startIndex; i < lines.length; i++) {
+    const rawLine = lines[i].trim()
+    if (!rawLine) continue
+
+    let cols: string[] = []
+    if (rawLine.includes('\t')) {
+      cols = rawLine.split('\t').map((c) => c.trim())
+    } else if (rawLine.includes(',')) {
+      cols = rawLine.split(',').map((c) => c.trim())
+    } else if (rawLine.includes(';')) {
+      cols = rawLine.split(';').map((c) => c.trim())
+    } else {
+      cols = [rawLine]
+    }
+
+    const productName = cols[0] || ''
+    if (!productName) continue
+
+    let quantity = 1
+    let targetPrice: number | undefined = undefined
+    let notes: string | undefined = undefined
+
+    if (cols.length > 1) {
+      const qNum = parseInt(cols[1].replace(/[^0-9]/g, ''), 10)
+      if (!isNaN(qNum) && qNum > 0) {
+        quantity = qNum
+      }
+    }
+
+    if (cols.length > 2) {
+      const pNum = parseFloat(cols[2].replace(/[^0-9.]/g, ''))
+      if (!isNaN(pNum) && pNum >= 0) {
+        targetPrice = pNum
+      } else if (cols[2]) {
+        notes = cols[2]
+      }
+    }
+
+    if (cols.length > 3 && cols[3]) {
+      notes = notes ? `${notes} - ${cols[3]}` : cols[3]
+    }
+
+    result.push({
+      productName,
+      quantity,
+      targetPrice,
+      notes,
+    })
+  }
+
+  return result
+}
+
 export default function BulkOrderModal({
   isOpen,
   onClose,
@@ -65,7 +139,38 @@ export default function BulkOrderModal({
 
   const [loading, setLoading] = useState(false)
   const [successQuoteNumber, setSuccessQuoteNumber] = useState<string | null>(null)
+  const [showExcelPaste, setShowExcelPaste] = useState(false)
+  const [excelPasteText, setExcelPasteText] = useState('')
   const modalRef = useRef<HTMLDivElement>(null)
+
+  const parsedExcelItems = useMemo(() => {
+    return parseExcelClipboard(excelPasteText)
+  }, [excelPasteText])
+
+  const handleAppendExcelItems = () => {
+    if (!parsedExcelItems.length) return
+    setForm((prev) => {
+      const filteredExisting = prev.items.filter((it) => it.productName.trim() !== '')
+      return {
+        ...prev,
+        items: [...filteredExisting, ...parsedExcelItems],
+      }
+    })
+    toast.success(`Added ${parsedExcelItems.length} products to your list!`)
+    setExcelPasteText('')
+    setShowExcelPaste(false)
+  }
+
+  const handleReplaceExcelItems = () => {
+    if (!parsedExcelItems.length) return
+    setForm((prev) => ({
+      ...prev,
+      items: parsedExcelItems,
+    }))
+    toast.success(`Imported ${parsedExcelItems.length} products from Excel!`)
+    setExcelPasteText('')
+    setShowExcelPaste(false)
+  }
 
   // Reset / pre-fill whenever modal opens
   useEffect(() => {
@@ -392,14 +497,79 @@ export default function BulkOrderModal({
 
                   {/* Required Products List */}
                   <div className="space-y-3 pt-2">
-                    <div className="flex items-center justify-between">
-                      <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                        <Boxes className="h-3.5 w-3.5" /> 2. Required Products & Quantities
-                      </h4>
-                      <span className="text-xs text-muted-foreground">
-                        {form.items.length} {form.items.length === 1 ? 'item' : 'items'}
-                      </span>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                          <Boxes className="h-3.5 w-3.5" /> 2. Required Products & Quantities
+                        </h4>
+                        <span className="text-xs text-muted-foreground font-mono">
+                          ({form.items.length} {form.items.length === 1 ? 'item' : 'items'})
+                        </span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setShowExcelPaste(!showExcelPaste)}
+                        className="inline-flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 font-semibold bg-emerald-500/10 hover:bg-emerald-500/15 border border-emerald-500/25 px-3 py-1 rounded-lg transition-colors cursor-pointer w-fit"
+                      >
+                        <FileSpreadsheet className="h-3.5 w-3.5" />
+                        {showExcelPaste ? 'Hide Excel Paste' : '📋 Paste from Excel / Sheets'}
+                      </button>
                     </div>
+
+                    {/* Excel Paste Box */}
+                    {showExcelPaste && (
+                      <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4 space-y-3">
+                        <div>
+                          <h5 className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                            <FileSpreadsheet className="h-4 w-4 text-emerald-500" />
+                            Paste directly from Excel or Google Sheets
+                          </h5>
+                          <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+                            Copy rows from your spreadsheet and paste below. Columns supported: <strong>Product Name</strong> | <strong>Quantity</strong> | <strong>Target Price (optional)</strong> | <strong>Notes (optional)</strong>.
+                          </p>
+                        </div>
+
+                        <Textarea
+                          rows={4}
+                          placeholder={`ESP32-WROOM-32D\t25\t350\tWith headers soldered\nArduino Uno R3\t50\t450\nSG90 Servo Motor\t100\t65\tTowerPro`}
+                          value={excelPasteText}
+                          onChange={(e) => setExcelPasteText(e.target.value)}
+                          className="font-mono text-xs"
+                        />
+
+                        {parsedExcelItems.length > 0 ? (
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs bg-card/90 border border-border p-2.5 rounded-lg">
+                            <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+                              ✓ Detected {parsedExcelItems.length} valid {parsedExcelItems.length === 1 ? 'item' : 'items'}
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                type="button"
+                                size="sm"
+                                onClick={handleAppendExcelItems}
+                                className="h-8 text-xs"
+                              >
+                                Add to List (+{parsedExcelItems.length})
+                              </Button>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={handleReplaceExcelItems}
+                                className="h-8 text-xs"
+                              >
+                                Replace Current List
+                              </Button>
+                            </div>
+                          </div>
+                        ) : excelPasteText.trim() ? (
+                          <p className="text-[11px] text-amber-500">
+                            Paste text above to preview and import parsed items.
+                          </p>
+                        ) : null}
+                      </div>
+                    )}
 
                     {errors.items && (
                       <p className="text-xs text-error-500 font-medium bg-error-500/10 px-3 py-1.5 rounded-lg">
