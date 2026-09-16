@@ -61,6 +61,7 @@ const WorkshopsPage = lazy(() => import('@/pages/workshops/WorkshopsPage'))
 const AdminWorkshopsPage = lazy(() => import('@/pages/admin/workshops/AdminWorkshopsPage'))
 const AdminWorkshopExperiencePage = lazy(() => import('@/pages/admin/workshops/AdminWorkshopExperiencePage'))
 const AdminWorkshopInquiriesPage = lazy(() => import('@/pages/admin/workshops/AdminWorkshopInquiriesPage'))
+const AdminBulkOrdersPage = lazy(() => import('@/pages/admin/BulkOrdersAdminPage'))
 
 // Vendor (lazy loaded for SEO performance)
 const VendorDashboardPage = lazy(() => import('@/pages/vendor/DashboardPage'))
@@ -167,6 +168,7 @@ export const router = createBrowserRouter([
       { path: 'workshops', element: <AdminWorkshopsPage /> },
       { path: 'workshop-experience', element: <AdminWorkshopExperiencePage /> },
       { path: 'workshop-inquiries', element: <AdminWorkshopInquiriesPage /> },
+      { path: 'bulk-orders', element: <AdminBulkOrdersPage /> },
     ],
   },
 

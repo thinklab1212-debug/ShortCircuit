@@ -26,6 +26,7 @@ import {
   MapPin,
   GraduationCap,
   MailQuestion,
+  Boxes,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { APP } from '@/constants'
@@ -33,7 +34,7 @@ import { BrandLogo } from '@/components/layout/BrandLogo'
 import { useIsMobile } from '@/hooks'
 import { ScrollToTop } from '@/components/layout/ScrollToTop'
 import { useQuery } from '@tanstack/react-query'
-import { orderApi } from '@/services'
+import { orderApi, bulkOrderApi } from '@/services'
 
 // ─── Types & Navigation Config ──────────────────────────────────────────────────
 
@@ -58,7 +59,10 @@ function isNavGroup(entry: SidebarEntry): entry is NavGroup {
   return 'items' in entry
 }
 
-const getSidebarNav = (pendingCancellationCount: number): SidebarEntry[] => [
+const getSidebarNav = (
+  pendingCancellationCount: number,
+  pendingBulkQuotesCount: number
+): SidebarEntry[] => [
   { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
   { label: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
   {
@@ -76,9 +80,15 @@ const getSidebarNav = (pendingCancellationCount: number): SidebarEntry[] => [
     id: 'sales',
     label: 'Sales & Orders',
     icon: ShoppingBag,
-    badge: pendingCancellationCount,
+    badge: (pendingCancellationCount || 0) + (pendingBulkQuotesCount || 0),
     items: [
       { label: 'Orders', href: '/admin/orders', icon: ShoppingBag },
+      {
+        label: 'Bulk Quotations',
+        href: '/admin/bulk-orders',
+        icon: Boxes,
+        badge: pendingBulkQuotesCount,
+      },
       {
         label: 'Cancellation Requests',
         href: '/admin/cancellation-requests',
@@ -157,7 +167,15 @@ export function AdminLayout() {
     refetchInterval: 30000,
   })
   const pendingCount = countData?.count || 0
-  const navEntries = getSidebarNav(pendingCount)
+
+  const { data: bulkStatsData } = useQuery({
+    queryKey: ['admin', 'bulk-orders-stats'],
+    queryFn: () => bulkOrderApi.getAdminStats().then((res) => res.data?.data),
+    refetchInterval: 30000,
+  })
+  const pendingBulkQuotes = bulkStatsData?.new || 0
+
+  const navEntries = getSidebarNav(pendingCount, pendingBulkQuotes)
 
   const isActive = (href: string) => {
     if (href === '/admin' || href === '/admin/events') return location.pathname === href

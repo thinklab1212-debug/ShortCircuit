@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { PackageSearch, RefreshCw, Cpu, ShieldCheck, Truck, ArrowUp } from 'lucide-react'
+import { PackageSearch, RefreshCw, Cpu, ShieldCheck, Truck, ArrowUp, Boxes } from 'lucide-react'
 
 import { Link } from 'react-router'
 import { Breadcrumb } from '@/components/ui/breadcrumb'
@@ -21,6 +21,8 @@ import {
   ShopPagination,
 } from './components'
 import ProductRequestCard from '@/components/common/ProductRequestCard'
+import BulkOrderCard from '@/components/common/BulkOrderCard'
+import BulkOrderModal from '@/components/common/BulkOrderModal'
 import { staggerContainer, fadeInUp } from '@/config/animations'
 
 
@@ -72,6 +74,7 @@ export default function ShopPage() {
   const products = data?.data || []
   const pagination = data?.pagination
   const isListView = filters.view === 'list'
+  const [isBulkModalOpen, setIsBulkModalOpen] = useState(false)
 
   // Back to top button visibility
   const [showBackToTop, setShowBackToTop] = useState(false)
@@ -205,6 +208,16 @@ export default function ShopPage() {
               onChange={(search) => setFilters({ search })}
               isSearching={isFetching && !isLoading}
             />
+            <div className="mt-3 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setIsBulkModalOpen(true)}
+                className="inline-flex items-center gap-1.5 text-xs text-blue-300 hover:text-white bg-blue-500/15 hover:bg-blue-500/25 px-3 py-1.5 rounded-full border border-blue-400/30 transition-colors backdrop-blur-sm"
+              >
+                <Boxes className="h-3.5 w-3.5 text-blue-400" />
+                Ordering in bulk for college or lab? Request quotation &rarr;
+              </button>
+            </div>
           </motion.div>
         </div>
       </div>
@@ -369,8 +382,9 @@ export default function ShopPage() {
           </div>
         </div>
 
-        {/* Product Request Banner */}
-        <div className="mt-8 sm:mt-14">
+        {/* Bulk Order & Product Request Banners */}
+        <div className="mt-8 sm:mt-14 space-y-6">
+          <BulkOrderCard variant="banner" />
           <ProductRequestCard variant="banner" searchTerm={filters.search || ''} />
         </div>
 
@@ -465,6 +479,11 @@ export default function ShopPage() {
           </motion.button>
         )}
       </AnimatePresence>
+
+      <BulkOrderModal
+        isOpen={isBulkModalOpen}
+        onClose={() => setIsBulkModalOpen(false)}
+      />
     </div>
   )
 }

@@ -442,6 +442,162 @@ export class EmailService {
     `;
     return this.sendEmail(to, subject, html);
   }
+
+  /**
+   * Sends a bulk order / quotation inquiry notification email to the admin.
+   */
+  public static async sendBulkOrderAdminNotification(quote: {
+    quoteNumber: string;
+    customer: {
+      name: string;
+      email: string;
+      phone: string;
+      organization?: string;
+      city?: string;
+      pincode?: string;
+    };
+    items: Array<{
+      productName: string;
+      quantity: number;
+      targetPrice?: number;
+      notes?: string;
+    }>;
+    notes?: string;
+  }): Promise<boolean> {
+    const adminEmail = 'sales.shortcircuit@gmail.com';
+    const emailSubject = `📦 Bulk Order Quotation Request [${quote.quoteNumber}] - ${quote.customer.name}`;
+    const requestDate = new Date().toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    const itemsRowsHtml = quote.items
+      .map(
+        (item, idx) => `
+        <tr style="border-bottom: 1px solid #e2e8f0; font-size: 13px;">
+          <td style="padding: 10px 8px; color: #64748b; text-align: center;">${idx + 1}</td>
+          <td style="padding: 10px 8px; color: #0f172a; font-weight: 600;">${item.productName}</td>
+          <td style="padding: 10px 8px; color: #2563eb; font-weight: bold; text-align: center;">${item.quantity}</td>
+          <td style="padding: 10px 8px; color: #16a34a; text-align: right;">${item.targetPrice ? `₹${item.targetPrice}` : '-'}</td>
+          <td style="padding: 10px 8px; color: #64748b; font-size: 12px;">${item.notes || '-'}</td>
+        </tr>`
+      )
+      .join('');
+
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 650px; margin: 0 auto; padding: 25px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
+        <div style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); padding: 20px 24px; border-radius: 8px; margin-bottom: 20px;">
+          <h2 style="color: #ffffff; margin: 0; font-size: 20px; font-weight: bold;">
+            ⚡ New Bulk Order Quotation Request
+          </h2>
+          <p style="color: #bfdbfe; margin: 6px 0 0 0; font-size: 13px;">
+            Quotation Reference: <strong>${quote.quoteNumber}</strong> • Submitted: ${requestDate}
+          </p>
+        </div>
+
+        <h3 style="color: #1e293b; font-size: 15px; margin: 0 0 10px 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">
+          Customer & Procurement Details
+        </h3>
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px;">
+          <tr>
+            <td style="padding: 6px 0; font-weight: bold; width: 140px; color: #64748b;">Customer Name:</td>
+            <td style="padding: 6px 0; color: #0f172a; font-weight: 600;">${quote.customer.name}</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; font-weight: bold; color: #64748b;">Email Address:</td>
+            <td style="padding: 6px 0; color: #2563eb;"><a href="mailto:${quote.customer.email}" style="color: #2563eb; text-decoration: none;">${quote.customer.email}</a></td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; font-weight: bold; color: #64748b;">Phone:</td>
+            <td style="padding: 6px 0; color: #0f172a;"><a href="tel:${quote.customer.phone}" style="color: #0f172a; text-decoration: none;">${quote.customer.phone}</a></td>
+          </tr>
+          ${
+            quote.customer.organization
+              ? `<tr>
+                  <td style="padding: 6px 0; font-weight: bold; color: #64748b;">Organization / College:</td>
+                  <td style="padding: 6px 0; color: #0f172a;">${quote.customer.organization}</td>
+                </tr>`
+              : ''
+          }
+          ${
+            quote.customer.city || quote.customer.pincode
+              ? `<tr>
+                  <td style="padding: 6px 0; font-weight: bold; color: #64748b;">Location:</td>
+                  <td style="padding: 6px 0; color: #0f172a;">${[quote.customer.city, quote.customer.pincode].filter(Boolean).join(', ')}</td>
+                </tr>`
+              : ''
+          }
+        </table>
+
+        <h3 style="color: #1e293b; font-size: 15px; margin: 20px 0 10px 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">
+          Requested Products & Quantities (${quote.items.length} items)
+        </h3>
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+          <thead>
+            <tr style="background-color: #f8fafc; border-bottom: 2px solid #cbd5e1; font-size: 12px; text-transform: uppercase; color: #475569;">
+              <th style="padding: 8px; text-align: center; width: 30px;">#</th>
+              <th style="padding: 8px; text-align: left;">Product / Component</th>
+              <th style="padding: 8px; text-align: center; width: 60px;">Qty</th>
+              <th style="padding: 8px; text-align: right; width: 90px;">Target (₹)</th>
+              <th style="padding: 8px; text-align: left;">Item Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsRowsHtml}
+          </tbody>
+        </table>
+
+        ${
+          quote.notes
+            ? `
+            <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin-bottom: 20px;">
+              <h4 style="margin: 0 0 6px 0; color: #1e293b; font-size: 13px; font-weight: bold;">General Requirements / Project Notes:</h4>
+              <p style="margin: 0; color: #334155; font-size: 13px; line-height: 1.5; white-space: pre-wrap;">${quote.notes}</p>
+            </div>
+            `
+            : ''
+        }
+
+        <div style="text-align: center; margin: 30px 0 15px 0;">
+          <a href="mailto:${quote.customer.email}?subject=Short%20Circuit%20Quotation%20for%20Bulk%20Order%20${encodeURIComponent(quote.quoteNumber)}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; font-size: 14px; margin-right: 10px;">
+            Reply to Customer with Quote
+          </a>
+          <a href="${env.CLIENT_URL}/admin/bulk-orders" style="background-color: #0f172a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; font-size: 14px;">
+            Open Admin Dashboard
+          </a>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 25px 0 15px 0;" />
+        <p style="font-size: 12px; color: #94a3b8; text-align: center; margin: 0;">
+          Short Circuit B2B & Bulk Order Notification System
+        </p>
+      </div>
+    `;
+
+    try {
+      const response = await resend.emails.send({
+        from: env.EMAIL_FROM,
+        to: adminEmail,
+        reply_to: quote.customer.email,
+        subject: emailSubject,
+        html,
+      });
+
+      if (response.error) {
+        logger.error(`❌ Resend Bulk Order Email Error: ${response.error.message}`, response.error);
+        return false;
+      }
+
+      logger.info(`📧 Bulk order inquiry email sent successfully to: ${adminEmail} [${quote.quoteNumber}]`);
+      return true;
+    } catch (error) {
+      logger.error(`❌ Failed to send bulk order inquiry email:`, error);
+      return false;
+    }
+  }
 }
 
 export default EmailService;

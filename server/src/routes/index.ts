@@ -35,6 +35,7 @@ import eventRoutes from './event.routes.js';
 import deliveryPincodeRoutes from './deliveryPincode.routes.js';
 import systemSettingsRoutes from './systemSettings.routes.js';
 import workshopRoutes from './workshop.routes.js';
+import bulkOrderRoutes from './bulkOrder.routes.js';
 
 const router = Router();
 
@@ -77,6 +78,9 @@ router.use('/settings', systemSettingsRoutes);
 
 // Workshops & Training Module
 router.use('/workshops', workshopRoutes);
+
+// Bulk Order & Quotations Module
+router.use('/bulk-orders', bulkOrderRoutes);
 
 export default router;
 

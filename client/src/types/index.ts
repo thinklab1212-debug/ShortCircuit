@@ -1273,4 +1273,61 @@ export interface WorkshopInquiryFormData {
   message?: string
 }
 
+// ─── Bulk Order & RFQ ──────────────────────────────────────────────────────────
+
+export type BulkOrderStatus =
+  | 'New'
+  | 'Under Review'
+  | 'Quote Sent'
+  | 'Completed'
+  | 'Cancelled'
+
+export interface BulkOrderItem {
+  productName: string
+  quantity: number
+  targetPrice?: number
+  notes?: string
+}
+
+export interface BulkOrderQuote {
+  _id: string
+  quoteNumber: string
+  user?: string
+  customer: {
+    name: string
+    email: string
+    phone: string
+    organization?: string
+    city?: string
+    pincode?: string
+  }
+  items: BulkOrderItem[]
+  notes?: string
+  status: BulkOrderStatus
+  adminNotes?: string
+  quotedAmount?: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface BulkOrderFormData {
+  name: string
+  email: string
+  phone: string
+  organization?: string
+  city?: string
+  pincode?: string
+  items: BulkOrderItem[]
+  notes?: string
+}
+
+export interface BulkOrderStats {
+  total: number
+  new: number
+  underReview: number
+  quoteSent: number
+  completed: number
+  cancelled: number
+}
+
 

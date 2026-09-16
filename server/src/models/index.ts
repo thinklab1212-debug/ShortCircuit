@@ -29,4 +29,5 @@ export { default as SystemSettings, type ISystemSettings, type ISystemSettingsMo
 export { default as Workshop, type IWorkshop } from './Workshop.model.js';
 export { default as WorkshopExperience, type IWorkshopExperience } from './WorkshopExperience.model.js';
 export { default as WorkshopInquiry, type IWorkshopInquiry, type WorkshopInquiryStatus } from './WorkshopInquiry.model.js';
+export { default as BulkOrderQuote, type IBulkOrderQuote, type IBulkOrderItem, type BulkOrderStatus } from './BulkOrderQuote.model.js';
 
