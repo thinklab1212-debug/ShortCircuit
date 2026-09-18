@@ -69,9 +69,24 @@ export const createBulkOrderSchema = z.object({
 });
 
 export const updateBulkOrderStatusSchema = z.object({
-  status: z.enum(['New', 'Under Review', 'Quote Sent', 'Completed', 'Cancelled'], {
-    required_error: 'Status is required',
-  }),
+  status: z.enum(
+    [
+      'New',
+      'In Review',
+      'Under Review',
+      'Quotation Sent',
+      'Quote Sent',
+      'Order Accepted',
+      'Shipped',
+      'Out for Delivery',
+      'Delivered',
+      'Completed',
+      'Cancelled',
+    ],
+    {
+      required_error: 'Status is required',
+    }
+  ),
   adminNotes: z
     .string()
     .trim()

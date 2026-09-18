@@ -1277,10 +1277,22 @@ export interface WorkshopInquiryFormData {
 
 export type BulkOrderStatus =
   | 'New'
+  | 'In Review'
   | 'Under Review'
+  | 'Quotation Sent'
   | 'Quote Sent'
+  | 'Order Accepted'
+  | 'Shipped'
+  | 'Out for Delivery'
+  | 'Delivered'
   | 'Completed'
   | 'Cancelled'
+
+export interface BulkOrderStatusHistory {
+  status: BulkOrderStatus
+  timestamp: string
+  note?: string
+}
 
 export interface BulkOrderItem {
   productName: string
@@ -1304,6 +1316,7 @@ export interface BulkOrderQuote {
   items: BulkOrderItem[]
   notes?: string
   status: BulkOrderStatus
+  statusHistory?: BulkOrderStatusHistory[]
   adminNotes?: string
   quotedAmount?: number
   createdAt: string

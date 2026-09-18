@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
+import { Link } from 'react-router'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   X,
@@ -568,12 +569,17 @@ export default function BulkOrderModal({
                   <p>
                     1. Our sales and procurement team will calculate volume discounts and availability for your components.
                   </p>
-                  <p>
-                    2. You will receive an official quotation via email within 24 business hours.
+                  <p className="text-[11px] text-amber-700 dark:text-amber-400 bg-amber-500/10 p-2 rounded-lg border border-amber-500/20">
+                    📌 <strong>Billing Notice:</strong> Final billing and official tax invoice will be sent manually via email upon order confirmation and dispatch.
                   </p>
                 </div>
 
-                <div className="pt-3">
+                <div className="pt-3 flex items-center justify-center gap-3">
+                  <Button asChild variant="outline" className="px-5">
+                    <Link to="/orders" onClick={onClose}>
+                      <Boxes className="h-4 w-4 mr-1.5 text-primary" /> Track in My Orders
+                    </Link>
+                  </Button>
                   <Button onClick={onClose} className="px-6">
                     Done
                   </Button>

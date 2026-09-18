@@ -10,7 +10,8 @@ import {
   Mail,
   Phone,
   Calendar,
-  Send,
+  Copy,
+  ExternalLink,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { bulkOrderApi } from '@/services'
@@ -26,16 +27,25 @@ import type { BulkOrderQuote, BulkOrderStatus } from '@/types'
 const STATUSES: ('All' | BulkOrderStatus)[] = [
   'All',
   'New',
-  'Under Review',
-  'Quote Sent',
-  'Completed',
+  'In Review',
+  'Quotation Sent',
+  'Order Accepted',
+  'Shipped',
+  'Out for Delivery',
+  'Delivered',
   'Cancelled',
 ]
 
-const statusStyles: Record<BulkOrderStatus, string> = {
+const statusStyles: Record<string, string> = {
   New: 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30',
+  'In Review': 'bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30',
   'Under Review': 'bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30',
+  'Quotation Sent': 'bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/30',
   'Quote Sent': 'bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/30',
+  'Order Accepted': 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border-indigo-500/30',
+  Shipped: 'bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border-cyan-500/30',
+  'Out for Delivery': 'bg-teal-500/15 text-teal-600 dark:text-teal-400 border-teal-500/30',
+  Delivered: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30',
   Completed: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30',
   Cancelled: 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30',
 }
@@ -143,29 +153,65 @@ export default function BulkOrdersAdminPage() {
     })
   }
 
-  // Compose pre-filled email body for manual response
-  const mailtoHref = useMemo(() => {
-    if (!selectedQuote) return ''
-    const subject = encodeURIComponent(
-      `Short Circuit Quotation for Bulk Order ${selectedQuote.quoteNumber}`
-    )
+  // Compose pre-filled quotation email data for sales.shortcircuit@gmail.com
+  const emailData = useMemo(() => {
+    if (!selectedQuote) return { subject: '', body: '', mailtoHref: '', gmailHref: '' }
+    const subjectText = `Quotation for Bulk Order #${selectedQuote.quoteNumber} - Short Circuit`
+    const subject = encodeURIComponent(subjectText)
     const itemsText = selectedQuote.items
       .map(
         (it, idx) =>
-          `${idx + 1}. ${it.productName} - Qty: ${it.quantity}${
-            it.targetPrice ? ` (Target: ₹${it.targetPrice})` : ''
-          }${it.notes ? ` [Note: ${it.notes}]` : ''}`
+          `  ${idx + 1}. ${it.productName} | Qty: ${it.quantity}${
+            it.targetPrice ? ` | Target: ₹${it.targetPrice}` : ''
+          }${it.notes ? ` | Notes: ${it.notes}` : ''}`
       )
       .join('\n')
 
-    const body = encodeURIComponent(
-      `Hi ${selectedQuote.customer.name},\n\nThank you for reaching out to Short Circuit for your bulk component requirements.\n\nWe have reviewed your request [Ref: ${selectedQuote.quoteNumber}] for the following items:\n${itemsText}\n\n--- OFFICIAL QUOTATION ---\nTotal Quoted Amount: ₹${
-        editQuotedAmount || ''
-      }\nGST: 18% Inclusive / Applicable as per HSN\nEstimated Dispatch Time: \nCourier / Transport: \nPayment Terms: 100% advance / Institutional PO\n\nPlease reply to this email or contact us to confirm the order and arrange billing.\n\nWarm regards,\nSales & Procurement Team\nShort Circuit Electronics\nsales.shortcircuit@gmail.com`
-    )
+    const rawBody = `Dear ${selectedQuote.customer.name},
 
-    return `mailto:${selectedQuote.customer.email}?subject=${subject}&body=${body}`
+Thank you for your bulk order inquiry with Short Circuit.
+
+We have reviewed your component requirements for inquiry reference #${selectedQuote.quoteNumber}:
+
+ITEM SPECIFICATIONS:
+${itemsText}
+
+OFFICIAL WHOLESALE QUOTATION:
+----------------------------------------
+Quoted Amount: ₹${editQuotedAmount !== '' ? editQuotedAmount : selectedQuote.quotedAmount || '0'}
+GST: Included / Applicable as per HSN
+Estimated Dispatch: 2-3 Business Days
+Delivery Address: ${[selectedQuote.customer.city, selectedQuote.customer.pincode].filter(Boolean).join(', ') || 'As provided in PO'}
+----------------------------------------
+
+TERMS & PAYMENT:
+- 100% advance or approved Institutional Purchase Order (PO).
+- Payment link / NEFT / RTGS details will be shared upon quotation confirmation.
+- Note: Official final billing and GST tax invoice will be sent manually via email to this address upon dispatch.
+
+Please confirm your acceptance of this quotation by replying to this email.
+
+Best regards,
+Sales & Procurement Team
+Short Circuit Electronics
+Email: sales.shortcircuit@gmail.com`
+
+    const encodedBody = encodeURIComponent(rawBody)
+
+    const gmailHref = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(
+      selectedQuote.customer.email
+    )}&su=${subject}&body=${encodedBody}`
+
+    const mailtoHref = `mailto:${selectedQuote.customer.email}?subject=${subject}&body=${encodedBody}`
+
+    return { subject: subjectText, body: rawBody, mailtoHref, gmailHref }
   }, [selectedQuote, editQuotedAmount])
+
+  const handleCopyTemplate = () => {
+    if (!emailData.body) return
+    navigator.clipboard.writeText(emailData.body)
+    toast.success('Quotation email template copied to clipboard!')
+  }
 
   const columns = [
     {
@@ -561,16 +607,18 @@ export default function BulkOrdersAdminPage() {
 
                 {/* Admin Management & Manual Emailing */}
                 <div className="rounded-xl border border-border bg-card p-4 space-y-4">
-                  <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground flex items-center justify-between">
-                    <span>Admin Quotation Controls</span>
-                    <a
-                      href={mailtoHref}
-                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
-                      title="Prepares quotation email draft in your default email client"
-                    >
-                      <Mail className="h-3.5 w-3.5" /> Manual Reply via Email &rarr;
-                    </a>
-                  </h4>
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground">
+                      Admin Quotation Controls & Status
+                    </h4>
+                    <span className="text-[11px] text-muted-foreground">
+                      From: <span className="font-semibold text-foreground">sales.shortcircuit@gmail.com</span>
+                    </span>
+                  </div>
+
+                  <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 p-2.5 text-[11px] text-amber-700 dark:text-amber-400">
+                    <strong>📌 Billing Policy:</strong> Final billing and official tax invoice will be sent manually via email to the customer once the order is accepted and dispatched.
+                  </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
@@ -611,10 +659,10 @@ export default function BulkOrdersAdminPage() {
 
                   <div>
                     <label className="text-[11px] font-medium text-muted-foreground block mb-1">
-                      Internal Admin Notes (Private)
+                      Internal Admin Notes & Customer Updates
                     </label>
                     <Textarea
-                      placeholder="e.g. Quoted ₹15,400 via email on 17 Sep. Awaiting college purchase order."
+                      placeholder="e.g. Components in stock. Quoting ₹15,400 with GST invoice. Ready to dispatch within 48 hours."
                       rows={2}
                       value={editAdminNotes}
                       onChange={(e) => setEditAdminNotes(e.target.value)}
@@ -622,20 +670,46 @@ export default function BulkOrdersAdminPage() {
                     />
                   </div>
 
-                  <div className="flex items-center justify-between pt-1">
-                    <a
-                      href={mailtoHref}
-                      className="inline-flex items-center gap-2 rounded-lg border border-primary/40 bg-primary/10 px-3.5 py-2 text-xs font-semibold text-primary hover:bg-primary/20 transition-colors"
-                    >
-                      <Send className="h-3.5 w-3.5" /> Open Email Client with Quote Draft
-                    </a>
+                  {/* Email Actions */}
+                  <div className="pt-2 border-t border-border/80 flex flex-wrap items-center justify-between gap-2.5">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <a
+                        href={emailData.gmailHref}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-1.5 text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-500/20 transition-colors"
+                        title="Directly opens Gmail compose window with pre-filled quotation"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" /> Compose in Gmail
+                      </a>
+
+                      <a
+                        href={emailData.mailtoHref}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/20 transition-colors"
+                        title="Opens default desktop email client"
+                      >
+                        <Mail className="h-3.5 w-3.5" /> Open Email Client
+                      </a>
+
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleCopyTemplate}
+                        className="text-xs h-8"
+                        leftIcon={<Copy className="h-3.5 w-3.5" />}
+                      >
+                        Copy Template
+                      </Button>
+                    </div>
 
                     <Button
                       size="sm"
                       onClick={handleSaveModal}
                       loading={updateStatusMutation.isPending}
+                      className="h-8 text-xs font-semibold"
                     >
-                      Save Status & Notes
+                      Update & Save Status
                     </Button>
                   </div>
                 </div>

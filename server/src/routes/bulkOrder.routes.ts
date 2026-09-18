@@ -6,7 +6,7 @@
 
 import { Router } from 'express';
 import { BulkOrderController } from '../controllers/index.js';
-import { authenticate, authorize, validate } from '../middlewares/index.js';
+import { authenticate, optionalAuthenticate, authorize, validate } from '../middlewares/index.js';
 import {
   createBulkOrderSchema,
   updateBulkOrderStatusSchema,
@@ -15,12 +15,16 @@ import {
 
 const router = Router();
 
-// ─── Public Submission Endpoint ──────────────────────────────────────────────
+// ─── Public & Customer Endpoints ──────────────────────────────────────────────
 router.post(
   '/',
+  optionalAuthenticate,
   validate({ body: createBulkOrderSchema }),
   BulkOrderController.createQuoteRequest
 );
+
+// Protected: fetch quotes for logged-in user
+router.get('/my-orders', authenticate, BulkOrderController.getMyBulkOrders);
 
 // ─── Admin Management Endpoints ──────────────────────────────────────────────
 router.use(authenticate, authorize('admin'));

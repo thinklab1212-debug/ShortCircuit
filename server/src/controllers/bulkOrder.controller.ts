@@ -26,6 +26,16 @@ export class BulkOrderController {
   });
 
   /**
+   * Protected: get all bulk order inquiries for the logged-in customer
+   */
+  static getMyBulkOrders = asyncHandler(async (req: Request, res: Response) => {
+    const userId = (req as any).user?._id?.toString();
+    const email = (req as any).user?.email;
+    const quotes = await BulkOrderService.getMyBulkOrders(userId, email);
+    res.status(200).json(new ApiResponse(200, quotes, 'Your bulk orders retrieved successfully.'));
+  });
+
+  /**
    * Admin: get all bulk orders (with filter & pagination)
    */
   static getQuotesAdmin = asyncHandler(async (req: Request, res: Response) => {

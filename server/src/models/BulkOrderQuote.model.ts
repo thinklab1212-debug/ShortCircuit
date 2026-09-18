@@ -10,10 +10,22 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export type BulkOrderStatus =
   | 'New'
+  | 'In Review'
   | 'Under Review'
+  | 'Quotation Sent'
   | 'Quote Sent'
+  | 'Order Accepted'
+  | 'Shipped'
+  | 'Out for Delivery'
+  | 'Delivered'
   | 'Completed'
   | 'Cancelled';
+
+export interface IBulkOrderStatusHistory {
+  status: BulkOrderStatus;
+  timestamp: Date;
+  note?: string;
+}
 
 export interface IBulkOrderItem {
   productName: string;
@@ -37,6 +49,7 @@ export interface IBulkOrderQuote extends Document {
   items: IBulkOrderItem[];
   notes?: string;
   status: BulkOrderStatus;
+  statusHistory?: IBulkOrderStatusHistory[];
   adminNotes?: string;
   quotedAmount?: number;
   createdAt: Date;
@@ -134,10 +147,29 @@ const bulkOrderQuoteSchema = new Schema<IBulkOrderQuote>(
     },
     status: {
       type: String,
-      enum: ['New', 'Under Review', 'Quote Sent', 'Completed', 'Cancelled'],
+      enum: [
+        'New',
+        'In Review',
+        'Under Review',
+        'Quotation Sent',
+        'Quote Sent',
+        'Order Accepted',
+        'Shipped',
+        'Out for Delivery',
+        'Delivered',
+        'Completed',
+        'Cancelled',
+      ],
       default: 'New',
       index: true,
     },
+    statusHistory: [
+      {
+        status: { type: String, required: true },
+        timestamp: { type: Date, default: Date.now },
+        note: { type: String, trim: true },
+      },
+    ],
     adminNotes: {
       type: String,
       trim: true,

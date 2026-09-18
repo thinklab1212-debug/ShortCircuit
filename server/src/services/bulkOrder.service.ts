@@ -59,6 +59,13 @@ export class BulkOrderService {
       items: data.items,
       notes: data.notes,
       status: 'New',
+      statusHistory: [
+        {
+          status: 'New',
+          timestamp: new Date(),
+          note: 'Bulk quotation request received and logged in system.',
+        },
+      ],
     });
 
     // Notify admin via transactional email asynchronously
@@ -137,6 +144,20 @@ export class BulkOrderService {
   }
 
   /**
+   * Retrieves all bulk order inquiries for an authenticated user.
+   * Matches either the user ID or the user's registered email address.
+   */
+  static async getMyBulkOrders(userId: string, email?: string) {
+    const conditions: Record<string, any>[] = [{ user: userId }];
+    if (email && email.trim()) {
+      conditions.push({ 'customer.email': new RegExp(`^${email.trim()}$`, 'i') });
+    }
+
+    const quotes = await BulkOrderQuote.find({ $or: conditions }).sort({ createdAt: -1 });
+    return quotes;
+  }
+
+  /**
    * Updates status, admin notes, or quoted amount.
    */
   static async updateQuoteStatusAdmin(
@@ -147,19 +168,37 @@ export class BulkOrderService {
       quotedAmount?: number;
     }
   ) {
-    const updatePayload: Record<string, any> = { status: data.status };
-    if (data.adminNotes !== undefined) updatePayload.adminNotes = data.adminNotes;
-    if (data.quotedAmount !== undefined) updatePayload.quotedAmount = data.quotedAmount;
-
-    const quote = await BulkOrderQuote.findByIdAndUpdate(id, updatePayload, {
-      new: true,
-      runValidators: true,
-    });
-
+    const quote = await BulkOrderQuote.findById(id);
     if (!quote) {
       throw ApiError.notFound('Bulk order quotation request not found.');
     }
 
+    const statusChanged = data.status && data.status !== quote.status;
+    quote.status = data.status;
+    if (data.adminNotes !== undefined) quote.adminNotes = data.adminNotes;
+    if (data.quotedAmount !== undefined) quote.quotedAmount = data.quotedAmount;
+
+    if (!quote.statusHistory || quote.statusHistory.length === 0) {
+      quote.statusHistory = [
+        {
+          status: 'New',
+          timestamp: quote.createdAt || new Date(),
+          note: 'Bulk quotation request received and logged in system.',
+        },
+      ];
+    }
+
+    if (statusChanged) {
+      quote.statusHistory.push({
+        status: data.status,
+        timestamp: new Date(),
+        note: data.adminNotes || `Status updated to ${data.status}`,
+      });
+    } else if (data.adminNotes && quote.statusHistory.length > 0) {
+      quote.statusHistory[quote.statusHistory.length - 1].note = data.adminNotes;
+    }
+
+    await quote.save();
     return quote;
   }
 

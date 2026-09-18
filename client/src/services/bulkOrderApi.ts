@@ -10,11 +10,15 @@ import type {
 } from '@/types'
 
 const bulkOrderApi = {
-  // ── Public ─────────────────────────────────────────────────────────────────
+  // ── Customer ───────────────────────────────────────────────────────────────
 
   /** Submit a bulk order / quotation request */
   submitQuoteRequest: (data: BulkOrderFormData) =>
     apiClient.post<ApiResponse<BulkOrderQuote>>(API_ROUTES.BULK_ORDERS.CREATE, data),
+
+  /** Fetch bulk orders for the authenticated logged-in customer */
+  getMyBulkOrders: () =>
+    apiClient.get<ApiResponse<BulkOrderQuote[]>>(API_ROUTES.BULK_ORDERS.MY_ORDERS),
 
   // ── Admin ──────────────────────────────────────────────────────────────────
 

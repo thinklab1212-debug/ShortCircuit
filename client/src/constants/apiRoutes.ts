@@ -265,6 +265,7 @@ const API_ROUTES = {
   // Bulk Orders & Quotations
   BULK_ORDERS: {
     CREATE: '/bulk-orders',
+    MY_ORDERS: '/bulk-orders/my-orders',
     ADMIN_ALL: '/bulk-orders/admin',
     ADMIN_STATS: '/bulk-orders/admin/stats',
     ADMIN_BY_ID: (id: string) => `/bulk-orders/admin/${id}`,
