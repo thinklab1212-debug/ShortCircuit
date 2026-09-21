@@ -182,9 +182,15 @@ export class ProductService {
    */
   public static async getProductBySlug(slug: string): Promise<InstanceType<typeof Product>> {
     // SAFETY: Both isActive AND approvalStatus are required for public access
-    const product = await Product.findOne({ slug, isActive: true, approvalStatus: 'approved' })
+    let product = await Product.findOne({ slug, isActive: true, approvalStatus: 'approved' })
       .populate({ path: 'category', select: 'name slug icon attributeDefinitions' })
       .populate({ path: 'brand', select: 'name slug logo' });
+
+    if (!product && mongoose.isValidObjectId(slug)) {
+      product = await Product.findOne({ _id: slug, isActive: true, approvalStatus: 'approved' })
+        .populate({ path: 'category', select: 'name slug icon attributeDefinitions' })
+        .populate({ path: 'brand', select: 'name slug logo' });
+    }
 
     if (!product) {
       throw ApiError.notFound('Product not found.');

@@ -39,6 +39,7 @@ const API_ROUTES = {
     BY_SLUG: (slug: string) => `/products/${slug}`,
     RELATED: (id: string) => `/products/${id}/related`,
     ADMIN_ALL: '/products/admin/all',
+    ADMIN_BY_ID: (id: string) => `/products/admin/${id}`,
     BY_ID: (id: string) => `/products/${id}`,
     SYNC_GOOGLE_SHEETS: '/products/sync-google-sheets',
     BULK_IMPORT_PREVIEW: '/products/admin/bulk-import/preview',

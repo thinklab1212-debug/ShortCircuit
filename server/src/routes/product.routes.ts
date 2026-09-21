@@ -137,6 +137,7 @@ router.use(authenticate, authorize('admin'));
  *         description: Admin catalog fetched successfully
  */
 router.get('/admin/all', validate({ query: productFilterSchema }), ProductController.getAdminProducts);
+router.get('/admin/:id', validate({ params: z.object({ id: objectIdSchema }) }), ProductController.getProductById);
 router.post('/sync-google-sheets', ProductController.syncGoogleSheets);
 
 // Bulk Import endpoints

@@ -27,6 +27,9 @@ const productApi = {
   getAdminAll: (params?: ProductFilters) =>
     apiClient.get<PaginatedResponse<Product>>(API_ROUTES.PRODUCTS.ADMIN_ALL, { params }),
 
+  getAdminById: (id: string) =>
+    apiClient.get<ApiResponse<Product>>(API_ROUTES.PRODUCTS.ADMIN_BY_ID(id)),
+
   create: (data: ProductFormData) =>
     apiClient.post<ApiResponse<Product>>(API_ROUTES.PRODUCTS.BASE, data),
 

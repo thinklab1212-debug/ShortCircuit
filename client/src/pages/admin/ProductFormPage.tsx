@@ -91,17 +91,12 @@ export default function ProductFormPage() {
     queryFn: () => brandApi.getAll().then((res) => res.data.data),
   })
 
-  // Existing product (edit): no get-by-id, so fetch a page and find it
-  const { data: productList, isLoading: loadingProduct } = useQuery({
-    queryKey: ['admin', 'products', 'all-for-edit'],
-    queryFn: () => productApi.getAdminAll({ limit: 100 }).then((res) => res.data.data),
-    enabled: isEdit,
+  // Fetch existing product directly by ID
+  const { data: existing, isLoading: loadingProduct } = useQuery({
+    queryKey: ['admin', 'product', id],
+    queryFn: () => productApi.getAdminById(id!).then((res) => res.data.data),
+    enabled: isEdit && Boolean(id),
   })
-
-  const existing = useMemo(
-    () => productList?.find((p) => p._id === id),
-    [productList, id]
-  )
 
   useEffect(() => {
     if (!existing) return

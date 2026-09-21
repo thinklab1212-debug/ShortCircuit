@@ -47,13 +47,11 @@ export default function ProductVariantsAdminPage() {
   const [dryRunReport, setDryRunReport] = useState<BatchImportResult | null>(null)
 
   // 1. Fetch Parent Master Product
-  const { data: productList } = useQuery({
-    queryKey: ['admin', 'products', 'for-variants-page'],
-    queryFn: () => productApi.getAdminAll({ limit: 100 }).then((res) => res.data.data),
+  const { data: parentProduct } = useQuery({
+    queryKey: ['admin', 'product', productId],
+    queryFn: () => productApi.getAdminById(productId!).then((res) => res.data.data),
     enabled: Boolean(productId),
   })
-
-  const parentProduct = productList?.find((p) => p._id === productId)
 
   // 2. Fetch Category for Attribute Definitions
   const categoryId = typeof parentProduct?.category === 'string' ? parentProduct.category : parentProduct?.category?._id
