@@ -9,6 +9,7 @@ export interface IInvoiceItem {
   qty: number;
   unit: string;
   unitPrice: number;
+  inclusivePrice?: number;
   discount: number; // percentage or fixed
   taxableValue: number;
   gstRate: number;
@@ -69,6 +70,7 @@ const InvoiceItemSchema = new Schema<IInvoiceItem>({
   qty: { type: Number, required: true, default: 1 },
   unit: { type: String, default: 'NOS' },
   unitPrice: { type: Number, required: true, default: 0 },
+  inclusivePrice: { type: Number },
   discount: { type: Number, default: 0 },
   taxableValue: { type: Number, required: true, default: 0 },
   gstRate: { type: Number, required: true, default: 18 },

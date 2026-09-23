@@ -89,6 +89,7 @@ export async function createInvoice(req: Request, res: Response) {
       paymentReference,
       customer,
       items,
+      freightCharges,
       terms,
       notes,
     } = req.body;
@@ -100,6 +101,8 @@ export async function createInvoice(req: Request, res: Response) {
     if (!items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: 'At least one line item is required' });
     }
+
+    const freight = Math.max(0, Number(freightCharges) || 0);
 
     // Invoice number: manual check or auto-suggest
     invoiceNo = (invoiceNo || '').trim();
@@ -134,18 +137,33 @@ export async function createInvoice(req: Request, res: Response) {
 
     const computedItems = items.map((it: any) => {
       const qty = Number(it.qty) || 1;
-      const unitPrice = Number(it.unitPrice) || 0;
-      const discount = Number(it.discount) || 0;
-      const gstRate = Number(it.gstRate) || 0;
+      const gstRate = Number(it.gstRate) !== undefined ? Number(it.gstRate) : 18;
+      let unitPrice = Number(it.unitPrice) || 0;
+      const inclusivePrice = Number(it.inclusivePrice) || 0;
 
-      const baseVal = qty * unitPrice;
-      const taxableValue = Math.max(0, baseVal - discount);
+      // If price was supplied as inclusive and unitPrice wasn't already split, back-calculate base rate
+      if (it.isPriceInclusive && inclusivePrice > 0 && (!unitPrice || unitPrice === inclusivePrice)) {
+        unitPrice = Math.round((inclusivePrice / (1 + (gstRate / 100))) * 100) / 100;
+      }
+
+      const discount = Number(it.discount) || 0;
+      const baseVal = Math.round((qty * unitPrice) * 100) / 100;
+      
+      // Allow manual taxableValue override if provided, else standard calculation
+      const taxableValue = (it.taxableValue !== undefined && it.taxableValue !== null && it.taxableValue !== '')
+        ? Number(it.taxableValue)
+        : Math.max(0, Math.round((baseVal - discount) * 100) / 100);
 
       let cgstAmount = 0;
       let sgstAmount = 0;
       let igstAmount = 0;
 
-      if (gstRate > 0) {
+      if (it.cgstAmount !== undefined && it.sgstAmount !== undefined && isIntraState && it.cgstAmount !== '' && it.sgstAmount !== '') {
+        cgstAmount = Math.round(Number(it.cgstAmount) * 100) / 100;
+        sgstAmount = Math.round(Number(it.sgstAmount) * 100) / 100;
+      } else if (it.igstAmount !== undefined && !isIntraState && it.igstAmount !== '') {
+        igstAmount = Math.round(Number(it.igstAmount) * 100) / 100;
+      } else if (gstRate > 0) {
         if (isIntraState) {
           const halfRate = gstRate / 2;
           cgstAmount = Math.round((taxableValue * (halfRate / 100)) * 100) / 100;
@@ -155,7 +173,9 @@ export async function createInvoice(req: Request, res: Response) {
         }
       }
 
-      const total = taxableValue + cgstAmount + sgstAmount + igstAmount;
+      const total = (it.total !== undefined && it.total !== null && it.total !== '')
+        ? Number(it.total)
+        : Math.round((taxableValue + cgstAmount + sgstAmount + igstAmount) * 100) / 100;
 
       subtotal += baseVal;
       totalDiscount += discount;
@@ -173,6 +193,7 @@ export async function createInvoice(req: Request, res: Response) {
         qty,
         unit: it.unit || (it.isKit ? 'SET' : 'NOS'),
         unitPrice,
+        inclusivePrice: inclusivePrice > 0 ? inclusivePrice : undefined,
         discount,
         taxableValue,
         gstRate,
@@ -183,7 +204,7 @@ export async function createInvoice(req: Request, res: Response) {
       };
     });
 
-    const rawGrandTotal = taxableSubtotal + cgstTotal + sgstTotal + igstTotal;
+    const rawGrandTotal = taxableSubtotal + cgstTotal + sgstTotal + igstTotal + freight;
     const roundedGrandTotal = Math.round(rawGrandTotal);
     const roundOff = Math.round((roundedGrandTotal - rawGrandTotal) * 100) / 100;
     const amountInWords = numberToIndianWords(roundedGrandTotal);
@@ -224,6 +245,7 @@ export async function createInvoice(req: Request, res: Response) {
       cgstTotal,
       sgstTotal,
       igstTotal,
+      freightCharges: freight,
       roundOff,
       grandTotal: roundedGrandTotal,
       amountInWords,

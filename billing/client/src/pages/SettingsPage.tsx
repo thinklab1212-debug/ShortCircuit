@@ -312,6 +312,295 @@ export const SettingsPage: React.FC = () => {
           </button>
         </div>
       </form>
+
+      {/* Company Branding: Logo & Stamp Upload */}
+      <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-5">
+        <div className="border-b border-slate-100 pb-2">
+          <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+            Official Branding & Signature Stamp
+          </h2>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Upload custom company logo and round stamp. These appear directly on all generated PDF invoices.
+          </p>
+        </div>
+
+        <BrandingUploadSection
+          currentLogo={form.logoPath || '/logo.png'}
+          currentStamp={form.stampPath || '/stamp.png'}
+          onAssetsUpdated={(updatedCompany) => {
+            setForm((prev) => ({ ...prev, ...updatedCompany }));
+            setSavedSuccess(true);
+            setTimeout(() => setSavedSuccess(false), 3000);
+          }}
+        />
+      </div>
+
+      {/* Security: Change Admin Password */}
+      <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+        <div className="border-b border-slate-100 pb-2">
+          <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+            Security & Admin Password
+          </h2>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Change your billing portal access password.
+          </p>
+        </div>
+        <ChangePasswordSection />
+      </div>
     </div>
+  );
+};
+
+// ---------------- Branding Upload Subcomponent ----------------
+interface BrandingUploadSectionProps {
+  currentLogo: string;
+  currentStamp: string;
+  onAssetsUpdated: (company: Partial<ICompany>) => void;
+}
+
+const BrandingUploadSection: React.FC<BrandingUploadSectionProps> = ({
+  currentLogo,
+  currentStamp,
+  onAssetsUpdated,
+}) => {
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [stampFile, setStampFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [stampPreview, setStampPreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [msg, setMsg] = useState<{ text: string; error?: boolean } | null>(null);
+
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const f = e.target.files[0];
+      setLogoFile(f);
+      setLogoPreview(URL.createObjectURL(f));
+    }
+  };
+
+  const handleStampChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const f = e.target.files[0];
+      setStampFile(f);
+      setStampPreview(URL.createObjectURL(f));
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!logoFile && !stampFile) {
+      setMsg({ text: 'Please select a new Logo or Stamp image first.', error: true });
+      return;
+    }
+
+    try {
+      setUploading(true);
+      setMsg(null);
+      const fd = new FormData();
+      if (logoFile) fd.append('logo', logoFile);
+      if (stampFile) fd.append('stamp', stampFile);
+
+      const res = await api.post('/company/upload-assets', fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      if (res.data.success) {
+        setMsg({ text: 'Branding assets updated successfully! PDF invoices will use these immediately.' });
+        onAssetsUpdated(res.data.company);
+        setLogoFile(null);
+        setStampFile(null);
+      }
+    } catch (err: any) {
+      setMsg({ text: err.response?.data?.error || 'Failed to upload assets', error: true });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      {msg && (
+        <div
+          className={`p-3 rounded-xl text-xs font-semibold flex items-center space-x-2 ${
+            msg.error ? 'bg-rose-50 border border-rose-200 text-rose-700' : 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+          }`}
+        >
+          <span>{msg.text}</span>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        {/* Company Logo Card */}
+        <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">Company Logo</span>
+            <span className="text-[10px] text-slate-400">PNG / JPEG (Max 5MB)</span>
+          </div>
+
+          <div className="h-24 bg-white rounded-lg border border-slate-200 flex items-center justify-center p-2 overflow-hidden shadow-inner">
+            <img
+              src={logoPreview || (currentLogo.startsWith('http') ? currentLogo : `http://localhost:5050${currentLogo}`)}
+              alt="Logo Preview"
+              className="max-h-full max-w-full object-contain"
+              onError={(e) => {
+                // fallback to /logo.png
+                (e.target as HTMLImageElement).src = '/logo.png';
+              }}
+            />
+          </div>
+
+          <div>
+            <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+              Choose New Logo Image
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleLogoChange}
+              className="block w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-900 hover:file:bg-blue-100 cursor-pointer"
+            />
+          </div>
+        </div>
+
+        {/* Authorized Stamp Card */}
+        <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">Authorized Stamp</span>
+            <span className="text-[10px] text-slate-400">Transparent PNG recommended</span>
+          </div>
+
+          <div className="h-24 bg-white rounded-lg border border-slate-200 flex items-center justify-center p-2 overflow-hidden shadow-inner">
+            <img
+              src={stampPreview || (currentStamp.startsWith('http') ? currentStamp : `http://localhost:5050${currentStamp}`)}
+              alt="Stamp Preview"
+              className="max-h-full max-w-full object-contain"
+              onError={(e) => {
+                // fallback to /stamp.png
+                (e.target as HTMLImageElement).src = '/stamp.png';
+              }}
+            />
+          </div>
+
+          <div>
+            <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+              Choose New Stamp / Signature Image
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleStampChange}
+              className="block w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-900 hover:file:bg-blue-100 cursor-pointer"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={handleUpload}
+          disabled={uploading || (!logoFile && !stampFile)}
+          className="px-5 py-2 text-xs font-semibold text-white bg-blue-900 hover:bg-blue-800 rounded-lg shadow-sm transition transform active:scale-95 disabled:opacity-50"
+        >
+          {uploading ? 'Uploading Images...' : 'Upload & Save Branding'}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// ---------------- Change Password Subcomponent ----------------
+const ChangePasswordSection: React.FC = () => {
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [msg, setMsg] = useState<{ text: string; error?: boolean } | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentPassword || !newPassword) {
+      setMsg({ text: 'Please fill in all password fields', error: true });
+      return;
+    }
+    if (newPassword.length < 6) {
+      setMsg({ text: 'New password must be at least 6 characters long', error: true });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setMsg({ text: 'New password and confirmation do not match', error: true });
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setMsg(null);
+      const res = await api.put('/auth/change-password', { currentPassword, newPassword });
+      setMsg({ text: res.data.message || 'Password changed successfully!' });
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err: any) {
+      setMsg({ text: err.response?.data?.error || 'Failed to change password', error: true });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
+      {msg && (
+        <div
+          className={`p-3 rounded-xl text-xs font-semibold ${
+            msg.error ? 'bg-rose-50 border border-rose-200 text-rose-700' : 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+          }`}
+        >
+          {msg.text}
+        </div>
+      )}
+
+      <div>
+        <label className="block text-xs font-semibold text-slate-700 mb-1">Current Password *</label>
+        <input
+          type="password"
+          required
+          value={currentPassword}
+          onChange={(e) => setCurrentPassword(e.target.value)}
+          placeholder="••••••••••••"
+          className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:ring-1 focus:ring-blue-600 focus:outline-none"
+        />
+      </div>
+
+      <div>
+        <label className="block text-xs font-semibold text-slate-700 mb-1">New Password *</label>
+        <input
+          type="password"
+          required
+          value={newPassword}
+          onChange={(e) => setNewPassword(e.target.value)}
+          placeholder="Minimum 6 characters"
+          className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:ring-1 focus:ring-blue-600 focus:outline-none"
+        />
+      </div>
+
+      <div>
+        <label className="block text-xs font-semibold text-slate-700 mb-1">Confirm New Password *</label>
+        <input
+          type="password"
+          required
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          placeholder="Repeat new password"
+          className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:ring-1 focus:ring-blue-600 focus:outline-none"
+        />
+      </div>
+
+      <button
+        type="submit"
+        disabled={loading}
+        className="px-5 py-2 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg shadow-sm transition transform active:scale-95 disabled:opacity-50"
+      >
+        {loading ? 'Updating Password...' : 'Update Password'}
+      </button>
+    </form>
   );
 };

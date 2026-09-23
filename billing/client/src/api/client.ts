@@ -9,6 +9,15 @@ export const api = axios.create({
   },
 });
 
+// Attach JWT token to requests if available
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('shortcircuit_billing_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 export interface ICustomer {
   _id?: string;
   name: string;
@@ -46,6 +55,8 @@ export interface IInvoiceItem {
   qty: number;
   unit: string;
   unitPrice: number;
+  inclusivePrice?: number;
+  isPriceInclusive?: boolean;
   discount: number;
   taxableValue: number;
   gstRate: number;
@@ -72,6 +83,7 @@ export interface IInvoice {
   cgstTotal: number;
   sgstTotal: number;
   igstTotal: number;
+  freightCharges?: number;
   roundOff: number;
   grandTotal: number;
   amountInWords?: string;
@@ -103,4 +115,6 @@ export interface ICompany {
   upiId?: string;
   defaultPrefix: string;
   defaultTerms: string[];
+  logoPath?: string;
+  stampPath?: string;
 }

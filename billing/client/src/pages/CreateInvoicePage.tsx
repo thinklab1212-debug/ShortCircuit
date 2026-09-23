@@ -17,7 +17,9 @@ interface LineItemState {
   hsn: string;
   qty: number;
   unit: string;
-  unitPrice: number;
+  inclusivePrice: number; // Gross price from website / user input (incl. GST)
+  unitPrice: number;      // Base taxable rate (excl. GST)
+  manualTaxableValue?: number; // Optional manual override of line taxable value
   discount: number;
   gstRate: number;
 }
@@ -33,6 +35,8 @@ export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onInvoiceC
   const [paymentMode, setPaymentMode] = useState('Cash');
   const [paymentStatus, setPaymentStatus] = useState<'PAID' | 'UNPAID' | 'PARTIAL'>('PAID');
   const [paymentReference, setPaymentReference] = useState('');
+  const [freightCharges, setFreightCharges] = useState<number>(0);
+  const [activeSuggestionIndex, setActiveSuggestionIndex] = useState<number | null>(null);
 
   // Customer state
   const [customers, setCustomers] = useState<ICustomer[]>([]);
@@ -60,6 +64,7 @@ export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onInvoiceC
       hsn: '8542',
       qty: 1,
       unit: 'NOS',
+      inclusivePrice: 0,
       unitPrice: 0,
       discount: 0,
       gstRate: 18,
@@ -163,6 +168,48 @@ export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onInvoiceC
     }
   };
 
+  // Quick bill item from catalog if selected from Products Page
+  useEffect(() => {
+    const quickItemStr = localStorage.getItem('shortcircuit_quick_bill_item');
+    if (quickItemStr && products.length > 0) {
+      try {
+        const prod: IProduct = JSON.parse(quickItemStr);
+        localStorage.removeItem('shortcircuit_quick_bill_item');
+        applyProductToRow(0, prod);
+      } catch {}
+    }
+  }, [products]);
+
+  // Apply a selected product to a line item row
+  const applyProductToRow = (index: number, prod: IProduct) => {
+    const hasPkg = Array.isArray(prod.packageContents) && prod.packageContents.length > 0;
+    const isKit = Boolean(prod.isKit || hasPkg);
+    const gst = prod.gstRate ?? 18;
+    const grossPrice = Number(prod.unitPrice) || 0;
+    // Website price is inclusive of GST: taxableRate = grossPrice / (1 + gst / 100)
+    const taxableRate = gst > 0 ? Math.round((grossPrice / (1 + gst / 100)) * 100) / 100 : grossPrice;
+
+    setItems((prev) => {
+      const updated = [...prev];
+      updated[index] = {
+        ...updated[index],
+        name: prod.name,
+        description: prod.description || '',
+        hsn: prod.hsn || '8542',
+        unit: prod.unit || (isKit ? 'SET' : 'NOS'),
+        inclusivePrice: grossPrice,
+        unitPrice: taxableRate,
+        gstRate: gst,
+        manualTaxableValue: undefined,
+        isKit,
+        kitItemsText: hasPkg ? prod.packageContents!.join('\n') : (updated[index].kitItemsText || ''),
+        showKitBreakdown: Boolean(isKit),
+      };
+      return updated;
+    });
+    setActiveSuggestionIndex(null);
+  };
+
   // Line Items manipulation
   const handleItemChange = (index: number, field: keyof LineItemState, value: any) => {
     setItems((prev) => {
@@ -172,26 +219,72 @@ export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onInvoiceC
     });
   };
 
-  const handleCatalogProductSelect = (index: number, productId: string) => {
-    const prod = products.find((p) => p._id === productId);
-    if (!prod) return;
-    const hasPkg = Array.isArray(prod.packageContents) && prod.packageContents.length > 0;
+  // Change Inclusive Price (Website Price) -> automatically recalculates Taxable Unit Rate
+  const handleInclusivePriceChange = (index: number, val: number) => {
+    const gross = Math.max(0, val);
+    const gst = items[index].gstRate || 0;
+    const taxable = gst > 0 ? Math.round((gross / (1 + gst / 100)) * 100) / 100 : gross;
     setItems((prev) => {
       const updated = [...prev];
       updated[index] = {
         ...updated[index],
-        name: prod.name,
-        description: prod.description || '',
-        hsn: prod.hsn || '8542',
-        unit: prod.unit || (hasPkg ? 'SET' : 'NOS'),
-        unitPrice: prod.unitPrice || 0,
-        gstRate: prod.gstRate ?? 18,
-        isKit: Boolean(prod.isKit || hasPkg),
-        kitItemsText: hasPkg ? prod.packageContents!.join('\n') : (updated[index].kitItemsText || ''),
-        showKitBreakdown: Boolean(hasPkg || updated[index].showKitBreakdown),
+        inclusivePrice: gross,
+        unitPrice: taxable,
+        manualTaxableValue: undefined,
       };
       return updated;
     });
+  };
+
+  // Change Taxable Unit Rate directly -> automatically recalculates Inclusive Price
+  const handleTaxableUnitPriceChange = (index: number, val: number) => {
+    const taxable = Math.max(0, val);
+    const gst = items[index].gstRate || 0;
+    const gross = Math.round((taxable * (1 + gst / 100)) * 100) / 100;
+    setItems((prev) => {
+      const updated = [...prev];
+      updated[index] = {
+        ...updated[index],
+        unitPrice: taxable,
+        inclusivePrice: gross,
+        manualTaxableValue: undefined,
+      };
+      return updated;
+    });
+  };
+
+  // Change GST Rate -> keeps inclusive price fixed and recomputes base taxable rate
+  const handleGstRateChange = (index: number, newGst: number) => {
+    setItems((prev) => {
+      const updated = [...prev];
+      const item = updated[index];
+      const taxable = newGst > 0 ? Math.round((item.inclusivePrice / (1 + newGst / 100)) * 100) / 100 : item.inclusivePrice;
+      updated[index] = {
+        ...item,
+        gstRate: newGst,
+        unitPrice: taxable,
+        manualTaxableValue: undefined,
+      };
+      return updated;
+    });
+  };
+
+  const handleManualTaxableChange = (index: number, val: number) => {
+    setItems((prev) => {
+      const updated = [...prev];
+      updated[index] = {
+        ...updated[index],
+        manualTaxableValue: val,
+      };
+      return updated;
+    });
+  };
+
+  const handleCatalogProductSelect = (index: number, productId: string) => {
+    const prod = products.find((p) => p._id === productId);
+    if (prod) {
+      applyProductToRow(index, prod);
+    }
   };
 
   const addItemRow = () => {
@@ -203,6 +296,7 @@ export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onInvoiceC
         hsn: '8542',
         qty: 1,
         unit: 'NOS',
+        inclusivePrice: 0,
         unitPrice: 0,
         discount: 0,
         gstRate: 18,
@@ -213,6 +307,9 @@ export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onInvoiceC
   const removeItemRow = (index: number) => {
     if (items.length === 1) return;
     setItems((prev) => prev.filter((_, i) => i !== index));
+    if (activeSuggestionIndex === index) {
+      setActiveSuggestionIndex(null);
+    }
   };
 
   // Tax and Total Calculations
@@ -231,8 +328,10 @@ export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onInvoiceC
     const disc = Number(item.discount) || 0;
     const gst = Number(item.gstRate) || 0;
 
-    const base = qty * rate;
-    const taxable = Math.max(0, base - disc);
+    const base = Math.round((qty * rate) * 100) / 100;
+    const taxable = item.manualTaxableValue !== undefined
+      ? Number(item.manualTaxableValue)
+      : Math.max(0, Math.round((base - disc) * 100) / 100);
 
     subtotal += base;
     totalDiscount += disc;
@@ -240,15 +339,16 @@ export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onInvoiceC
 
     if (gst > 0) {
       if (isIntraState) {
-        cgstTotal += (taxable * (gst / 2)) / 100;
-        sgstTotal += (taxable * (gst / 2)) / 100;
+        cgstTotal += Math.round(((taxable * (gst / 2)) / 100) * 100) / 100;
+        sgstTotal += Math.round(((taxable * (gst / 2)) / 100) * 100) / 100;
       } else {
-        igstTotal += (taxable * gst) / 100;
+        igstTotal += Math.round(((taxable * gst) / 100) * 100) / 100;
       }
     }
   });
 
-  const rawGrandTotal = taxableSubtotal + cgstTotal + sgstTotal + igstTotal;
+  const freight = Math.max(0, Number(freightCharges) || 0);
+  const rawGrandTotal = taxableSubtotal + cgstTotal + sgstTotal + igstTotal + freight;
   const grandTotal = Math.round(rawGrandTotal);
   const roundOff = Math.round((grandTotal - rawGrandTotal) * 100) / 100;
 
@@ -271,20 +371,50 @@ export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onInvoiceC
 
     try {
       setLoading(true);
-      const computedItems = items.map((it) => ({
-        name: it.name,
-        description: it.description || '',
-        isKit: Boolean(it.isKit || (it.kitItemsText && it.kitItemsText.trim().length > 0)),
-        kitItems: it.kitItemsText
-          ? it.kitItemsText.split('\n').map((s) => s.trim()).filter(Boolean)
-          : [],
-        hsn: it.hsn,
-        qty: it.qty,
-        unit: it.unit,
-        unitPrice: it.unitPrice,
-        discount: it.discount,
-        gstRate: it.gstRate,
-      }));
+      const computedItems = items.map((it) => {
+        const qty = Number(it.qty) || 1;
+        const unitPrice = Number(it.unitPrice) || 0;
+        const discount = Number(it.discount) || 0;
+        const gstRate = Number(it.gstRate) || 0;
+        const taxableValue = it.manualTaxableValue !== undefined
+          ? Number(it.manualTaxableValue)
+          : Math.max(0, Math.round((qty * unitPrice - discount) * 100) / 100);
+
+        let cgstAmount = 0;
+        let sgstAmount = 0;
+        let igstAmount = 0;
+        if (gstRate > 0) {
+          if (isIntraState) {
+            cgstAmount = Math.round(((taxableValue * (gstRate / 2)) / 100) * 100) / 100;
+            sgstAmount = Math.round(((taxableValue * (gstRate / 2)) / 100) * 100) / 100;
+          } else {
+            igstAmount = Math.round(((taxableValue * gstRate) / 100) * 100) / 100;
+          }
+        }
+        const total = Math.round((taxableValue + cgstAmount + sgstAmount + igstAmount) * 100) / 100;
+
+        return {
+          name: it.name,
+          description: it.description || '',
+          isKit: Boolean(it.isKit || (it.kitItemsText && it.kitItemsText.trim().length > 0)),
+          kitItems: it.kitItemsText
+            ? it.kitItemsText.split('\n').map((s) => s.trim()).filter(Boolean)
+            : [],
+          hsn: it.hsn,
+          qty,
+          unit: it.unit,
+          unitPrice,
+          inclusivePrice: it.inclusivePrice,
+          isPriceInclusive: Boolean(it.inclusivePrice && it.inclusivePrice > 0),
+          discount,
+          taxableValue,
+          gstRate,
+          cgstAmount,
+          sgstAmount,
+          igstAmount,
+          total,
+        };
+      });
 
       const payload = {
         invoiceNo: invoiceNo.trim(),
@@ -296,6 +426,7 @@ export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onInvoiceC
         paymentReference,
         customer,
         items: computedItems,
+        freightCharges: freight,
       };
 
       const res = await api.post('/invoices', payload);
@@ -587,11 +718,18 @@ export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onInvoiceC
       </div>
 
       {/* Line Items Table */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
           <div>
-            <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Line Items</h2>
-            <p className="text-xs text-slate-500">Pick from products catalog or type custom items freely.</p>
+            <div className="flex items-center space-x-2">
+              <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Line Items & Kits</h2>
+              <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                GST-Inclusive Website Pricing Enabled
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Type product or kit keyword for instant suggestions. Edit either Inclusive Price OR Taxable Rate manually.
+            </p>
           </div>
           <button
             type="button"
@@ -607,37 +745,130 @@ export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onInvoiceC
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="bg-slate-100/70 border-b border-slate-200 text-slate-700 font-bold">
-                <th className="py-3 px-3 w-10 text-center">#</th>
-                <th className="py-3 px-3 min-w-[220px]">Item Description</th>
-                <th className="py-3 px-2 w-24 text-center">Catalog Pick</th>
+                <th className="py-3 px-2 w-8 text-center">#</th>
+                <th className="py-3 px-3 min-w-[280px]">Item Description & Suggestion</th>
+                <th className="py-3 px-2 w-24 text-center">Catalog</th>
                 <th className="py-3 px-2 w-20 text-center">HSN/SAC</th>
-                <th className="py-3 px-2 w-16 text-center">Qty</th>
+                <th className="py-3 px-2 w-14 text-center">Qty</th>
                 <th className="py-3 px-2 w-16 text-center">Unit</th>
-                <th className="py-3 px-2 w-24 text-right">Price (Rs.)</th>
-                <th className="py-3 px-2 w-20 text-right">Disc (Rs.)</th>
+                <th className="py-3 px-2 w-28 text-right bg-emerald-50/60 text-emerald-950">
+                  <div className="flex flex-col items-end">
+                    <span>Price (GST Incl.)</span>
+                    <span className="text-[9px] font-normal text-emerald-700">Website Rate</span>
+                  </div>
+                </th>
+                <th className="py-3 px-2 w-28 text-right bg-blue-50/60 text-blue-950">
+                  <div className="flex flex-col items-end">
+                    <span>Taxable Rate</span>
+                    <span className="text-[9px] font-normal text-blue-700">Base Unit Rate</span>
+                  </div>
+                </th>
+                <th className="py-3 px-2 w-18 text-right">Disc (Rs.)</th>
                 <th className="py-3 px-2 w-20 text-center">GST %</th>
+                <th className="py-3 px-2 w-24 text-right">Taxable Val</th>
                 <th className="py-3 px-3 w-28 text-right">Total (Rs.)</th>
-                <th className="py-3 px-2 w-10 text-center"></th>
+                <th className="py-3 px-2 w-8 text-center"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {items.map((item, index) => {
-                const lineBase = item.qty * item.unitPrice;
-                const lineTaxable = Math.max(0, lineBase - item.discount);
-                const lineGst = (lineTaxable * item.gstRate) / 100;
-                const lineTotal = lineTaxable + lineGst;
+                const lineBase = Math.round((item.qty * item.unitPrice) * 100) / 100;
+                const lineTaxable = item.manualTaxableValue !== undefined
+                  ? Number(item.manualTaxableValue)
+                  : Math.max(0, Math.round((lineBase - item.discount) * 100) / 100);
+                const lineGst = Math.round(((lineTaxable * item.gstRate) / 100) * 100) / 100;
+                const lineTotal = Math.round((lineTaxable + lineGst) * 100) / 100;
+
+                // Keyword match for suggestions
+                const searchTerm = item.name.toLowerCase().trim();
+                const matchedSuggestions = searchTerm.length >= 1
+                  ? products.filter((p) => {
+                      return (
+                        p.name.toLowerCase().includes(searchTerm) ||
+                        (p.sku && p.sku.toLowerCase().includes(searchTerm)) ||
+                        (p.description && p.description.toLowerCase().includes(searchTerm))
+                      );
+                    }).slice(0, 8)
+                  : [];
 
                 return (
                   <tr key={index} className="hover:bg-slate-50/50 transition">
-                    <td className="py-2.5 px-3 text-center text-slate-400 font-semibold">{index + 1}</td>
-                    <td className="py-2.5 px-3">
+                    <td className="py-2.5 px-2 text-center text-slate-400 font-semibold">{index + 1}</td>
+                    
+                    {/* Item Description with Keyword Autocomplete Dropdown */}
+                    <td className="py-2.5 px-3 relative">
                       <input
                         type="text"
                         value={item.name}
-                        onChange={(e) => handleItemChange(index, 'name', e.target.value)}
-                        placeholder="e.g. Arduino Uno R3 or Custom IoT Project Kit"
-                        className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg focus:ring-1 focus:ring-blue-600 focus:outline-none text-xs font-semibold text-slate-800"
+                        onChange={(e) => {
+                          handleItemChange(index, 'name', e.target.value);
+                          setActiveSuggestionIndex(index);
+                        }}
+                        onFocus={() => setActiveSuggestionIndex(index)}
+                        placeholder="Type to search e.g. Arduino, ESP32, Line Follower Kit..."
+                        className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-600 focus:outline-none text-xs font-semibold text-slate-800"
                       />
+
+                      {/* Autocomplete Suggestions Popover */}
+                      {activeSuggestionIndex === index && matchedSuggestions.length > 0 && (
+                        <div
+                          className="absolute left-3 top-full mt-1 w-[420px] max-h-64 overflow-y-auto bg-white rounded-xl shadow-2xl border border-slate-200 z-50 divide-y divide-slate-100"
+                          onMouseDown={(e) => e.preventDefault()}
+                        >
+                          <div className="px-3 py-1.5 bg-slate-50 text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+                            <span>Catalog Suggestions ({matchedSuggestions.length})</span>
+                            <button
+                              type="button"
+                              onClick={() => setActiveSuggestionIndex(null)}
+                              className="text-slate-400 hover:text-slate-600 text-xs"
+                            >
+                              ✕ Close
+                            </button>
+                          </div>
+                          {matchedSuggestions.map((p) => {
+                            const isKit = Boolean(p.isKit || (p.packageContents && p.packageContents.length > 0));
+                            return (
+                              <button
+                                key={p._id}
+                                type="button"
+                                onClick={() => applyProductToRow(index, p)}
+                                className="w-full text-left p-2.5 hover:bg-blue-50 transition flex items-start justify-between space-x-2 group"
+                              >
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center space-x-1.5">
+                                    <span className="text-xs font-bold text-slate-800 group-hover:text-blue-900 truncate">
+                                      {p.name}
+                                    </span>
+                                    {isKit ? (
+                                      <span className="px-1.5 py-0.2 text-[9px] font-black uppercase tracking-wider bg-purple-100 text-purple-800 rounded">
+                                        KIT ({p.packageContents?.length || 0})
+                                      </span>
+                                    ) : (
+                                      <span className="px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 rounded">
+                                        PART
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center space-x-2 mt-0.5 text-[10px] text-slate-500">
+                                    <span>HSN: {p.hsn || '8542'}</span>
+                                    {p.sku && <span>SKU: {p.sku}</span>}
+                                    <span>Unit: {p.unit || (isKit ? 'SET' : 'NOS')}</span>
+                                  </div>
+                                </div>
+                                <div className="text-right flex-shrink-0">
+                                  <div className="text-xs font-bold text-emerald-800 font-mono">
+                                    Rs. {p.unitPrice?.toFixed(2)}
+                                  </div>
+                                  <div className="text-[9px] text-emerald-600 font-semibold">
+                                    GST Incl. ({p.gstRate ?? 18}%)
+                                  </div>
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+
                       <div className="flex items-center justify-between mt-1">
                         <button
                           type="button"
@@ -647,8 +878,8 @@ export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onInvoiceC
                           <span>{item.showKitBreakdown ? '▲ Hide Kit Breakdown' : '📦 + Kit / Items Breakdown'}</span>
                         </button>
                         {item.kitItemsText && (
-                          <span className="text-[10px] bg-blue-50 text-blue-800 font-bold px-1.5 py-0.2 rounded">
-                            {item.kitItemsText.split('\n').filter(Boolean).length} kit items
+                          <span className="text-[10px] bg-purple-50 text-purple-800 font-bold px-1.5 py-0.2 rounded border border-purple-200">
+                            {item.kitItemsText.split('\n').filter(Boolean).length} kit components included
                           </span>
                         )}
                       </div>
@@ -656,7 +887,7 @@ export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onInvoiceC
                       {item.showKitBreakdown && (
                         <div className="mt-2 p-2 bg-blue-50/70 border border-blue-200 rounded-lg space-y-1">
                           <div className="flex items-center justify-between text-[10px] font-bold text-blue-900">
-                            <span>Items in this Kit (Printed on Invoice):</span>
+                            <span>Items in this Kit (Printed on Invoice PDF):</span>
                             <span className="text-[9px] text-slate-500 font-normal">One item per line</span>
                           </div>
                           <textarea
@@ -669,6 +900,8 @@ export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onInvoiceC
                         </div>
                       )}
                     </td>
+
+                    {/* Catalog Quick Dropdown */}
                     <td className="py-2.5 px-2 text-center">
                       <select
                         onChange={(e) => handleCatalogProductSelect(index, e.target.value)}
@@ -683,6 +916,8 @@ export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onInvoiceC
                         ))}
                       </select>
                     </td>
+
+                    {/* HSN */}
                     <td className="py-2.5 px-2">
                       <input
                         type="text"
@@ -692,6 +927,8 @@ export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onInvoiceC
                         className="w-full text-center px-1.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs"
                       />
                     </td>
+
+                    {/* Qty */}
                     <td className="py-2.5 px-2">
                       <input
                         type="number"
@@ -701,6 +938,8 @@ export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onInvoiceC
                         className="w-full text-center px-1.5 py-1.5 bg-white border border-slate-200 rounded-lg font-bold text-xs"
                       />
                     </td>
+
+                    {/* Unit */}
                     <td className="py-2.5 px-2">
                       <select
                         value={item.unit}
@@ -714,30 +953,51 @@ export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onInvoiceC
                         <option value="KG">KG</option>
                       </select>
                     </td>
-                    <td className="py-2.5 px-2 text-right">
+
+                    {/* Gross Price (Inclusive of GST) - Editable */}
+                    <td className="py-2.5 px-2 text-right bg-emerald-50/20">
                       <input
                         type="number"
                         min="0"
                         step="any"
-                        value={item.unitPrice}
-                        onChange={(e) => handleItemChange(index, 'unitPrice', Number(e.target.value))}
-                        className="w-full text-right px-2 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold"
+                        value={item.inclusivePrice || ''}
+                        onChange={(e) => handleInclusivePriceChange(index, Number(e.target.value))}
+                        placeholder="0.00"
+                        className="w-full text-right px-2 py-1.5 bg-white border border-emerald-300 rounded-lg text-xs font-bold text-emerald-900 focus:ring-1 focus:ring-emerald-600 focus:outline-none"
                       />
                     </td>
+
+                    {/* Base Taxable Rate (Exclusive of GST) - Editable */}
+                    <td className="py-2.5 px-2 text-right bg-blue-50/20">
+                      <input
+                        type="number"
+                        min="0"
+                        step="any"
+                        value={item.unitPrice || ''}
+                        onChange={(e) => handleTaxableUnitPriceChange(index, Number(e.target.value))}
+                        placeholder="0.00"
+                        className="w-full text-right px-2 py-1.5 bg-white border border-blue-300 rounded-lg text-xs font-semibold text-blue-900 focus:ring-1 focus:ring-blue-600 focus:outline-none"
+                      />
+                    </td>
+
+                    {/* Discount */}
                     <td className="py-2.5 px-2 text-right">
                       <input
                         type="number"
                         min="0"
                         step="any"
-                        value={item.discount}
+                        value={item.discount || ''}
                         onChange={(e) => handleItemChange(index, 'discount', Number(e.target.value))}
+                        placeholder="0"
                         className="w-full text-right px-2 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-red-600"
                       />
                     </td>
+
+                    {/* GST % */}
                     <td className="py-2.5 px-2 text-center">
                       <select
                         value={item.gstRate}
-                        onChange={(e) => handleItemChange(index, 'gstRate', Number(e.target.value))}
+                        onChange={(e) => handleGstRateChange(index, Number(e.target.value))}
                         className="w-full text-center px-1 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-medium"
                       >
                         <option value="0">0%</option>
@@ -747,9 +1007,18 @@ export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onInvoiceC
                         <option value="28">28%</option>
                       </select>
                     </td>
+
+                    {/* Taxable Value */}
+                    <td className="py-2.5 px-2 text-right font-mono text-xs font-semibold text-slate-700">
+                      Rs. {lineTaxable.toFixed(2)}
+                    </td>
+
+                    {/* Total (Line) */}
                     <td className="py-2.5 px-3 text-right font-mono font-bold text-blue-900">
                       Rs. {lineTotal.toFixed(2)}
                     </td>
+
+                    {/* Remove Row */}
                     <td className="py-2.5 px-2 text-center">
                       <button
                         type="button"
@@ -779,12 +1048,15 @@ export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onInvoiceC
           <p className="text-xs text-slate-600">
             • Taxes will be computed automatically as <span className="font-semibold text-blue-900">{isIntraState ? 'CGST & SGST (9% + 9%)' : 'IGST (18%)'}</span> based on customer state code.
           </p>
+          <p className="text-xs text-slate-600">
+            • <span className="font-semibold text-emerald-800">GST Inclusive Math:</span> Website prices automatically split into base taxable value and GST. You can manually edit any field as needed.
+          </p>
         </div>
 
         {/* Right Side: Financial Breakdown */}
         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-3">
           <div className="flex justify-between text-xs text-slate-600 pb-2 border-b border-slate-100">
-            <span>Subtotal (Base)</span>
+            <span>Subtotal (Base Taxable)</span>
             <span className="font-mono font-semibold">Rs. {subtotal.toFixed(2)}</span>
           </div>
 
@@ -817,6 +1089,25 @@ export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onInvoiceC
               <span className="font-mono font-semibold">Rs. {igstTotal.toFixed(2)}</span>
             </div>
           )}
+
+          {/* Freight and Delivery Charges Field */}
+          <div className="flex items-center justify-between text-xs py-2 px-3 bg-slate-50 border border-slate-200 rounded-lg">
+            <span className="font-semibold text-slate-700 flex items-center space-x-1.5">
+              <span>🚚 Freight & Delivery Charges:</span>
+            </span>
+            <div className="flex items-center space-x-1.5">
+              <span className="text-slate-400 font-mono text-xs">Rs.</span>
+              <input
+                type="number"
+                min="0"
+                step="any"
+                value={freightCharges || ''}
+                onChange={(e) => setFreightCharges(Number(e.target.value) || 0)}
+                placeholder="0.00"
+                className="w-28 text-right px-2 py-1 bg-white border border-slate-300 rounded text-xs font-mono font-bold text-slate-900 focus:ring-2 focus:ring-blue-600 focus:outline-none"
+              />
+            </div>
+          </div>
 
           {roundOff !== 0 && (
             <div className="flex justify-between text-xs text-slate-500 pb-2 border-b border-slate-100">

@@ -6,6 +6,7 @@ import fs from 'fs';
 import { connectDB } from './config/db.js';
 import apiRouter from './routes/api.js';
 import { syncComponentsFromStore } from './scripts/syncFromStore.js';
+import { ensureDefaultAdmin } from './controllers/authController.js';
 
 dotenv.config();
 
@@ -13,11 +14,11 @@ const app = express();
 const PORT = process.env.PORT || 5050;
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5174';
 
-// Ensure uploads directory exists
+// Ensure uploads directories exist
 const uploadsDir = path.resolve(process.cwd(), 'uploads/invoices');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
+const brandingDir = path.resolve(process.cwd(), 'uploads/branding');
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+if (!fs.existsSync(brandingDir)) fs.mkdirSync(brandingDir, { recursive: true });
 
 // Middleware
 app.use(cors({
@@ -37,6 +38,7 @@ app.use('/api', apiRouter);
 // Start
 async function start() {
   await connectDB();
+  await ensureDefaultAdmin();
   app.listen(PORT, () => {
     console.log(`=========================================`);
     console.log(`🚀 [Billing Server] Running on http://localhost:${PORT}`);

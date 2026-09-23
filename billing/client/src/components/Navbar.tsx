@@ -1,13 +1,21 @@
 import React from 'react';
-import { FileText, Users, Package, Settings, PlusCircle } from 'lucide-react';
+import { FileText, Users, Package, Settings, PlusCircle, LogOut, UserCheck } from 'lucide-react';
 
 interface NavbarProps {
   activeTab: 'invoices' | 'create' | 'customers' | 'products' | 'settings';
   setActiveTab: (tab: 'invoices' | 'create' | 'customers' | 'products' | 'settings') => void;
   invoiceCount?: number;
+  authUser?: { email: string; name?: string; role?: string } | null;
+  onLogout?: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, invoiceCount = 0 }) => {
+export const Navbar: React.FC<NavbarProps> = ({
+  activeTab,
+  setActiveTab,
+  invoiceCount = 0,
+  authUser,
+  onLogout,
+}) => {
   return (
     <header className="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -19,7 +27,6 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, invoice
               alt="ShortCircuit Logo"
               className="h-9 w-auto object-contain drop-shadow-sm"
               onError={(e) => {
-                // fallback if image not found
                 (e.target as HTMLElement).style.display = 'none';
               }}
             />
@@ -74,7 +81,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, invoice
               }`}
             >
               <Package className="w-4 h-4" />
-              <span>Items / Catalog</span>
+              <span>Catalog & Kits</span>
             </button>
 
             <button
@@ -92,11 +99,32 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, invoice
             {/* Primary Action */}
             <button
               onClick={() => setActiveTab('create')}
-              className="ml-3 flex items-center space-x-2 bg-blue-900 hover:bg-blue-800 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-sm transition-all transform active:scale-95"
+              className="ml-2 flex items-center space-x-2 bg-blue-900 hover:bg-blue-800 text-white px-3.5 py-2 rounded-lg text-sm font-semibold shadow-sm transition-all transform active:scale-95"
             >
               <PlusCircle className="w-4 h-4" />
               <span>+ New Invoice</span>
             </button>
+
+            {/* User Profile Badge & Logout */}
+            {authUser && (
+              <div className="ml-3 pl-3 border-l border-slate-200 flex items-center space-x-2">
+                <div className="hidden md:flex flex-col text-right">
+                  <span className="text-xs font-bold text-slate-800 leading-tight">
+                    {authUser.name || 'Admin'}
+                  </span>
+                  <span className="text-[10px] text-slate-400 leading-tight truncate max-w-[120px]">
+                    {authUser.email}
+                  </span>
+                </div>
+                <button
+                  onClick={onLogout}
+                  title="Logout"
+                  className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
+            )}
           </nav>
         </div>
       </div>

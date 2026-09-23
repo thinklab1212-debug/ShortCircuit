@@ -1,4 +1,7 @@
 import { Router } from 'express';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 import {
   listInvoices,
   getInvoiceById,
@@ -25,9 +28,42 @@ import {
 import {
   getCompanyProfile,
   updateCompanyProfile,
+  uploadBrandingAssets,
 } from '../controllers/companyController.js';
+import {
+  login,
+  getMe,
+  changePassword,
+} from '../controllers/authController.js';
+
+// Configure Multer for branding asset uploads
+const brandingDir = path.resolve(process.cwd(), 'uploads/branding');
+if (!fs.existsSync(brandingDir)) {
+  fs.mkdirSync(brandingDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, brandingDir);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase() || '.png';
+    const field = file.fieldname; // 'logo' or 'stamp'
+    cb(null, `${field}-${Date.now()}${ext}`);
+  },
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+});
 
 const router = Router();
+
+// Authentication
+router.post('/auth/login', login);
+router.get('/auth/me', getMe);
+router.put('/auth/change-password', changePassword);
 
 // Invoices
 router.get('/invoices/next-number', getNextInvoiceNumber);
@@ -64,5 +100,6 @@ router.delete('/products/:id', deleteProduct);
 // Company Profile & Settings
 router.get('/company', getCompanyProfile);
 router.put('/company', updateCompanyProfile);
+router.post('/company/upload-assets', upload.fields([{ name: 'logo', maxCount: 1 }, { name: 'stamp', maxCount: 1 }]), uploadBrandingAssets);
 
 export default router;
