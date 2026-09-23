@@ -161,45 +161,13 @@ export async function generateInvoicePdf(
     invoice.items.forEach((item, index) => {
       const isEven = index % 2 === 0;
 
-      // Extract kit items or multiline description
-      const kitList = (item.kitItems && item.kitItems.length > 0)
-        ? item.kitItems
-        : (item.description && item.description.includes('\n'))
-          ? item.description.split('\n').map(s => s.trim()).filter(Boolean)
-          : [];
-
-      const hasKitBreakdown = kitList.length > 0;
-
-      // 1. Accurately measure item title height
+      // 1. Accurately measure item title height (item name only for clean billing)
       doc.font(fontBold).fontSize(8.5);
       const titleHeight = doc.heightOfString(item.name, { width: colW.desc - 6, lineGap: 1 });
 
-      // 2. Accurately measure kit breakdown or item description
-      let breakdownHeight = 0;
-      const measuredBullets: { text: string; height: number }[] = [];
-
-      if (hasKitBreakdown) {
-        doc.font(fontBold).fontSize(7);
-        const headingH = doc.heightOfString('Package / Kit Breakdown:', { width: colW.desc - 6 }) + 2;
-        breakdownHeight += headingH;
-
-        doc.font(fontRegular).fontSize(6.8);
-        for (const subItem of kitList) {
-          const cleanItem = `• ${subItem.replace(/^[•\-\*]\s*/, '').trim()}`;
-          const bH = doc.heightOfString(cleanItem, { width: colW.desc - 10, lineGap: 1 });
-          measuredBullets.push({ text: cleanItem, height: bH });
-          breakdownHeight += bH + 2;
-        }
-      } else if (item.description && item.description.trim().length > 0) {
-        doc.font(fontRegular).fontSize(7);
-        const dH = doc.heightOfString(item.description.trim(), { width: colW.desc - 6, lineGap: 1 });
-        breakdownHeight = dH + 3;
-      }
-
-      const topPadding = 6;
-      const bottomPadding = 6;
-      const totalContentHeight = titleHeight + (breakdownHeight > 0 ? (breakdownHeight + 2) : 0);
-      const rowHeight = Math.max(24, Math.ceil(topPadding + totalContentHeight + bottomPadding));
+      const topPadding = 5;
+      const bottomPadding = 5;
+      const rowHeight = Math.max(20, Math.ceil(topPadding + titleHeight + bottomPadding));
 
       // Page overflow check for table items
       if (rowY + rowHeight > 740) {
@@ -217,15 +185,16 @@ export async function generateInvoicePdf(
 
       const cellY = rowY + topPadding;
 
-      // 1. Render all single-line cells FIRST (cleanly top-aligned at cellY)
+      // 1. Render all single-line numeric and code cells (cleanly aligned at cellY)
       doc.font(fontRegular).fontSize(8.5).fillColor('#64748b')
         .text(String(index + 1), colX.num, cellY, { width: colW.num, align: 'center' });
 
-      doc.font(fontRegular).fontSize(8).fillColor('#64748b')
+      // HSN / SAC Code
+      doc.font(fontRegular).fontSize(8).fillColor('#334155')
         .text(item.hsn || '-', colX.hsn, cellY, { width: colW.hsn, align: 'center' });
 
       doc.font(fontBold).fontSize(8.5).fillColor('#111827')
-        .text(`${item.qty} ${item.unit || (hasKitBreakdown ? 'SET' : 'NOS')}`, colX.qty, cellY, { width: colW.qty, align: 'center' });
+        .text(`${item.qty} ${item.unit || 'NOS'}`, colX.qty, cellY, { width: colW.qty, align: 'center' });
 
       doc.font(fontRegular).fontSize(8.5).fillColor('#111827')
         .text(item.unitPrice.toFixed(2), colX.rate, cellY, { width: colW.rate, align: 'right' });
@@ -236,27 +205,9 @@ export async function generateInvoicePdf(
       doc.font(fontBold).fontSize(8.5).fillColor('#1e3a8a')
         .text(item.total.toFixed(2), colX.total, cellY, { width: colW.total, align: 'right' });
 
-      // 2. Render Description column (Item Name + Kit Breakdown)
-      let descY = cellY;
+      // 2. Render Description column - Item Name ONLY (no description/breakdown)
       doc.font(fontBold).fontSize(8.5).fillColor('#111827')
-        .text(item.name, colX.desc, descY, { width: colW.desc - 6, lineGap: 1 });
-      descY += titleHeight + 2;
-
-      // Render Kit Components or Description with dynamically measured offsets
-      if (hasKitBreakdown) {
-        doc.font(fontBold).fontSize(7).fillColor('#1e40af')
-          .text('Package / Kit Breakdown:', colX.desc + 2, descY);
-        descY += 10;
-
-        for (const bullet of measuredBullets) {
-          doc.font(fontRegular).fontSize(6.8).fillColor('#475569')
-            .text(bullet.text, colX.desc + 6, descY, { width: colW.desc - 10, lineGap: 1 });
-          descY += bullet.height + 2;
-        }
-      } else if (item.description && item.description.trim().length > 0) {
-        doc.font(fontRegular).fontSize(7).fillColor('#64748b')
-          .text(item.description.trim(), colX.desc, descY, { width: colW.desc - 6, lineGap: 1 });
-      }
+        .text(item.name, colX.desc, cellY, { width: colW.desc - 6, lineGap: 1 });
 
       rowY += rowHeight;
     });

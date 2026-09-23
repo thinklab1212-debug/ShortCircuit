@@ -61,7 +61,7 @@ export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onInvoiceC
     {
       name: '',
       description: '',
-      hsn: '8542',
+      hsn: '',
       qty: 1,
       unit: 'NOS',
       inclusivePrice: 0,
@@ -182,8 +182,7 @@ export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onInvoiceC
 
   // Apply a selected product to a line item row
   const applyProductToRow = (index: number, prod: IProduct) => {
-    const hasPkg = Array.isArray(prod.packageContents) && prod.packageContents.length > 0;
-    const isKit = Boolean(prod.isKit || hasPkg);
+    const isKit = Boolean(prod.isKit);
     const gst = prod.gstRate ?? 18;
     const grossPrice = Number(prod.unitPrice) || 0;
     // Website price is inclusive of GST: taxableRate = grossPrice / (1 + gst / 100)
@@ -194,16 +193,16 @@ export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onInvoiceC
       updated[index] = {
         ...updated[index],
         name: prod.name,
-        description: prod.description || '',
-        hsn: prod.hsn || '8542',
+        description: '',
+        hsn: prod.hsn || updated[index].hsn || '',
         unit: prod.unit || (isKit ? 'SET' : 'NOS'),
         inclusivePrice: grossPrice,
         unitPrice: taxableRate,
         gstRate: gst,
         manualTaxableValue: undefined,
         isKit,
-        kitItemsText: hasPkg ? prod.packageContents!.join('\n') : (updated[index].kitItemsText || ''),
-        showKitBreakdown: Boolean(isKit),
+        kitItemsText: '',
+        showKitBreakdown: false,
       };
       return updated;
     });
@@ -293,7 +292,7 @@ export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onInvoiceC
       {
         name: '',
         description: '',
-        hsn: '8542',
+        hsn: '',
         qty: 1,
         unit: 'NOS',
         inclusivePrice: 0,
@@ -394,13 +393,11 @@ export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onInvoiceC
         const total = Math.round((taxableValue + cgstAmount + sgstAmount + igstAmount) * 100) / 100;
 
         return {
-          name: it.name,
-          description: it.description || '',
-          isKit: Boolean(it.isKit || (it.kitItemsText && it.kitItemsText.trim().length > 0)),
-          kitItems: it.kitItemsText
-            ? it.kitItemsText.split('\n').map((s) => s.trim()).filter(Boolean)
-            : [],
-          hsn: it.hsn,
+          name: it.name.trim(),
+          description: '',
+          isKit: false,
+          kitItems: [],
+          hsn: (it.hsn || '').trim().toUpperCase(),
           qty,
           unit: it.unit,
           unitPrice,
@@ -746,9 +743,14 @@ export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onInvoiceC
             <thead>
               <tr className="bg-slate-100/70 border-b border-slate-200 text-slate-700 font-bold">
                 <th className="py-3 px-2 w-8 text-center">#</th>
-                <th className="py-3 px-3 min-w-[280px]">Item Description & Suggestion</th>
+                <th className="py-3 px-3 min-w-[260px]">Item Description & Suggestion</th>
                 <th className="py-3 px-2 w-24 text-center">Catalog</th>
-                <th className="py-3 px-2 w-20 text-center">HSN/SAC</th>
+                <th className="py-3 px-2 w-28 text-center bg-blue-50/70 border-x border-blue-100 text-blue-950">
+                  <div className="flex flex-col items-center">
+                    <span className="font-bold">HSN Code</span>
+                    <span className="text-[9px] font-normal text-blue-700">Manual Entry</span>
+                  </div>
+                </th>
                 <th className="py-3 px-2 w-14 text-center">Qty</th>
                 <th className="py-3 px-2 w-16 text-center">Unit</th>
                 <th className="py-3 px-2 w-28 text-right bg-emerald-50/60 text-emerald-950">
@@ -869,36 +871,6 @@ export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onInvoiceC
                         </div>
                       )}
 
-                      <div className="flex items-center justify-between mt-1">
-                        <button
-                          type="button"
-                          onClick={() => handleItemChange(index, 'showKitBreakdown', !item.showKitBreakdown)}
-                          className="text-[10px] text-blue-700 hover:text-blue-900 font-semibold flex items-center space-x-1"
-                        >
-                          <span>{item.showKitBreakdown ? '▲ Hide Kit Breakdown' : '📦 + Kit / Items Breakdown'}</span>
-                        </button>
-                        {item.kitItemsText && (
-                          <span className="text-[10px] bg-purple-50 text-purple-800 font-bold px-1.5 py-0.2 rounded border border-purple-200">
-                            {item.kitItemsText.split('\n').filter(Boolean).length} kit components included
-                          </span>
-                        )}
-                      </div>
-
-                      {item.showKitBreakdown && (
-                        <div className="mt-2 p-2 bg-blue-50/70 border border-blue-200 rounded-lg space-y-1">
-                          <div className="flex items-center justify-between text-[10px] font-bold text-blue-900">
-                            <span>Items in this Kit (Printed on Invoice PDF):</span>
-                            <span className="text-[9px] text-slate-500 font-normal">One item per line</span>
-                          </div>
-                          <textarea
-                            rows={3}
-                            value={item.kitItemsText || ''}
-                            onChange={(e) => handleItemChange(index, 'kitItemsText', e.target.value)}
-                            placeholder={"1x Arduino Uno R3 DIP\n1x ESP8266 NodeMCU Wi-Fi\n1x 16x2 I2C Display\n1x Ultrasonic Sensor HC-SR04"}
-                            className="w-full text-[11px] font-mono p-1.5 bg-white border border-blue-200 rounded focus:ring-1 focus:ring-blue-600 focus:outline-none"
-                          />
-                        </div>
-                      )}
                     </td>
 
                     {/* Catalog Quick Dropdown */}
@@ -917,14 +889,14 @@ export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onInvoiceC
                       </select>
                     </td>
 
-                    {/* HSN */}
-                    <td className="py-2.5 px-2">
+                    {/* HSN Code (Manual Entry) */}
+                    <td className="py-2.5 px-2 bg-blue-50/20 border-x border-blue-100">
                       <input
                         type="text"
                         value={item.hsn}
-                        onChange={(e) => handleItemChange(index, 'hsn', e.target.value)}
-                        placeholder="8542"
-                        className="w-full text-center px-1.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs"
+                        onChange={(e) => handleItemChange(index, 'hsn', e.target.value.toUpperCase())}
+                        placeholder="e.g. 8542"
+                        className="w-full text-center px-1.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-mono font-bold text-slate-800 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 focus:outline-none placeholder:text-slate-400 uppercase tracking-wider"
                       />
                     </td>
 
