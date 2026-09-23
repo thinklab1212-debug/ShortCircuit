@@ -388,7 +388,10 @@ export async function emailInvoice(req: Request, res: Response) {
     const pdfBase64 = pdfBuffer.toString('base64');
     const safeFilename = `Invoice-${invoice.invoiceNo.replace(/[^a-zA-Z0-9_-]/g, '-')}.pdf`;
 
-    const resendKey = process.env.RESEND_API_KEY || 're_VaZf4Xkq_8YFpxMkJFBY9TVkWtAwtKP2N';
+    const resendKey = process.env.RESEND_API_KEY;
+    if (!resendKey) {
+      return res.status(500).json({ error: 'RESEND_API_KEY is not configured in .env. Please set RESEND_API_KEY in your server environment.' });
+    }
     const senderEmail = process.env.EMAIL_FROM || 'ShortCircuit Billing <onboarding@resend.dev>';
 
     const emailSubject = subject || `Tax Invoice ${invoice.invoiceNo} from ${company.name || 'ShortCircuit'}`;

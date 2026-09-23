@@ -9,14 +9,14 @@ export async function ensureDefaultAdmin() {
   try {
     const count = await AdminUser.countDocuments();
     if (count === 0) {
-      const defaultEmail = 'admin@shortcircuit.in';
-      const defaultPass = 'ShortCircuit@2026';
+      const defaultEmail = process.env.ADMIN_DEFAULT_EMAIL || 'admin@shortcircuit.in';
+      const defaultPass = process.env.ADMIN_DEFAULT_PASSWORD || 'ShortCircuit@2026';
       await AdminUser.create({
         email: defaultEmail,
         password: defaultPass,
         name: 'Administrator',
       });
-      console.log(`🔑 [Auth] Default admin initialized: ${defaultEmail} / ${defaultPass}`);
+      console.log(`🔑 [Auth] Default admin initialized: ${defaultEmail}`);
     }
   } catch (err: any) {
     console.warn('⚠️ [Auth] Admin check error:', err.message);

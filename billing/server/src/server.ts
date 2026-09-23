@@ -1,14 +1,12 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
 import { connectDB } from './config/db.js';
 import apiRouter from './routes/api.js';
 import { syncComponentsFromStore } from './scripts/syncFromStore.js';
 import { ensureDefaultAdmin } from './controllers/authController.js';
-
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5050;
