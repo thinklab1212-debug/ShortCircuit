@@ -23,32 +23,22 @@ async function testPdf() {
     },
     items: [
       {
-        name: 'Arduino Uno R3 Compatible Board (SMD)',
+        name: 'Arduino Uno R3 with Cable',
         hsn: '8542',
-        qty: 10,
-        unit: 'NOS',
-        unitPrice: 450,
-        discount: 0,
-        taxableValue: 4500,
-        gstRate: 18,
-        cgstAmount: 405,
-        sgstAmount: 405,
-        igstAmount: 0,
-        total: 5310,
-      },
-      {
-        name: 'Digital Storage Oscilloscope 100MHz 2CH',
-        hsn: '9030',
         qty: 1,
         unit: 'NOS',
-        unitPrice: 22000,
-        discount: 1000,
-        taxableValue: 21000,
+        unitPrice: 250,
+        discount: 0,
+        taxableValue: 250,
         gstRate: 18,
-        cgstAmount: 1890,
-        sgstAmount: 1890,
+        cgstAmount: 22.5,
+        sgstAmount: 22.5,
         igstAmount: 0,
-        total: 24780,
+        total: 295,
+        isKit: true,
+        kitItems: [
+          'The Arduino Uno R3 with Cable is a microcontroller board based on the ATmega328 (datasheet). It has 14 digital input/output pins (of which 6 can be used as PWM outputs), 6 analog inputs, a 16 MHz ceramic resonator, a USB connection, a power jack, an ICSP header, and a reset button.'
+        ]
       },
       {
         name: 'Custom IoT & Robotics Workshop Kit',

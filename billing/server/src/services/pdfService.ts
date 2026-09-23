@@ -139,28 +139,29 @@ export async function generateInvoicePdf(
 
     currentY += boxH + 14;
 
-    // Items Table
-    const tableTop = currentY;
-    const colX = { num: 36, desc: 60, hsn: 270, qty: 320, rate: 360, taxVal: 425, total: 490 };
-    const colW = { num: 24, desc: 206, hsn: 48, qty: 38, rate: 62, taxVal: 62, total: 69 };
+    // Items Table Column Positions & Widths (Total span: 36 to 559 = 523pt)
+    const colX = { num: 36, desc: 60, hsn: 272, qty: 320, rate: 362, taxVal: 426, total: 492 };
+    const colW = { num: 22, desc: 210, hsn: 46, qty: 40, rate: 62, taxVal: 64, total: 67 };
 
-    // Table Header
-    doc.rect(36, tableTop, 523, 20).fill('#1e3a8a');
-    doc.font(fontBold).fontSize(8).fillColor('#ffffff')
-      .text('#', colX.num, tableTop + 6, { width: colW.num, align: 'center' })
-      .text('ITEM DESCRIPTION', colX.desc, tableTop + 6, { width: colW.desc, align: 'left' })
-      .text('HSN/SAC', colX.hsn, tableTop + 6, { width: colW.hsn, align: 'center' })
-      .text('QTY', colX.qty, tableTop + 6, { width: colW.qty, align: 'center' })
-      .text('RATE (Rs.)', colX.rate, tableTop + 6, { width: colW.rate, align: 'right' })
-      .text('TAXABLE', colX.taxVal, tableTop + 6, { width: colW.taxVal, align: 'right' })
-      .text('TOTAL (Rs.)', colX.total, tableTop + 6, { width: colW.total, align: 'right' });
+    const renderTableHeader = (y: number) => {
+      doc.rect(36, y, 523, 20).fill('#1e3a8a');
+      doc.font(fontBold).fontSize(8).fillColor('#ffffff')
+        .text('#', colX.num, y + 6, { width: colW.num, align: 'center' })
+        .text('ITEM DESCRIPTION', colX.desc, y + 6, { width: colW.desc, align: 'left' })
+        .text('HSN/SAC', colX.hsn, y + 6, { width: colW.hsn, align: 'center' })
+        .text('QTY', colX.qty, y + 6, { width: colW.qty, align: 'center' })
+        .text('RATE (Rs.)', colX.rate, y + 6, { width: colW.rate, align: 'right' })
+        .text('TAXABLE', colX.taxVal, y + 6, { width: colW.taxVal, align: 'right' })
+        .text('TOTAL (Rs.)', colX.total, y + 6, { width: colW.total, align: 'right' });
+    };
 
-    let rowY = tableTop + 20;
+    renderTableHeader(currentY);
+    let rowY = currentY + 20;
 
     invoice.items.forEach((item, index) => {
       const isEven = index % 2 === 0;
 
-      // Extract kit items if present
+      // Extract kit items or multiline description
       const kitList = (item.kitItems && item.kitItems.length > 0)
         ? item.kitItems
         : (item.description && item.description.includes('\n'))
@@ -168,62 +169,94 @@ export async function generateInvoicePdf(
           : [];
 
       const hasKitBreakdown = kitList.length > 0;
-      let kitTextHeight = 0;
+
+      // 1. Accurately measure item title height
+      doc.font(fontBold).fontSize(8.5);
+      const titleHeight = doc.heightOfString(item.name, { width: colW.desc - 6, lineGap: 1 });
+
+      // 2. Accurately measure kit breakdown or item description
+      let breakdownHeight = 0;
+      const measuredBullets: { text: string; height: number }[] = [];
+
       if (hasKitBreakdown) {
-        kitTextHeight = kitList.length * 10 + 10;
-      } else if (item.description) {
-        kitTextHeight = 11;
+        doc.font(fontBold).fontSize(7);
+        const headingH = doc.heightOfString('Package / Kit Breakdown:', { width: colW.desc - 6 }) + 2;
+        breakdownHeight += headingH;
+
+        doc.font(fontRegular).fontSize(6.8);
+        for (const subItem of kitList) {
+          const cleanItem = `• ${subItem.replace(/^[•\-\*]\s*/, '').trim()}`;
+          const bH = doc.heightOfString(cleanItem, { width: colW.desc - 10, lineGap: 1 });
+          measuredBullets.push({ text: cleanItem, height: bH });
+          breakdownHeight += bH + 2;
+        }
+      } else if (item.description && item.description.trim().length > 0) {
+        doc.font(fontRegular).fontSize(7);
+        const dH = doc.heightOfString(item.description.trim(), { width: colW.desc - 6, lineGap: 1 });
+        breakdownHeight = dH + 3;
       }
 
-      const rowHeight = Math.max(22, 16 + kitTextHeight);
+      const topPadding = 6;
+      const bottomPadding = 6;
+      const totalContentHeight = titleHeight + (breakdownHeight > 0 ? (breakdownHeight + 2) : 0);
+      const rowHeight = Math.max(24, Math.ceil(topPadding + totalContentHeight + bottomPadding));
 
-      if (isEven) {
-        doc.rect(36, rowY, 523, rowHeight).fill('#ffffff');
-      } else {
-        doc.rect(36, rowY, 523, rowHeight).fill('#f8fafc');
+      // Page overflow check for table items
+      if (rowY + rowHeight > 740) {
+        doc.addPage();
+        doc.rect(36, 36, 523, 3).fill('#1e3a8a');
+        doc.font(fontBold).fontSize(10).fillColor('#1e3a8a').text(`TAX INVOICE - ${invoice.invoiceNo} (Continued)`, 36, 46);
+        rowY = 64;
+        renderTableHeader(rowY);
+        rowY += 20;
       }
 
+      // Draw alternating row background & bottom divider line
+      doc.rect(36, rowY, 523, rowHeight).fill(isEven ? '#ffffff' : '#f8fafc');
       doc.moveTo(36, rowY + rowHeight).lineTo(559, rowY + rowHeight).strokeColor('#e2e8f0').lineWidth(0.5).stroke();
 
+      const cellY = rowY + topPadding;
+
+      // 1. Render all single-line cells FIRST (cleanly top-aligned at cellY)
       doc.font(fontRegular).fontSize(8.5).fillColor('#64748b')
-        .text(String(index + 1), colX.num, rowY + 6, { width: colW.num, align: 'center' });
-
-      // Item description + Kit components list
-      let descY = rowY + 6;
-      doc.font(fontBold).fontSize(8.5).fillColor('#111827')
-        .text(item.name, colX.desc, descY, { width: colW.desc, align: 'left', lineBreak: false });
-
-      if (hasKitBreakdown) {
-        descY += 12;
-        doc.font(fontBold).fontSize(6.8).fillColor('#1e3a8a')
-           .text('Package / Kit Breakdown:', colX.desc + 2, descY);
-        descY += 9;
-
-        kitList.forEach((kitSubItem) => {
-          const cleanItem = kitSubItem.replace(/^[•\-\*]\s*/, '').trim();
-          doc.font(fontRegular).fontSize(6.8).fillColor('#475569')
-             .text(`• ${cleanItem}`, colX.desc + 6, descY, { width: colW.desc - 10, lineGap: 0.5 });
-          descY += 9.5;
-        });
-      } else if (item.description) {
-        doc.font(fontRegular).fontSize(7).fillColor('#64748b')
-           .text(item.description, colX.desc, descY + 11, { width: colW.desc, lineBreak: false });
-      }
+        .text(String(index + 1), colX.num, cellY, { width: colW.num, align: 'center' });
 
       doc.font(fontRegular).fontSize(8).fillColor('#64748b')
-        .text(item.hsn || '-', colX.hsn, rowY + 6, { width: colW.hsn, align: 'center' });
+        .text(item.hsn || '-', colX.hsn, cellY, { width: colW.hsn, align: 'center' });
 
       doc.font(fontBold).fontSize(8.5).fillColor('#111827')
-        .text(`${item.qty} ${item.unit || (hasKitBreakdown ? 'SET' : 'NOS')}`, colX.qty, rowY + 6, { width: colW.qty, align: 'center' });
+        .text(`${item.qty} ${item.unit || (hasKitBreakdown ? 'SET' : 'NOS')}`, colX.qty, cellY, { width: colW.qty, align: 'center' });
 
       doc.font(fontRegular).fontSize(8.5).fillColor('#111827')
-        .text(item.unitPrice.toFixed(2), colX.rate, rowY + 6, { width: colW.rate, align: 'right' });
+        .text(item.unitPrice.toFixed(2), colX.rate, cellY, { width: colW.rate, align: 'right' });
 
       doc.font(fontRegular).fontSize(8.5).fillColor('#111827')
-        .text(item.taxableValue.toFixed(2), colX.taxVal, rowY + 6, { width: colW.taxVal, align: 'right' });
+        .text(item.taxableValue.toFixed(2), colX.taxVal, cellY, { width: colW.taxVal, align: 'right' });
 
       doc.font(fontBold).fontSize(8.5).fillColor('#1e3a8a')
-        .text(item.total.toFixed(2), colX.total, rowY + 6, { width: colW.total, align: 'right' });
+        .text(item.total.toFixed(2), colX.total, cellY, { width: colW.total, align: 'right' });
+
+      // 2. Render Description column (Item Name + Kit Breakdown)
+      let descY = cellY;
+      doc.font(fontBold).fontSize(8.5).fillColor('#111827')
+        .text(item.name, colX.desc, descY, { width: colW.desc - 6, lineGap: 1 });
+      descY += titleHeight + 2;
+
+      // Render Kit Components or Description with dynamically measured offsets
+      if (hasKitBreakdown) {
+        doc.font(fontBold).fontSize(7).fillColor('#1e40af')
+          .text('Package / Kit Breakdown:', colX.desc + 2, descY);
+        descY += 10;
+
+        for (const bullet of measuredBullets) {
+          doc.font(fontRegular).fontSize(6.8).fillColor('#475569')
+            .text(bullet.text, colX.desc + 6, descY, { width: colW.desc - 10, lineGap: 1 });
+          descY += bullet.height + 2;
+        }
+      } else if (item.description && item.description.trim().length > 0) {
+        doc.font(fontRegular).fontSize(7).fillColor('#64748b')
+          .text(item.description.trim(), colX.desc, descY, { width: colW.desc - 6, lineGap: 1 });
+      }
 
       rowY += rowHeight;
     });
@@ -241,15 +274,23 @@ export async function generateInvoicePdf(
       .text(`${curr}${invoice.taxableSubtotal.toFixed(2)}`, colX.taxVal, rowY + 5, { width: colW.taxVal, align: 'right' })
       .text(`${curr}${invoice.grandTotal.toFixed(2)}`, colX.total, rowY + 5, { width: colW.total, align: 'right' });
 
-    currentY = rowY + 28;
+    currentY = rowY + 26;
+
+    // Check if bottom section fits on current page (approx 210pt required)
+    if (currentY + 210 > 788) {
+      doc.addPage();
+      doc.rect(36, 36, 523, 3).fill('#1e3a8a');
+      doc.font(fontBold).fontSize(10).fillColor('#1e3a8a').text(`TAX INVOICE - ${invoice.invoiceNo} (Payment Details & Summary)`, 36, 46);
+      currentY = 66;
+    }
 
     // Bottom Split: Left Side (Bank & Terms) vs Right Side (Tax & Financial Summary)
-    const leftW = 280;
-    const rightW = 233;
-    const rightX = 326;
+    const leftW = 276;
+    const rightW = 237;
+    const rightX = 322;
 
     // Bank Details Card (Left)
-    const bankH = 82;
+    const bankH = 80;
     doc.roundedRect(36, currentY, leftW, bankH, 4).fillAndStroke('#f8fafc', '#e2e8f0');
     doc.rect(36, currentY, 3, bankH).fill('#1e3a8a');
     doc.font(fontBold).fontSize(8).fillColor('#1e3a8a').text('BANK & PAYMENT DETAILS', 46, currentY + 6);
@@ -270,7 +311,7 @@ export async function generateInvoicePdf(
     }
 
     // Terms & Conditions (Left below bank)
-    const termsH = 68;
+    const termsH = 64;
     const termsY = currentY + bankH + 8;
     doc.roundedRect(36, termsY, leftW, termsH, 4).fillAndStroke('#f8fafc', '#e2e8f0');
     doc.rect(36, termsY, 3, termsH).fill('#64748b');
@@ -287,7 +328,7 @@ export async function generateInvoicePdf(
     let tY = termsY + 18;
     termsList.slice(0, 3).forEach((term, i) => {
       doc.font(fontRegular).fontSize(7).fillColor('#64748b').text(`${i + 1}. ${term}`, 46, tY, { width: leftW - 20, lineGap: 1 });
-      tY += 14;
+      tY += 13;
     });
 
     // Right Side: Tax & Total Financial Summary Table
@@ -316,36 +357,37 @@ export async function generateInvoicePdf(
 
     let sY = currentY;
     summaryRows.forEach((row, i) => {
-      doc.rect(rightX, sY, rightW, 16).fill(i % 2 === 0 ? '#ffffff' : '#f8fafc');
-      doc.moveTo(rightX, sY + 16).lineTo(rightX + rightW, sY + 16).strokeColor('#e2e8f0').lineWidth(0.5).stroke();
-      doc.font(fontRegular).fontSize(8).fillColor('#64748b').text(row.label, rightX + 8, sY + 4, { width: 120 });
-      doc.font(fontBold).fontSize(8).fillColor('#111827').text(row.value, rightX + 130, sY + 4, { width: 95, align: 'right' });
-      sY += 16;
+      doc.rect(rightX, sY, rightW, 15).fill(i % 2 === 0 ? '#ffffff' : '#f8fafc');
+      doc.moveTo(rightX, sY + 15).lineTo(rightX + rightW, sY + 15).strokeColor('#e2e8f0').lineWidth(0.5).stroke();
+      doc.font(fontRegular).fontSize(8).fillColor('#64748b').text(row.label, rightX + 8, sY + 3, { width: 120 });
+      doc.font(fontBold).fontSize(8).fillColor('#111827').text(row.value, rightX + 130, sY + 3, { width: 98, align: 'right' });
+      sY += 15;
     });
 
     // Grand Total Box (Prominent)
-    doc.rect(rightX, sY + 4, rightW, 26).fill('#1e3a8a');
-    doc.font(fontBold).fontSize(10).fillColor('#ffffff')
-      .text('GRAND TOTAL', rightX + 8, sY + 11)
-      .text(`${curr}${invoice.grandTotal.toFixed(2)}`, rightX + 100, sY + 11, { width: 125, align: 'right' });
+    doc.rect(rightX, sY + 3, rightW, 25).fill('#1e3a8a');
+    doc.font(fontBold).fontSize(9.5).fillColor('#ffffff')
+      .text('GRAND TOTAL', rightX + 8, sY + 10)
+      .text(`${curr}${invoice.grandTotal.toFixed(2)}`, rightX + 100, sY + 10, { width: 128, align: 'right' });
 
     // Amount in Words below right summary
-    const wordsY = sY + 36;
+    const wordsY = sY + 33;
+    const wordsH = 34;
     const words = invoice.amountInWords || numberToIndianWords(invoice.grandTotal);
-    doc.roundedRect(rightX, wordsY, rightW, 40, 3).fillAndStroke('#eff6ff', '#bfdbfe');
-    doc.font(fontBold).fontSize(7.5).fillColor('#1e3a8a').text('AMOUNT IN WORDS:', rightX + 6, wordsY + 5);
-    doc.font(fontRegular).fontSize(7.5).fillColor('#1e40af').text(words, rightX + 6, wordsY + 15, { width: rightW - 12 });
+    doc.roundedRect(rightX, wordsY, rightW, wordsH, 3).fillAndStroke('#eff6ff', '#bfdbfe');
+    doc.font(fontBold).fontSize(7).fillColor('#1e3a8a').text('AMOUNT IN WORDS:', rightX + 6, wordsY + 4);
+    doc.font(fontRegular).fontSize(7).fillColor('#1e40af').text(words, rightX + 6, wordsY + 13, { width: rightW - 12 });
 
-    // Authorized Signatory Block
-    const signY = termsY + termsH + 10;
-    const signBoxH = 58;
+    // Authorized Signatory Block (Cleanly below the tallest of left or right column)
+    const signY = Math.max(termsY + termsH, wordsY + wordsH) + 8;
+    const signBoxH = 54;
     doc.roundedRect(36, signY, 523, signBoxH, 4).strokeColor('#e2e8f0').lineWidth(0.8).stroke();
     doc.font(fontRegular).fontSize(7.5).fillColor('#64748b')
-      .text('Certified that the particulars given above are true and correct.', 46, signY + 10);
+      .text('Certified that the particulars given above are true and correct.', 46, signY + 8);
 
     const signRightX = 350;
     doc.font(fontBold).fontSize(8.5).fillColor('#1e3a8a')
-      .text(`For ${company.name || 'ShortCircuit'}`, signRightX, signY + 7, { width: 200, align: 'right' });
+      .text(`For ${company.name || 'ShortCircuit'}`, signRightX, signY + 6, { width: 200, align: 'right' });
 
     // Render authorized stamp / signature image
     const stampCandidates = [
@@ -360,7 +402,7 @@ export async function generateInvoicePdf(
     for (const sPath of stampCandidates) {
       if (fs.existsSync(sPath)) {
         try {
-          doc.image(sPath, 480, signY + 17, { fit: [65, 30] });
+          doc.image(sPath, 480, signY + 15, { fit: [65, 26] });
           stampDrawn = true;
           break;
         } catch (e) {
@@ -370,9 +412,9 @@ export async function generateInvoicePdf(
     }
 
     doc.font(fontBold).fontSize(7.5).fillColor('#1e3a8a')
-      .text('Authorized Signatory', signRightX, signY + 45, { width: 200, align: 'right' });
+      .text('Authorized Signatory', signRightX, signY + 42, { width: 200, align: 'right' });
 
-    // Bottom Footer Bar
+    // Bottom Footer Bar (Page 1 or active page)
     doc.rect(36, 788, 523, 2).fill('#1e3a8a');
     doc.font(fontRegular).fontSize(7.5).fillColor('#94a3b8')
       .text(`This is a computer generated tax invoice. Registered with ${company.name || 'ShortCircuit'}.`, 36, 794, { align: 'center', width: 523 });
