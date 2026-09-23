@@ -161,13 +161,33 @@ export async function generateInvoicePdf(
     invoice.items.forEach((item, index) => {
       const isEven = index % 2 === 0;
 
-      // 1. Accurately measure item title height (item name only for clean billing)
+      // 1. Accurately measure item title height
       doc.font(fontBold).fontSize(8.5);
       const titleHeight = doc.heightOfString(item.name, { width: colW.desc - 6, lineGap: 1 });
 
+      // 2. Kit components & units breakdown (ONLY printed if explicitly a kit item)
+      const hasKitBreakdown = Boolean(item.isKit && item.kitItems && item.kitItems.length > 0);
+      let breakdownHeight = 0;
+      const measuredBullets: { text: string; height: number }[] = [];
+
+      if (hasKitBreakdown) {
+        doc.font(fontBold).fontSize(7);
+        const headingH = doc.heightOfString('Included Kit Items & Units:', { width: colW.desc - 6 }) + 2;
+        breakdownHeight += headingH;
+
+        doc.font(fontRegular).fontSize(6.8);
+        for (const subItem of item.kitItems!) {
+          const cleanItem = `• ${subItem.replace(/^[•\-\*]\s*/, '').trim()}`;
+          const bH = doc.heightOfString(cleanItem, { width: colW.desc - 10, lineGap: 1 });
+          measuredBullets.push({ text: cleanItem, height: bH });
+          breakdownHeight += bH + 2;
+        }
+      }
+
       const topPadding = 5;
       const bottomPadding = 5;
-      const rowHeight = Math.max(20, Math.ceil(topPadding + titleHeight + bottomPadding));
+      const totalContentHeight = titleHeight + (breakdownHeight > 0 ? (breakdownHeight + 2) : 0);
+      const rowHeight = Math.max(20, Math.ceil(topPadding + totalContentHeight + bottomPadding));
 
       // Page overflow check for table items
       if (rowY + rowHeight > 740) {
@@ -194,7 +214,7 @@ export async function generateInvoicePdf(
         .text(item.hsn || '-', colX.hsn, cellY, { width: colW.hsn, align: 'center' });
 
       doc.font(fontBold).fontSize(8.5).fillColor('#111827')
-        .text(`${item.qty} ${item.unit || 'NOS'}`, colX.qty, cellY, { width: colW.qty, align: 'center' });
+        .text(`${item.qty} ${item.unit || (hasKitBreakdown ? 'SET' : 'NOS')}`, colX.qty, cellY, { width: colW.qty, align: 'center' });
 
       doc.font(fontRegular).fontSize(8.5).fillColor('#111827')
         .text(item.unitPrice.toFixed(2), colX.rate, cellY, { width: colW.rate, align: 'right' });
@@ -205,9 +225,23 @@ export async function generateInvoicePdf(
       doc.font(fontBold).fontSize(8.5).fillColor('#1e3a8a')
         .text(item.total.toFixed(2), colX.total, cellY, { width: colW.total, align: 'right' });
 
-      // 2. Render Description column - Item Name ONLY (no description/breakdown)
+      // 2. Render Description column: Item Name, and if kit, the kit components & units
+      let descY = cellY;
       doc.font(fontBold).fontSize(8.5).fillColor('#111827')
-        .text(item.name, colX.desc, cellY, { width: colW.desc - 6, lineGap: 1 });
+        .text(item.name, colX.desc, descY, { width: colW.desc - 6, lineGap: 1 });
+      descY += titleHeight + 2;
+
+      if (hasKitBreakdown) {
+        doc.font(fontBold).fontSize(7).fillColor('#1e40af')
+          .text('Included Kit Items & Units:', colX.desc + 2, descY);
+        descY += 10;
+
+        for (const bullet of measuredBullets) {
+          doc.font(fontRegular).fontSize(6.8).fillColor('#475569')
+            .text(bullet.text, colX.desc + 6, descY, { width: colW.desc - 10, lineGap: 1 });
+          descY += bullet.height + 2;
+        }
+      }
 
       rowY += rowHeight;
     });

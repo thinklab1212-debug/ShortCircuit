@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, RefreshCw, UserPlus, CheckCircle2, FileDown, Eye, AlertCircle } from 'lucide-react';
+import { Plus, Trash2, RefreshCw, UserPlus, CheckCircle2, FileDown, Eye, AlertCircle, Search, Package } from 'lucide-react';
 import { api, ICustomer, IProduct, IInvoice } from '../api/client';
 import { Modal } from '../components/Modal';
 
@@ -182,7 +182,8 @@ export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onInvoiceC
 
   // Apply a selected product to a line item row
   const applyProductToRow = (index: number, prod: IProduct) => {
-    const isKit = Boolean(prod.isKit);
+    const hasPkg = Array.isArray(prod.packageContents) && prod.packageContents.length > 0;
+    const isKit = Boolean(prod.isKit || (hasPkg && prod.name.toLowerCase().includes('kit')));
     const gst = prod.gstRate ?? 18;
     const grossPrice = Number(prod.unitPrice) || 0;
     // Website price is inclusive of GST: taxableRate = grossPrice / (1 + gst / 100)
@@ -201,8 +202,7 @@ export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onInvoiceC
         gstRate: gst,
         manualTaxableValue: undefined,
         isKit,
-        kitItemsText: '',
-        showKitBreakdown: false,
+        kitItemsText: isKit && hasPkg ? prod.packageContents!.join('\n') : (isKit ? updated[index].kitItemsText || '' : ''),
       };
       return updated;
     });
@@ -392,11 +392,16 @@ export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onInvoiceC
         }
         const total = Math.round((taxableValue + cgstAmount + sgstAmount + igstAmount) * 100) / 100;
 
+        const isKit = Boolean(it.isKit);
+        const kitItems = isKit && it.kitItemsText
+          ? it.kitItemsText.split('\n').map((s) => s.trim()).filter(Boolean)
+          : [];
+
         return {
           name: it.name.trim(),
           description: '',
-          isKit: false,
-          kitItems: [],
+          isKit,
+          kitItems,
           hsn: (it.hsn || '').trim().toUpperCase(),
           qty,
           unit: it.unit,
@@ -738,7 +743,7 @@ export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onInvoiceC
           </button>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto min-h-[380px] pb-44">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="bg-slate-100/70 border-b border-slate-200 text-slate-700 font-bold">
@@ -797,80 +802,124 @@ export const CreateInvoicePage: React.FC<CreateInvoicePageProps> = ({ onInvoiceC
                   <tr key={index} className="hover:bg-slate-50/50 transition">
                     <td className="py-2.5 px-2 text-center text-slate-400 font-semibold">{index + 1}</td>
                     
-                    {/* Item Description with Keyword Autocomplete Dropdown */}
-                    <td className="py-2.5 px-3 relative">
-                      <input
-                        type="text"
-                        value={item.name}
-                        onChange={(e) => {
-                          handleItemChange(index, 'name', e.target.value);
-                          setActiveSuggestionIndex(index);
-                        }}
-                        onFocus={() => setActiveSuggestionIndex(index)}
-                        placeholder="Type to search e.g. Arduino, ESP32, Line Follower Kit..."
-                        className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-600 focus:outline-none text-xs font-semibold text-slate-800"
-                      />
-
-                      {/* Autocomplete Suggestions Popover */}
-                      {activeSuggestionIndex === index && matchedSuggestions.length > 0 && (
-                        <div
-                          className="absolute left-3 top-full mt-1 w-[420px] max-h-64 overflow-y-auto bg-white rounded-xl shadow-2xl border border-slate-200 z-50 divide-y divide-slate-100"
-                          onMouseDown={(e) => e.preventDefault()}
-                        >
-                          <div className="px-3 py-1.5 bg-slate-50 text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center justify-between">
-                            <span>Catalog Suggestions ({matchedSuggestions.length})</span>
-                            <button
-                              type="button"
-                              onClick={() => setActiveSuggestionIndex(null)}
-                              className="text-slate-400 hover:text-slate-600 text-xs"
-                            >
-                              ✕ Close
-                            </button>
-                          </div>
-                          {matchedSuggestions.map((p) => {
-                            const isKit = Boolean(p.isKit || (p.packageContents && p.packageContents.length > 0));
-                            return (
-                              <button
-                                key={p._id}
-                                type="button"
-                                onClick={() => applyProductToRow(index, p)}
-                                className="w-full text-left p-2.5 hover:bg-blue-50 transition flex items-start justify-between space-x-2 group"
-                              >
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center space-x-1.5">
-                                    <span className="text-xs font-bold text-slate-800 group-hover:text-blue-900 truncate">
-                                      {p.name}
-                                    </span>
-                                    {isKit ? (
-                                      <span className="px-1.5 py-0.2 text-[9px] font-black uppercase tracking-wider bg-purple-100 text-purple-800 rounded">
-                                        KIT ({p.packageContents?.length || 0})
-                                      </span>
-                                    ) : (
-                                      <span className="px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 rounded">
-                                        PART
-                                      </span>
-                                    )}
-                                  </div>
-                                  <div className="flex items-center space-x-2 mt-0.5 text-[10px] text-slate-500">
-                                    <span>HSN: {p.hsn || '8542'}</span>
-                                    {p.sku && <span>SKU: {p.sku}</span>}
-                                    <span>Unit: {p.unit || (isKit ? 'SET' : 'NOS')}</span>
-                                  </div>
-                                </div>
-                                <div className="text-right flex-shrink-0">
-                                  <div className="text-xs font-bold text-emerald-800 font-mono">
-                                    Rs. {p.unitPrice?.toFixed(2)}
-                                  </div>
-                                  <div className="text-[9px] text-emerald-600 font-semibold">
-                                    GST Incl. ({p.gstRate ?? 18}%)
-                                  </div>
-                                </div>
-                              </button>
-                            );
-                          })}
+                    {/* Item Description with Keyword Autocomplete Dropdown directly attached to field */}
+                    <td className="py-2.5 px-3 align-top min-w-[300px]">
+                      <div className="relative">
+                        <div className="relative flex items-center">
+                          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 pointer-events-none" />
+                          <input
+                            type="text"
+                            value={item.name}
+                            onChange={(e) => {
+                              handleItemChange(index, 'name', e.target.value);
+                              setActiveSuggestionIndex(index);
+                            }}
+                            onFocus={() => setActiveSuggestionIndex(index)}
+                            placeholder="Type keyword e.g. Arduino, Raspberry Pi, Kit..."
+                            className="w-full pl-8 pr-2.5 py-1.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-blue-600 focus:outline-none text-xs font-semibold text-slate-800 shadow-sm"
+                          />
                         </div>
-                      )}
 
+                        {/* Autocomplete Suggestions Popover - attached directly to the search field */}
+                        {activeSuggestionIndex === index && matchedSuggestions.length > 0 && (
+                          <div
+                            className="absolute left-0 top-full mt-1 w-[460px] max-h-72 overflow-y-auto bg-white rounded-xl shadow-2xl border border-slate-300 z-50 divide-y divide-slate-100 ring-1 ring-black/5"
+                            onMouseDown={(e) => e.preventDefault()}
+                          >
+                            <div className="px-3 py-2 bg-slate-50 text-[10px] font-bold text-slate-600 uppercase tracking-wider flex items-center justify-between border-b border-slate-100">
+                              <span className="flex items-center space-x-1.5">
+                                <Search className="w-3 h-3 text-blue-600" />
+                                <span>Suggested Products & Kits ({matchedSuggestions.length})</span>
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => setActiveSuggestionIndex(null)}
+                                className="text-slate-400 hover:text-slate-600 text-xs font-bold"
+                              >
+                                ✕ Close
+                              </button>
+                            </div>
+                            {matchedSuggestions.map((p) => {
+                              const isKit = Boolean(p.isKit || (p.packageContents && p.packageContents.length > 0));
+                              return (
+                                <button
+                                  key={p._id}
+                                  type="button"
+                                  onClick={() => applyProductToRow(index, p)}
+                                  className="w-full text-left p-2.5 hover:bg-blue-50 transition flex items-start justify-between space-x-2 group"
+                                >
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center space-x-1.5">
+                                      <span className="text-xs font-bold text-slate-800 group-hover:text-blue-900 truncate">
+                                        {p.name}
+                                      </span>
+                                      {isKit ? (
+                                        <span className="px-1.5 py-0.2 text-[9px] font-black uppercase tracking-wider bg-purple-100 text-purple-800 rounded">
+                                          KIT ({p.packageContents?.length || 0})
+                                        </span>
+                                      ) : (
+                                        <span className="px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 rounded">
+                                          PART
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="flex items-center space-x-2 mt-0.5 text-[10px] text-slate-500">
+                                      <span>HSN: {p.hsn || '8542'}</span>
+                                      {p.sku && <span>SKU: {p.sku}</span>}
+                                      <span>Unit: {p.unit || (isKit ? 'SET' : 'NOS')}</span>
+                                    </div>
+                                  </div>
+                                  <div className="text-right flex-shrink-0">
+                                    <div className="text-xs font-bold text-emerald-800 font-mono">
+                                      Rs. {p.unitPrice?.toFixed(2)}
+                                    </div>
+                                    <div className="text-[9px] text-emerald-600 font-semibold">
+                                      GST Incl. ({p.gstRate ?? 18}%)
+                                    </div>
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Kit Items & Units Section (ONLY for kit payments) */}
+                      <div className="mt-1.5">
+                        <label className="inline-flex items-center space-x-1.5 cursor-pointer text-[11px] font-semibold text-slate-600 hover:text-blue-900 select-none">
+                          <input
+                            type="checkbox"
+                            checked={Boolean(item.isKit)}
+                            onChange={(e) => {
+                              const isK = e.target.checked;
+                              handleItemChange(index, 'isKit', isK);
+                              if (isK && item.unit === 'NOS') {
+                                handleItemChange(index, 'unit', 'SET');
+                              }
+                            }}
+                            className="rounded text-blue-600 focus:ring-blue-500 w-3.5 h-3.5 border-slate-300"
+                          />
+                          <span className={item.isKit ? 'text-blue-900 font-bold' : ''}>
+                            📦 Kit Item (Specify Included Components & Units)
+                          </span>
+                        </label>
+
+                        {item.isKit && (
+                          <div className="mt-1.5 p-2 bg-blue-50/80 border border-blue-200 rounded-lg space-y-1 shadow-sm">
+                            <div className="flex items-center justify-between text-[10px] font-bold text-blue-950">
+                              <span>Items & Units in this Kit (Printed on Bill):</span>
+                              <span className="text-[9px] text-slate-500 font-normal">e.g. 1 NOS Arduino Uno, 2 PCS Servo</span>
+                            </div>
+                            <textarea
+                              rows={3}
+                              value={item.kitItemsText || ''}
+                              onChange={(e) => handleItemChange(index, 'kitItemsText', e.target.value)}
+                              placeholder={"1 NOS Arduino Uno R3 DIP\n2 PCS SG90 Micro Servo 9g\n1 SET 65-pc Jumper Wires\n1 NOS HC-SR04 Ultrasonic Sensor"}
+                              className="w-full text-xs font-mono p-1.5 bg-white border border-blue-300 rounded focus:ring-2 focus:ring-blue-600 focus:outline-none placeholder:text-slate-400 text-slate-800"
+                            />
+                          </div>
+                        )}
+                      </div>
                     </td>
 
                     {/* Catalog Quick Dropdown */}
