@@ -6,11 +6,13 @@ import { CustomersPage } from './pages/CustomersPage';
 import { ProductsPage } from './pages/ProductsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { LoginPage } from './pages/LoginPage';
+import { WelcomePage } from './pages/WelcomePage';
 import { IInvoice, API_BASE, api } from './api/client';
 
 export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'invoices' | 'create' | 'customers' | 'products' | 'settings'>('invoices');
   const [invoiceCount, setInvoiceCount] = useState(0);
+  const [unauthView, setUnauthView] = useState<'welcome' | 'login'>('welcome');
   const [authUser, setAuthUser] = useState<{ email: string; name?: string; role?: string } | null>(() => {
     const saved = localStorage.getItem('shortcircuit_billing_user');
     return saved ? JSON.parse(saved) : null;
@@ -46,6 +48,7 @@ export const App: React.FC = () => {
     localStorage.removeItem('shortcircuit_billing_token');
     localStorage.removeItem('shortcircuit_billing_user');
     setAuthUser(null);
+    setUnauthView('welcome');
   };
 
   const handleInvoiceCreated = (invoice: IInvoice, downloadNow?: boolean) => {
@@ -67,7 +70,15 @@ export const App: React.FC = () => {
   }
 
   if (!authUser) {
-    return <LoginPage onLoginSuccess={(user) => setAuthUser(user)} />;
+    if (unauthView === 'login') {
+      return (
+        <LoginPage
+          onLoginSuccess={(user) => setAuthUser(user)}
+          onBackToWelcome={() => setUnauthView('welcome')}
+        />
+      );
+    }
+    return <WelcomePage onStartBilling={() => setUnauthView('login')} />;
   }
 
   return (

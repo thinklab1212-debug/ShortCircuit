@@ -4,9 +4,10 @@ import { api } from '../api/client';
 
 interface LoginPageProps {
   onLoginSuccess: (user: { email: string; name?: string; role?: string }) => void;
+  onBackToWelcome?: () => void;
 }
 
-export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
+export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onBackToWelcome }) => {
   const [email, setEmail] = useState('admin@shortcircuit.in');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -55,6 +56,16 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
       <div className="relative w-full max-w-md">
         {/* Main Card */}
         <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-100/20 overflow-hidden p-8">
+          {onBackToWelcome && (
+            <button
+              type="button"
+              onClick={onBackToWelcome}
+              className="text-xs text-slate-500 hover:text-blue-900 font-semibold mb-4 inline-flex items-center space-x-1 transition"
+            >
+              <span>← Back to Home</span>
+            </button>
+          )}
+
           {/* Logo & Header */}
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center p-3 bg-blue-50 rounded-2xl mb-4 shadow-inner border border-blue-100">
