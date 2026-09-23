@@ -22,14 +22,14 @@ async function start() {
     setTimeout(() => {
       syncComponentsFromStore()
         .then(() => console.log('🔄 [Auto-Sync] Startup catalog sync finished.'))
-        .catch((err) => console.warn('ℹ️ [Auto-Sync] Store sync skipped (Network/Atlas whitelist restriction):', err.message));
+        .catch((err: any) => console.warn('ℹ️ [Auto-Sync] Store sync skipped (Network/Atlas whitelist restriction):', err?.message || err));
     }, 5000);
 
     // Periodic auto-sync every 10 minutes
     setInterval(() => {
       syncComponentsFromStore()
         .then(() => console.log('🔄 [Auto-Sync] Periodic store sync completed.'))
-        .catch((err) => console.warn('ℹ️ [Auto-Sync] Periodic sync skipped:', err.message));
+        .catch((err: any) => console.warn('ℹ️ [Auto-Sync] Periodic sync skipped:', err?.message || err));
     }, 10 * 60 * 1000);
   });
 }

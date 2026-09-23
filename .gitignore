@@ -73,5 +73,4 @@ server/src/scripts/test_idempotency.ts
 server/src/scripts/test_order_state_machine.ts
 server/src/scripts/test_webhook_signature.ts
 server/src/scripts/test_reconciliation.ts
-billing/server/.env.example
-billing/server/src/scripts/syncFromStore.ts
+
