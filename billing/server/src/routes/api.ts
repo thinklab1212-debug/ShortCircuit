@@ -36,11 +36,10 @@ import {
   changePassword,
 } from '../controllers/authController.js';
 
+import { getUploadsDir } from '../config/paths.js';
+
 // Configure Multer for branding asset uploads
-const brandingDir = path.resolve(process.cwd(), 'uploads/branding');
-if (!fs.existsSync(brandingDir)) {
-  fs.mkdirSync(brandingDir, { recursive: true });
-}
+const brandingDir = getUploadsDir('branding');
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {

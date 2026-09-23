@@ -49,8 +49,9 @@ export async function generateInvoicePdf(
     const logoCandidates = [
       company.logoPath && !company.logoPath.startsWith('http') ? path.resolve(process.cwd(), company.logoPath.replace(/^\//, '')) : null,
       path.resolve(process.cwd(), 'assets/logo.png'),
-      'd:/ShortCircuit/billing/client/public/logo.png',
-      'd:/ShortCircuit/client/public/logo.png',
+      path.resolve(process.cwd(), 'client/public/logo.png'),
+      path.resolve(process.cwd(), '../client/public/logo.png'),
+      path.resolve(process.cwd(), 'public/logo.png'),
     ].filter(Boolean) as string[];
 
     let logoDrawn = false;
@@ -350,9 +351,9 @@ export async function generateInvoicePdf(
     const stampCandidates = [
       company.stampPath && !company.stampPath.startsWith('http') ? path.resolve(process.cwd(), company.stampPath.replace(/^\//, '')) : null,
       path.resolve(process.cwd(), 'assets/stamp.png'),
-      'd:/ShortCircuit/billing/server/assets/stamp.png',
-      'd:/ShortCircuit/server/stamp.png',
-      'd:/ShortCircuit/client/public/stamp.png',
+      path.resolve(process.cwd(), 'client/public/stamp.png'),
+      path.resolve(process.cwd(), '../client/public/stamp.png'),
+      path.resolve(process.cwd(), 'public/stamp.png'),
     ].filter(Boolean) as string[];
 
     let stampDrawn = false;

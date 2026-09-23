@@ -6,6 +6,7 @@ import { Company } from '../models/Company.js';
 import { generateInvoicePdf } from '../services/pdfService.js';
 import { numberToIndianWords } from '../services/numToWords.js';
 import { cloudinary, isConfigured as isCloudinaryConfigured } from '../config/cloudinary.js';
+import { getUploadsDir } from '../config/paths.js';
 
 // Get next suggested invoice number
 export async function getNextInvoiceNumber(req: Request, res: Response) {
@@ -213,7 +214,7 @@ export async function createInvoice(req: Request, res: Response) {
 
     // File path for PDF
     const safeInvName = invoiceNo.replace(/[^a-zA-Z0-9_-]/g, '-');
-    const storageDir = path.resolve(process.cwd(), 'uploads/invoices');
+    const storageDir = getUploadsDir('invoices');
     const pdfFilename = `Invoice-${safeInvName}.pdf`;
     const pdfLocalPath = path.join(storageDir, pdfFilename);
 
@@ -297,7 +298,7 @@ export async function downloadInvoicePdf(req: Request, res: Response) {
       // Regenerate if missing
       const company = await Company.findOne() || await Company.create({});
       const safeInvName = invoice.invoiceNo.replace(/[^a-zA-Z0-9_-]/g, '-');
-      const storageDir = path.resolve(process.cwd(), 'uploads/invoices');
+      const storageDir = getUploadsDir('invoices');
       filePath = path.join(storageDir, `Invoice-${safeInvName}.pdf`);
       await generateInvoicePdf(invoice, company.toObject(), filePath);
       invoice.pdfLocalPath = filePath;
@@ -377,7 +378,7 @@ export async function emailInvoice(req: Request, res: Response) {
     let filePath = invoice.pdfLocalPath;
     if (!filePath || !fs.existsSync(filePath)) {
       const safeInvName = invoice.invoiceNo.replace(/[^a-zA-Z0-9_-]/g, '-');
-      const storageDir = path.resolve(process.cwd(), 'uploads/invoices');
+      const storageDir = getUploadsDir('invoices');
       filePath = path.join(storageDir, `Invoice-${safeInvName}.pdf`);
       await generateInvoicePdf(invoice, company.toObject(), filePath);
       invoice.pdfLocalPath = filePath;
