@@ -8,7 +8,6 @@ import {
   Circle,
   XCircle,
   Truck,
-  Download,
   MapPin,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -18,7 +17,6 @@ import { Separator } from '@/components/ui/separator'
 import { Textarea } from '@/components/ui/textarea'
 import { Loader } from '@/components/ui/loader'
 import { useOrder, useRequestCancellation } from '@/hooks'
-import { orderApi } from '@/services'
 import { formatPrice, formatDate, formatDateTime, capitalize, formatStatusLabel } from '@/utils'
 import { cn } from '@/lib/utils'
 import type { OrderStatus } from '@/types'
@@ -267,7 +265,6 @@ export default function OrderDetailPage() {
   const { data: order, isLoading, isError } = useOrder(id || '')
   const requestCancellation = useRequestCancellation()
   const [cancelOpen, setCancelOpen] = useState(false)
-  const [invoiceLoading, setInvoiceLoading] = useState(false)
 
   if (isLoading) {
     return (
@@ -311,26 +308,6 @@ export default function OrderDetailPage() {
     )
   }
 
-  const handleInvoice = async () => {
-    setInvoiceLoading(true)
-    try {
-      const response = await orderApi.getInvoice(order._id)
-      const blob = new Blob([response.data], { type: 'application/pdf' })
-      const url = window.URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.setAttribute('download', `Invoice-${order.orderId}.pdf`)
-      document.body.appendChild(link)
-      link.click()
-      link.remove()
-      window.URL.revokeObjectURL(url)
-      toast.success('Invoice downloaded successfully')
-    } catch {
-      toast.error('Could not download invoice. Confirm the order is paid and delivered.')
-    } finally {
-      setInvoiceLoading(false)
-    }
-  }
 
   return (
     <div className="container py-6 lg:py-8">
@@ -358,32 +335,15 @@ export default function OrderDetailPage() {
             </div>
             <div className="flex flex-col items-end gap-3">
               <OrderStatusBadge status={order.orderStatus} />
-              <div className="flex flex-col items-end gap-2">
-                {order.orderStatus === 'delivered' && order.paymentStatus === 'paid' ? (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleInvoice}
-                    loading={invoiceLoading}
-                  >
-                    <Download className="h-4 w-4 mr-1" />
-                    Download Invoice
-                  </Button>
-                ) : (
-                  <p className="max-w-xs text-right text-xs text-muted-foreground italic">
-                    Invoice will be available after successful delivery and payment completion.
-                  </p>
-                )}
-                {canRequestCancellation && (
-                  <Button
-                    variant="soft-destructive"
-                    size="sm"
-                    onClick={() => setCancelOpen(true)}
-                  >
-                    Request Cancellation
-                  </Button>
-                )}
-              </div>
+              {canRequestCancellation && (
+                <Button
+                  variant="soft-destructive"
+                  size="sm"
+                  onClick={() => setCancelOpen(true)}
+                >
+                  Request Cancellation
+                </Button>
+              )}
             </div>
           </div>
         </Card>
