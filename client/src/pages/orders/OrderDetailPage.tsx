@@ -10,7 +10,6 @@ import {
   Truck,
   MapPin,
 } from 'lucide-react'
-import toast from 'react-hot-toast'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
